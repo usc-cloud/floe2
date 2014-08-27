@@ -1,0 +1,24 @@
+# Dependencies
+markdown:         redcarpet
+pygments:         true
+
+# Permalinks
+permalink:        pretty
+
+# Setup
+title:            Floe2
+tagline:          'Dynamic Countinuous Dataflow Framework'
+description:      'A distributed, adaptive framework for dynamic dataflow applications.'
+url:              http://usc-cloud.github.io/floe2
+
+author:
+  name:           'Alok Kumbhare'
+  url:            https://www-scf.usc.edu/~kumbhare
+
+paginate:         5
+
+# Custom vars
+version:          
+
+github:
+  repo:           https://github.com/usc-cloud/floe2
