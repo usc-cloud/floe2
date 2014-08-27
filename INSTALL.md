@@ -26,8 +26,8 @@ Download and install zmq 4.0.4+ from [ZMQ Download Page](http://zeromq.org/intro
     
     #configure and install using default parameters.
     ./configure
-    ./make 
-    ./make install
+    make 
+    sudo make install
 ```        
         
 ###Installing jzmq - Java bindings for ZMQ
