@@ -2,7 +2,6 @@
 ---------------------
 The current verion of Floe2 has been tested for Ubuntu 14.04 hosts and the following instructions are based on that. Support for other platforms is coming soon.
 
-Follow the below steps for each machine hosting any of the Floe2 components (e.g. coordinator, container). For client machine, you may skip zmq and jzmq installation.
 
 ##Pre-requisites
 ----------------
@@ -12,6 +11,7 @@ Follow the below steps for each machine hosting any of the Floe2 components (e.g
 4. openjdk-7-jdk
 
 ###Installing zmq
+Follow the below steps for each machine hosting any of the Floe2 components (e.g. coordinator, container). For client machine, you may skip zmq and jzmq installation.
 
 Download and install zmq 4.0.4+ from [ZMQ Download Page](http://zeromq.org/intro:get-the-software). Instructions are repeated here for convenience, however it is suggested to follow the latest instructions on the ZMQ site.
 
