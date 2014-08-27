@@ -6,9 +6,10 @@ Follow the below steps for each machine hosting any of the Floe2 components (e.g
 
 ##Pre-requisites
 ----------------
-1. zmq 4.0.4+ (container nodes)
-2. jzmq (container nodes)
+1. zmq 4.0.4+ 
+2. jzmq 3.1.0
 3. python 2.7.x
+4. openjdk-7-jdk
 
 ###Installing zmq
 
@@ -72,7 +73,10 @@ Download and install jzmq from [JZMQ Download Page](http://zeromq.org/bindings:j
     cd <jzmq dir>/src/main/perf
     java local_lat tcp://127.0.0.1:5000 1 100
     
-    #This should run without errors. You won't see any output on console if it runs successfully. If you see errors, please visit [zmq java binding page](http://zeromq.org/bindings:java) for troubleshooting information.
+    #This should run without errors. Press cntrl-c to exit.
+    #You won't see any output on console if it runs successfully. 
+    #If you see errors, 
+    #please visit http://zeromq.org/bindings:java for troubleshooting.
 ```        
 
 
