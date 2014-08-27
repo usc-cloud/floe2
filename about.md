@@ -8,6 +8,6 @@ weight: 100
   Hey there!
 </p>
 
-Have questions or suggestions? Feel free to [open an issue on GitHub]({{ site.github.repo }}) or [ask me on Twitter](https://twitter.com/kumbhare).
+Have questions or suggestions? Feel free to [open an issue on GitHub]({{ site.github.repo }}/issues) or [ask me on Twitter](https://twitter.com/kumbhare).
 
 Thanks for reading!

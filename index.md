@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Home
+title: Floe2
 weight: 0
 ---
 
