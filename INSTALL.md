@@ -1,6 +1,6 @@
 #Installation Guide
 ---------------------
-The current verion of Floe2 has been tested for Ubuntu 14.04 hosts and the following instructions are based on that. Support for other platforms is coming soon.
+The current verion of Floe2 has been tested for Ubuntu 14.04 Server hosts and the following instructions are based on that. Support for other platforms is coming soon.
 
 
 ##Pre-requisites
