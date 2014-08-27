@@ -1,21 +1,19 @@
-#Installation Guide
----------------------
 The current verion of Floe2 has been tested for Ubuntu 14.04 Server hosts and the following instructions are based on that. Support for other platforms is coming soon.
 
 
 ##Pre-requisites
 ----------------
-1. zmq 4.0.4+ 
-2. jzmq 3.1.0
-3. python 2.7.x
-4. openjdk-7-jdk
+1. zmq 4.0.4+  (only for container machines)
+2. jzmq 3.1.0 (only for container machines)
+3. python 2.7.x (only for client machine)
+4. openjdk-7-jdk (for all machines)
 
 ###Installing zmq
 Follow the below steps for each machine hosting any of the Floe2 components (e.g. coordinator, container). For client machine, you may skip zmq and jzmq installation.
 
 Download and install zmq 4.0.4+ from [ZMQ Download Page](http://zeromq.org/intro:get-the-software). Instructions are repeated here for convenience, however it is suggested to follow the latest instructions on the ZMQ site.
 
-```bsh
+```bash
     #pre-reqs for installing zmq.
     sudo apt-get install g++ gcc libtool autoconf automake make
         
@@ -33,7 +31,7 @@ Download and install zmq 4.0.4+ from [ZMQ Download Page](http://zeromq.org/intro
 ###Installing jzmq - Java bindings for ZMQ
 Download and install jzmq from [JZMQ Download Page](http://zeromq.org/bindings:java). Instructions are repeated here for convenience, however it is suggested to follow the latest instructions on the ZMQ site.
 
-```bsh
+```bash
     #pre-reqs for installing jzmq.
     sudo apt-get install autoconf automake libtool gcc g++ make libuuid-dev git openjdk-7-jdk pkg-config
    
@@ -101,7 +99,7 @@ Components span multiple machines with (preferably) separate machines dedicated 
 **Download and Build Floe2**   
 (A release version is not available yet, use the github master branch)
 
-```
+```bash
     #install maven.
     sudo apt-get install maven python
     
@@ -122,7 +120,8 @@ Components span multiple machines with (preferably) separate machines dedicated 
 **Compile and Run Sample**  
 (Use floe-examples project as a template for creating your project)   
 floe-examples is compiled along with floe-core during the previous step.
-```
+
+```bash
     #to run the sample HelloWorld Application. (go to the floe2 home directory)
     chmod a+x bin/floe.py
     bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.HelloWorldApp
@@ -142,7 +141,8 @@ Follow same instructions as ***Local Mode***
 **Compile and Run Sample**  
 (Use floe-examples project as a template for creating your project)   
 floe-examples is compiled along with floe-core during the previous step.
-```
+
+```bash
     chmod a+x bin/floe.py
     
     #Start zookeeper. (For convenience, a dev version of zookeeper is provided with Floe2. Do not use this for production environment.)
