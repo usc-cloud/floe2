@@ -157,7 +157,7 @@ floe-examples is compiled along with floe-core during the previous step.
     #to run the sample HelloWorld Application. (go to the floe2 home directory)
     bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.HelloWorldApp
     
-    #all logs for appended to the file alllogs.logs, use tail to see the ouput of the above command.
+    #all logs are appended to the file alllogs.logs, use tail to see the ouput of the above command.
     tail -f alllogs.log
 ```
 
