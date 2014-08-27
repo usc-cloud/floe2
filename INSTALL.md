@@ -1,16 +1,17 @@
 #Installation Guide
 ---------------------
-The current verion of Floe2 has been tested for Ubuntu 14.04 hosts and the following instructions are based on that. Support for other platforms is coming soon.
+The current verion of Floe2 has been tested for Ubuntu 14.04 Server hosts and the following instructions are based on that. Support for other platforms is coming soon.
 
-Follow the below steps for each machine hosting any of the Floe2 components (e.g. coordinator, container). For client machine, you may skip zmq and jzmq installation.
 
 ##Pre-requisites
 ----------------
-1. zmq 4.0.4+ (container nodes)
-2. jzmq (container nodes)
+1. zmq 4.0.4+ 
+2. jzmq 3.1.0
 3. python 2.7.x
+4. openjdk-7-jdk
 
 ###Installing zmq
+Follow the below steps for each machine hosting any of the Floe2 components (e.g. coordinator, container). For client machine, you may skip zmq and jzmq installation.
 
 Download and install zmq 4.0.4+ from [ZMQ Download Page](http://zeromq.org/intro:get-the-software). Instructions are repeated here for convenience, however it is suggested to follow the latest instructions on the ZMQ site.
 
@@ -25,8 +26,8 @@ Download and install zmq 4.0.4+ from [ZMQ Download Page](http://zeromq.org/intro
     
     #configure and install using default parameters.
     ./configure
-    ./make 
-    ./make install
+    make 
+    sudo make install
 ```        
         
 ###Installing jzmq - Java bindings for ZMQ
@@ -72,14 +73,16 @@ Download and install jzmq from [JZMQ Download Page](http://zeromq.org/bindings:j
     cd <jzmq dir>/src/main/perf
     java local_lat tcp://127.0.0.1:5000 1 100
     
-    #This should run without errors. You won't see any output on console if it runs successfully. If you see errors, please visit [zmq java binding page](http://zeromq.org/bindings:java) for troubleshooting information.
+    #This should run without errors. Press cntrl-c to exit.
+    #You won't see any output on console if it runs successfully. 
+    #If you see errors, 
+    #please visit http://zeromq.org/bindings:java for troubleshooting.
 ```        
 
 
 ##Download, build and configure Floe2 
 -------------------------------------
 
-###Configure Floe2
 Floe2 can be run in several modes:
 
 1. ***Local Mode:*** - Single Process (used for development and debugging)  
@@ -92,7 +95,7 @@ Floe2 can be run in several modes:
 Components span multiple machines with (preferably) separate machines dedicated for different components. One dedicated machine for Zookeeper, one for Coordinator and Resource Manager, and multiple machines for containers (one container per machine).
 
 ---
-####_Local Mode_
+###_Local Mode_
 ---
 
 **Download and Build Floe2**   
@@ -125,7 +128,7 @@ floe-examples is compiled along with floe-core during the previous step.
     bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.HelloWorldApp
 ```
 ---
-####_Psuedo distributed Mode_
+###_Psuedo distributed Mode_
 ---
 **Download and Build Floe2**   
 Follow same instructions as ***Local Mode***
@@ -153,10 +156,13 @@ floe-examples is compiled along with floe-core during the previous step.
     
     #to run the sample HelloWorld Application. (go to the floe2 home directory)
     bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.HelloWorldApp
+    
+    #all logs are appended to the file alllogs.log, use tail to see the ouput of the above command.
+    tail -f alllogs.log
 ```
 
 
 ---
-####_Distributed Mode_
+###_Distributed Mode_
 ---
 Coming soon.
