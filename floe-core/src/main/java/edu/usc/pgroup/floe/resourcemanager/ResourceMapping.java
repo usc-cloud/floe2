@@ -16,8 +16,6 @@
 
 package edu.usc.pgroup.floe.resourcemanager;
 
-import edu.usc.pgroup.floe.config.ConfigProperties;
-import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.ContainerInfo;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
@@ -205,8 +203,7 @@ public class ResourceMapping implements Serializable {
         public ContainerInstance(final String cid, final ContainerInfo cInfo) {
             this.containerId = cid;
             this.containerInfo = cInfo;
-            this.nextPort = FloeConfig.getConfig().
-                    getInt(ConfigProperties.FLAKE_RECEIVER_PORT);
+            this.nextPort = containerInfo.getPortRangeStart();
             this.flakeMap = new HashMap<>();
         }
 

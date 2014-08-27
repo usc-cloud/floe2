@@ -97,9 +97,11 @@ public class ClusterResourceManager extends ResourceManager {
             return null;
         }
 
+        int i = 0;
         for (String tPelletId: app.get_pellets().keySet()) {
             mapping.createNewInstance(tPelletId,
-                    containers.get(0));
+                    containers.get(i++));
+            if (i == containers.size()) { i = 0; }
         }
         return  mapping;
     }

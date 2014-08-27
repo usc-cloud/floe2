@@ -51,8 +51,11 @@ public final class FlakeService {
 
     /**
      * constructor.
-     * @param flakeId flake's id. (the container decides a unique id for the
+     * @param fid flake's id. (the container decides a unique id for the
      *                flake)
+     * @param cid container's id. This will be appended by fid to get the
+     *            actual globally unique flake id. This is to support
+     *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param appName application's name to which this flake belongs.
      * @param jar the application's jar file name.
      * @param listeningPorts the list of ports on which this flake should
@@ -60,11 +63,13 @@ public final class FlakeService {
      *                       control signal) because this depends only on
      *                       static application configuration and not on
      */
-    private FlakeService(final String flakeId,
+    private FlakeService(final String fid,
+                         final String cid,
                          final String appName,
                          final String jar,
                          final int[] listeningPorts) {
-        flake = new Flake(flakeId,
+        flake = new Flake(fid,
+                cid,
                 appName,
                 jar,
                 listeningPorts);
@@ -93,6 +98,11 @@ public final class FlakeService {
                                  .withDescription("Container Local Flake id")
                                  .create("id");
 
+        Option cidOption = OptionBuilder.withArgName("containerId")
+                .hasArg().isRequired()
+                .withDescription("Container id on which this flake resides")
+                .create("cid");
+
         Option appNameOption = OptionBuilder.withArgName("name")
                 .hasArg().isRequired()
                 .withDescription("App's name to which this flake belong")
@@ -111,6 +121,7 @@ public final class FlakeService {
                 .create("ports");
 
         options.addOption(idOption);
+        options.addOption(cidOption);
         options.addOption(appNameOption);
         options.addOption(jarOption);
         options.addOption(portsOption);
@@ -129,6 +140,7 @@ public final class FlakeService {
         }
 
         String id = line.getOptionValue("id");
+        String cid = line.getOptionValue("cid");
         String appName = line.getOptionValue("appname");
         String jar = null;
         if (line.hasOption("jar")) {
@@ -137,6 +149,7 @@ public final class FlakeService {
         String[] sports = line.getOptionValues("ports");
 
         LOGGER.info("id: {}", id);
+        LOGGER.info("cid: {}", cid);
         LOGGER.info("app: {}", appName);
         LOGGER.info("jar: {}", jar);
         LOGGER.info("ports: {}", sports);
@@ -147,6 +160,7 @@ public final class FlakeService {
                 ports[i] = Integer.parseInt(sports[i]);
             }
             new FlakeService(id,
+                    cid,
                     appName,
                     jar,
                     ports).start();

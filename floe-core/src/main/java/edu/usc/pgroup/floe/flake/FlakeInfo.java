@@ -40,6 +40,11 @@ public final class FlakeInfo implements Serializable {
             LoggerFactory.getLogger(FlakeInfo.class);
 
     /**
+     * Container id.
+     */
+    private final String containerId;
+
+    /**
      * A container-local unique flake id.
      */
     private String flakeId;
@@ -58,10 +63,12 @@ public final class FlakeInfo implements Serializable {
     /**
      * private constructor that sets the constant or default values. Hidden
      * from others since this is a singleton class.
-     * @param fid Flake's id
+     * @param fid Flake's id.
+     * @param cid Container id.
      */
-    public FlakeInfo(final String fid) {
+    public FlakeInfo(final String fid, final String cid) {
         this.flakeId = fid;
+        this.containerId = cid;
     }
 
     /**
@@ -94,5 +101,12 @@ public final class FlakeInfo implements Serializable {
      */
     public String getFlakeId() {
         return flakeId;
+    }
+
+    /**
+     * @return container id.
+     */
+    public String getContainerId() {
+        return containerId;
     }
 }

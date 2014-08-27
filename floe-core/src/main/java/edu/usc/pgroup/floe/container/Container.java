@@ -41,12 +41,6 @@ public class Container {
     private Timer heartBeatTimer;
 
     /**
-     * the containerInfo object sent during heartbeats.
-     */
-    private ContainerInfo containerInfo;
-
-
-    /**
      * Apps assignment monitor.
      */
     private AppsAssignmentMonitor appsAssignmentMonitor;
@@ -71,6 +65,9 @@ public class Container {
         startResourceMappingMonitor();
 
         LOGGER.info("Starting flake Monitor");
+        LOGGER.info("Flake port range start: {}", FloeConfig.getConfig().getInt(
+                ConfigProperties.FLAKE_RECEIVER_PORT
+        ));
         startFlakeMonitor();
 
         LOGGER.info("Container Started.");
@@ -81,6 +78,8 @@ public class Container {
      */
     private void startFlakeMonitor() {
         flakeMonitor = FlakeMonitor.getInstance();
+        flakeMonitor.initialize(ContainerInfo.getInstance().getContainerId());
+        flakeMonitor.startMonitor();
     }
 
     /**
@@ -118,7 +117,6 @@ public class Container {
      * TODO: PerfInfoObject etc.
      */
     private void initializeContainer() {
-        containerInfo = ContainerInfo.getInstance();
-        containerInfo.setStartTime(new Date().getTime());
+        ContainerInfo.getInstance().setStartTime(new Date().getTime());
     }
 }

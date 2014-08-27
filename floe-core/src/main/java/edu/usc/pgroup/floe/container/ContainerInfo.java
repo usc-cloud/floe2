@@ -69,6 +69,12 @@ public final class ContainerInfo implements Serializable {
     private long uptime;
 
     /**
+     * The starting port number which is to be used for creating bind sockets
+     * for different flakes on this container.
+     */
+    private int portRangeStart;
+
+    /**
      * private constructor that sets the constant or default values. Hidden
      * from others since this is a singleton class.
      */
@@ -86,6 +92,10 @@ public final class ContainerInfo implements Serializable {
         } else {
             hostnameOrIpAddr = Utils.getHostName();
         }
+
+        portRangeStart = FloeConfig.getConfig().getInt(
+                ConfigProperties.FLAKE_RECEIVER_PORT
+        );
 
         this.uptime = 0;
     }
@@ -139,4 +149,10 @@ public final class ContainerInfo implements Serializable {
     public long getUptime() {
         return uptime;
     }
+
+    /**
+     * @return  The starting port number which is to be used for
+     * creating bind sockets for different flakes on this container.
+     */
+    public int getPortRangeStart() { return portRangeStart; }
 }

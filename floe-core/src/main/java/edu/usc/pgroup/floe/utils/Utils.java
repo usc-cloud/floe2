@@ -248,6 +248,17 @@ public final class Utils {
     }
 
     /**
+     * Generates a unique flake id given cid and fid.
+     * @param cid container's id on which this flake resides.
+     * @param fid flake's id.
+     * @return globally unique flake id.
+     */
+    public static String generateFlakeId(final String cid,
+                                         final String fid) {
+        return cid + "-" + fid;
+    }
+
+    /**
      * Various Constants used across the project.
      * Note: The string constants for configuration file,
      * and for the zookeeper paths are in config/ConfigProperties and
@@ -337,8 +348,8 @@ public final class Utils {
          * the endpoint to be used by flakes to send their heartbeat to the
          * container.
          */
-        public static final String FLAKE_HEARBEAT_SOC
-                = "ipc://flake-heartbeat";
+        public static final String FLAKE_HEARBEAT_SOCK_PREFIX
+                = "ipc://flake-heartbeat-";
 
         /**
          * Number of i/o threads to be used by ZMQ for a single flake.

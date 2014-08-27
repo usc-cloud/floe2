@@ -86,12 +86,19 @@ public class Flake {
      */
     private ZMQ.Context sharedContext;
 
+    /**
+     * Container id.
+     */
+    private String containerId;
 
 
     /**
      * Constructor.
      * @param fid flake's id. (the container decides a unique id for the
      *                flake)
+     * @param cid container's id. This will be appended by fid to get the
+     *            actual globally unique flake id. This is to support
+     *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param appName application's name to which this flake belongs.
      * @param jar the application's jar file name.
      * @param listeningPorts the list of ports on which this flake should
@@ -100,10 +107,12 @@ public class Flake {
      *                       static application configuration and not on
      */
     public Flake(final String fid,
+                 final String cid,
                  final String appName,
                  final String jar,
                  final int[] listeningPorts) {
-        this.flakeId = fid;
+        this.flakeId = Utils.generateFlakeId(cid, fid);
+        this.containerId = cid;
         this.ports = listeningPorts;
         this.app = appName;
         this.appJar = jar;
@@ -132,7 +141,7 @@ public class Flake {
         LOGGER.info("Scheduling flake heartbeat.");
         scheduleHeartBeat(new FlakeHeartbeatTask(flakeInfo, sharedContext));
 
-        LOGGER.info("flake Started.");
+        LOGGER.info("flake Started: {}.", getId());
     }
 
     /**
@@ -158,7 +167,7 @@ public class Flake {
      * setup the flakeInfo object (for heartbeat)
      */
     private void initializeFlake() {
-        flakeInfo = new FlakeInfo(flakeId);
+        flakeInfo = new FlakeInfo(flakeId, containerId);
         flakeInfo.setStartTime(new Date().getTime());
         sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
 

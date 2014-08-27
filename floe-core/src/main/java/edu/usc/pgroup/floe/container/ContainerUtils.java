@@ -48,12 +48,14 @@ public final class ContainerUtils {
      *
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
+     * @param cid container's id on which this flake resides.
      * @param listeningPorts array of ports to listen on for connections
      *                          from the succeeding pellets.
      * @return the flake id of the launched flake.
      */
     public static synchronized String launchFlake(
             final String appName, final String applicationJarPath,
+            final String cid,
             final Integer[] listeningPorts) {
 
         final String fid  = String.valueOf(getUniqueFlakeId());
@@ -69,6 +71,8 @@ public final class ContainerUtils {
             args.add("-jar");
             args.add(applicationJarPath);
         }
+        args.add("-cid");
+        args.add(cid);
         args.add("-ports");
 
         for (int i = 0; i < listeningPorts.length; i++) {
@@ -92,7 +96,7 @@ public final class ContainerUtils {
                 }
         );
         t.start();
-        return fid;
+        return Utils.generateFlakeId(cid, fid);
     }
 
     /**

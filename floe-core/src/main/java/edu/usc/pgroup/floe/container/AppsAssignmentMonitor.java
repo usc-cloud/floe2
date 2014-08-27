@@ -147,6 +147,7 @@ public class AppsAssignmentMonitor {
                     //TODO: write status to zookeeper.
                     LOGGER.error("Could not launch the appropriate flakes "
                             + "suggested by the resource manager.");
+                    return;
                 }
 
                 //Step 2. Send connect signals to the flakes.
@@ -253,6 +254,7 @@ public class AppsAssignmentMonitor {
                 ResourceMapping.FlakeInstance flakeInstance = entry.getValue();
                 final String fid = ContainerUtils.launchFlake(appName,
                         applicationJarPath,
+                        containerId,
                         flakeInstance.getListeningPorts());
 
                 try {
@@ -265,7 +267,7 @@ public class AppsAssignmentMonitor {
                                             .getFlakeInfo(fid);
                                 }
                             });
-
+                    LOGGER.info("Flake started:{}", info.getFlakeId());
                     pidToFidMap.put(entry.getKey(), info.getFlakeId());
                 } catch (Exception e) {
                     LOGGER.error("Could not start flake");

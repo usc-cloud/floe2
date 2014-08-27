@@ -51,6 +51,11 @@ public final class FlakeMonitor {
      */
     private Map<String, FlakeInfo> flakeMap;
 
+    /**
+     * Container id.
+     */
+    private String containerId;
+
 
     /**
      * hiding the default constructor.
@@ -65,22 +70,22 @@ public final class FlakeMonitor {
     public static synchronized FlakeMonitor getInstance() {
         if (instance == null) {
             instance = new FlakeMonitor();
-            instance.initialize();
         }
         return instance;
     }
 
     /**
      * Initialize the flake monitor.
+     * @param cid container id.
      */
-    private void initialize() {
-        startMonitor();
+    public void initialize(final String cid) {
+        this.containerId = cid;
     }
 
     /**
      * Starts the flake monitor.
      */
-    private void startMonitor() {
+    public void startMonitor() {
         //currently we use ZMQ IPC to log heartbeats.
         monitor = new Monitor();
         monitor.start();
@@ -107,7 +112,7 @@ public final class FlakeMonitor {
         FlakeInfo info = flakeMap.get(fid);
         if (info == null) {
             LOGGER.warn("Flake: {} does not exist or has not sent a heartbeat"
-                    + " yet.");
+                    + " yet.", fid);
             throw new FlakeNotFoundException(fid);
         }
         return info;
@@ -124,7 +129,10 @@ public final class FlakeMonitor {
         public void run() {
             ZMQ.Context ctx = ZMQ.context(1);
             ZMQ.Socket heartBeatSoc = ctx.socket(ZMQ.PULL);
-            heartBeatSoc.bind(Utils.Constants.FLAKE_HEARBEAT_SOC);
+            String hbBindStr = Utils.Constants.FLAKE_HEARBEAT_SOCK_PREFIX
+                    + containerId;
+            LOGGER.info("Waiting for hb at: {}", hbBindStr);
+            heartBeatSoc.bind(hbBindStr);
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] hb = heartBeatSoc.recv();
                 FlakeInfo finfo = (FlakeInfo) Utils.deserialize(hb);

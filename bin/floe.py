@@ -30,7 +30,7 @@ CONFFILE = CONF_DIR + "/config.xml"
 JAR_JVM_OPTS = os.getenv('FLOE_JAR_JVM_OPTS', '')
 LIB_DIR = os.getenv('FLOE_LIB_DIR', FLOE_HOME + '/floe-core/target/lib')
 FLOE_LIB =  os.getenv('FLOE_LIB', FLOE_HOME + '/floe-core/target/floe-core-0.1-SNAPSHOT.jar')
-
+CONFIG_OVERRIDES = []
 def get_jars_full(adir):
     files = os.listdir(adir)
     ret = []
@@ -72,13 +72,12 @@ def exec_floe_class(klass, jvmtype="-server", jvmopts=[], extrajars=[], args=[],
         "-Dfloe.home=" + FLOE_HOME,
         "-Dfloe.config.file=" + CONFFILE,
         "-cp", get_classpath(extrajars),
-    ] + jvmopts + [klass] + list(args)
+    ] + jvmopts + CONFIG_OVERRIDES + [klass] + list(args)
     print "Running: " + " ".join(all_args)
     if fork:
         os.spawnvp(os.P_WAIT, "java", all_args)
     else:
-        os.execvp("java", all_args) # replaces the current process and never
-    # returns
+        os.execvp("java", all_args) # replaces the current process and never returns
 
 def jar(jarfile, klass, *args):
     """Syntax: [floe jar topology-jar-path class ...]
@@ -212,11 +211,28 @@ COMMANDS = {"jar": jar, "kill": kill, "coordinator": coordinator,
             "dev-zookeeper": dev_zookeeper,
             "help": print_usage}
 
+def parse_config_opts(args):
+    curr = args[:]
+    curr.reverse()
+    config_list = []
+    args_list = []
+
+    while len(curr) > 0:
+        token = curr.pop()
+        if token.startswith("-D"):
+            config_list.append(token)
+        else:
+            args_list.append(token)
+
+    return config_list, args_list
+
 def main():
     if len(sys.argv) <= 1:
         print_usage()
         sys.exit(-1)
-    args = sys.argv[1:]
+    #args = sys.argv[1:]
+    global  CONFIG_OVERRIDES
+    CONFIG_OVERRIDES, args = parse_config_opts(sys.argv[1:])
     COMMAND = args[0]
     ARGS = args[1:]
     (COMMANDS.get(COMMAND, unknown_command))(*ARGS)

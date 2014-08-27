@@ -209,8 +209,8 @@ public class CoordinatorHandler implements TCoordinator.Iface {
      * @throws TException thrift exception wrapper.
      */
     @Override
-    public final int beginFileDownload(final String filename) throws
-            TException {
+    public final synchronized int beginFileDownload(final String filename)
+            throws TException {
         if (!FloeConfig.getConfig().containsKey(FILE_HANDLES_PROP)) {
             FloeConfig.getConfig().setProperty(FILE_HANDLES_PROP,
                     new ChannelMap());

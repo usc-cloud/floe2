@@ -74,7 +74,10 @@ public class FlakeHeartbeatTask extends TimerTask {
 
         if (hsoc == null) {
             hsoc = zcontext.socket(ZMQ.PUSH);
-            hsoc.connect(Utils.Constants.FLAKE_HEARBEAT_SOC);
+            String hbConnetStr = Utils.Constants.FLAKE_HEARBEAT_SOCK_PREFIX
+                    + finfo.getContainerId();
+            LOGGER.info("Connecting to hb at: {}", hbConnetStr);
+            hsoc.connect(hbConnetStr);
         }
 
         //TODO: Update other flake information here.
