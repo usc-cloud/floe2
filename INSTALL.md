@@ -88,8 +88,8 @@ Floe2 can be run in several modes:
 1. ***Local Mode:*** - Single Process (used for development and debugging)  
  All components of Floe2 run in a single process (including zookeeper, coordinator, container). User just executes the user application (see examples/HelloWorld) and the framework launches all the components in a single process.  
  
-2. ***Psuedo Distributed Mode:*** - Single Machine, multi procs. (used for testing the application in an environment similar to the distributed version before actual deployment on a cluster)  
- All components of Floe2 run on a single machine but in seperate processes. User is responsible for running each component manually. However, currently, you can run only one instance of container (will be fixed in next version).
+2. ***Psuedo Distributed Mode:*** - Single Machine, multi procs. (used for testing the application functionality (not performance) in an environment similar to the distributed mode before actual deployment on a cluster)  
+ All components of Floe2 run on a single machine but in seperate processes. User is responsible for running each component manually.
  
 3. ***Distributed Mode:*** - Cluster of Machines (distributed deployment of Floe2)
 Components span multiple machines with (preferably) separate machines dedicated for different components. One dedicated machine for Zookeeper, one for Coordinator and Resource Manager, and multiple machines for containers (one container per machine).
@@ -145,14 +145,18 @@ floe-examples is compiled along with floe-core during the previous step.
 ```
     chmod a+x bin/floe.py
     
-    #Start zookeeper. (For convinience, a dev version of zookeeper is provided with Floe2. Do not use this for production environment.)
+    #Start zookeeper. (For convenience, a dev version of zookeeper is provided with Floe2. Do not use this for production environment.)
     bin/floe.py dev-zookeeper &
     
     #Start coordinator
     bin/floe.py coordinator &    
     
-    #Start container
-    bin/floe.py container &    
+    #Start multiple containers on a single machine. Each with it own range of network ports. 
+    #Note that the floe.flake.port config property is used to specify the starting port number to be used by flakes in that container.
+    #You may use any number of -Dconfig.property=value options to override properties mentioned in the config file.
+    bin/floe.py container -Dfloe.flake.port=7000 &    
+    bin/floe.py container -Dfloe.flake.port=8000 &    
+    bin/floe.py container -Dfloe.flake.port=9000 &        
     
     #to run the sample HelloWorld Application. (go to the floe2 home directory)
     bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.HelloWorldApp
