@@ -83,7 +83,6 @@ Download and install jzmq from [JZMQ Download Page](http://zeromq.org/bindings:j
 ##Download, build and configure Floe2 
 -------------------------------------
 
-###Configure Floe2
 Floe2 can be run in several modes:
 
 1. ***Local Mode:*** - Single Process (used for development and debugging)  
@@ -96,7 +95,7 @@ Floe2 can be run in several modes:
 Components span multiple machines with (preferably) separate machines dedicated for different components. One dedicated machine for Zookeeper, one for Coordinator and Resource Manager, and multiple machines for containers (one container per machine).
 
 ---
-####_Local Mode_
+###_Local Mode_
 ---
 
 **Download and Build Floe2**   
@@ -129,7 +128,7 @@ floe-examples is compiled along with floe-core during the previous step.
     bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.HelloWorldApp
 ```
 ---
-####_Psuedo distributed Mode_
+###_Psuedo distributed Mode_
 ---
 **Download and Build Floe2**   
 Follow same instructions as ***Local Mode***
@@ -161,6 +160,6 @@ floe-examples is compiled along with floe-core during the previous step.
 
 
 ---
-####_Distributed Mode_
+###_Distributed Mode_
 ---
 Coming soon.
