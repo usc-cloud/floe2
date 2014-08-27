@@ -24,7 +24,6 @@ import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
 import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,17 +106,21 @@ public class AppsAssignmentMonitor {
 
             String applicationJar = resourceMapping.getApplicationJarPath();
 
-            try {
+            if (applicationJar != null) {
+                try {
 
-                String downloadLocation = Utils.getContainerJarDownloadPath(
-                    resourceMapping.getAppName(), applicationJar);
+                    String downloadLocation = Utils.getContainerJarDownloadPath(
+                            resourceMapping.getAppName(), applicationJar);
 
-                LOGGER.info("Downloading: " + applicationJar);
-                FloeClient.getInstance().downloadFileSync(applicationJar,
-                        downloadLocation);
-                LOGGER.info("Finished Downloading: " + applicationJar);
-            } catch (TTransportException e) {
-                e.printStackTrace();
+                    LOGGER.info("Downloading: " + applicationJar);
+                    FloeClient.getInstance().downloadFileSync(applicationJar,
+                            downloadLocation);
+                    LOGGER.info("Finished Downloading: " + applicationJar);
+                } catch (Exception e) {
+                    LOGGER.warn("No application jar specified. It should work"
+                            + " still work for inproc testing. Exception: {}",
+                            e);
+                }
             }
 
             LOGGER.info("Container Id: " + containerId);

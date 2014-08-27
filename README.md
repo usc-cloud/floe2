@@ -1,4 +1,6 @@
-floe2
-=====
+Dynamic Continuous Dataflow framework. 
 
-USC Dynamic Continuous Dataflow framework.
+
+Installation Guide
+==================
+Available [here](INSTALL.md)
