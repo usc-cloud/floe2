@@ -105,5 +105,18 @@ public final class ApplicationBuilder {
             //inputPellet.get_incomingEdges().add(edge);
             return this;
         }
+
+
+        /**
+         * Set the parallelism for the pellet (across the cluster). This
+         * refers to the number of pellet instances that will be created
+         * during deployment.
+         * @param numInstances number of PE instances.
+         * @return The builder pattern's object to further configure the pellet.
+         */
+        public final PelletBuilder setParallelism(final int numInstances) {
+            pellet.set_parallelism(numInstances);
+            return this;
+        }
     }
 }

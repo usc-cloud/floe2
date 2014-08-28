@@ -40,6 +40,7 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
   private static final org.apache.thrift.protocol.TField INCOMING_EDGES_FIELD_DESC = new org.apache.thrift.protocol.TField("incomingEdges", org.apache.thrift.protocol.TType.LIST, (short)2);
   private static final org.apache.thrift.protocol.TField OUTGOING_EDGES_FIELD_DESC = new org.apache.thrift.protocol.TField("outgoingEdges", org.apache.thrift.protocol.TType.LIST, (short)3);
   private static final org.apache.thrift.protocol.TField SERIALIZED_PELLET_FIELD_DESC = new org.apache.thrift.protocol.TField("serializedPellet", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField PARALLELISM_FIELD_DESC = new org.apache.thrift.protocol.TField("parallelism", org.apache.thrift.protocol.TType.I32, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -51,13 +52,15 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
   private List<TEdge> incomingEdges; // required
   private List<TEdge> outgoingEdges; // required
   private ByteBuffer serializedPellet; // required
+  private int parallelism; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     INCOMING_EDGES((short)2, "incomingEdges"),
     OUTGOING_EDGES((short)3, "outgoingEdges"),
-    SERIALIZED_PELLET((short)4, "serializedPellet");
+    SERIALIZED_PELLET((short)4, "serializedPellet"),
+    PARALLELISM((short)5, "parallelism");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -80,6 +83,8 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
           return OUTGOING_EDGES;
         case 4: // SERIALIZED_PELLET
           return SERIALIZED_PELLET;
+        case 5: // PARALLELISM
+          return PARALLELISM;
         default:
           return null;
       }
@@ -120,6 +125,9 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
   }
 
   // isset id assignments
+  private static final int __PARALLELISM_ISSET_ID = 0;
+  private byte __isset_bitfield = 0;
+  private _Fields optionals[] = {_Fields.PARALLELISM};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -133,6 +141,8 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
             new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TEdge.class))));
     tmpMap.put(_Fields.SERIALIZED_PELLET, new org.apache.thrift.meta_data.FieldMetaData("serializedPellet", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.PARALLELISM, new org.apache.thrift.meta_data.FieldMetaData("parallelism", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TPellet.class, metaDataMap);
   }
@@ -157,6 +167,7 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
    * Performs a deep copy on <i>other</i>.
    */
   public TPellet(TPellet other) {
+    __isset_bitfield = other.__isset_bitfield;
     if (other.is_set_id()) {
       this.id = other.id;
     }
@@ -178,6 +189,7 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       this.serializedPellet = org.apache.thrift.TBaseHelper.copyBinary(other.serializedPellet);
 ;
     }
+    this.parallelism = other.parallelism;
   }
 
   public TPellet deepCopy() {
@@ -190,6 +202,8 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     this.incomingEdges = null;
     this.outgoingEdges = null;
     this.serializedPellet = null;
+    set_parallelism_isSet(false);
+    this.parallelism = 0;
   }
 
   public String get_id() {
@@ -323,6 +337,28 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     }
   }
 
+  public int get_parallelism() {
+    return this.parallelism;
+  }
+
+  public void set_parallelism(int parallelism) {
+    this.parallelism = parallelism;
+    set_parallelism_isSet(true);
+  }
+
+  public void unset_parallelism() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __PARALLELISM_ISSET_ID);
+  }
+
+  /** Returns true if field parallelism is set (has been assigned a value) and false otherwise */
+  public boolean is_set_parallelism() {
+    return EncodingUtils.testBit(__isset_bitfield, __PARALLELISM_ISSET_ID);
+  }
+
+  public void set_parallelism_isSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __PARALLELISM_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ID:
@@ -357,6 +393,14 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       }
       break;
 
+    case PARALLELISM:
+      if (value == null) {
+        unset_parallelism();
+      } else {
+        set_parallelism((Integer)value);
+      }
+      break;
+
     }
   }
 
@@ -373,6 +417,9 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
 
     case SERIALIZED_PELLET:
       return get_serializedPellet();
+
+    case PARALLELISM:
+      return Integer.valueOf(get_parallelism());
 
     }
     throw new IllegalStateException();
@@ -393,6 +440,8 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       return is_set_outgoingEdges();
     case SERIALIZED_PELLET:
       return is_set_serializedPellet();
+    case PARALLELISM:
+      return is_set_parallelism();
     }
     throw new IllegalStateException();
   }
@@ -446,6 +495,15 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
         return false;
     }
 
+    boolean this_present_parallelism = true && this.is_set_parallelism();
+    boolean that_present_parallelism = true && that.is_set_parallelism();
+    if (this_present_parallelism || that_present_parallelism) {
+      if (!(this_present_parallelism && that_present_parallelism))
+        return false;
+      if (this.parallelism != that.parallelism)
+        return false;
+    }
+
     return true;
   }
 
@@ -472,6 +530,11 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     builder.append(present_serializedPellet);
     if (present_serializedPellet)
       builder.append(serializedPellet);
+
+    boolean present_parallelism = true && (is_set_parallelism());
+    builder.append(present_parallelism);
+    if (present_parallelism)
+      builder.append(parallelism);
 
     return builder.toHashCode();
   }
@@ -520,6 +583,16 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     }
     if (is_set_serializedPellet()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.serializedPellet, other.serializedPellet);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(is_set_parallelism()).compareTo(other.is_set_parallelism());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (is_set_parallelism()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.parallelism, other.parallelism);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -575,6 +648,12 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       org.apache.thrift.TBaseHelper.toString(this.serializedPellet, sb);
     }
     first = false;
+    if (is_set_parallelism()) {
+      if (!first) sb.append(", ");
+      sb.append("parallelism:");
+      sb.append(this.parallelism);
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -610,6 +689,8 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bitfield = 0;
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -688,6 +769,14 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 5: // PARALLELISM
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.parallelism = iprot.readI32();
+              struct.set_parallelism_isSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -735,6 +824,11 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
         oprot.writeBinary(struct.serializedPellet);
         oprot.writeFieldEnd();
       }
+      if (struct.is_set_parallelism()) {
+        oprot.writeFieldBegin(PARALLELISM_FIELD_DESC);
+        oprot.writeI32(struct.parallelism);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -768,6 +862,14 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
         }
       }
       oprot.writeBinary(struct.serializedPellet);
+      BitSet optionals = new BitSet();
+      if (struct.is_set_parallelism()) {
+        optionals.set(0);
+      }
+      oprot.writeBitSet(optionals, 1);
+      if (struct.is_set_parallelism()) {
+        oprot.writeI32(struct.parallelism);
+      }
     }
 
     @Override
@@ -801,6 +903,11 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       struct.set_outgoingEdges_isSet(true);
       struct.serializedPellet = iprot.readBinary();
       struct.set_serializedPellet_isSet(true);
+      BitSet incoming = iprot.readBitSet(1);
+      if (incoming.get(0)) {
+        struct.parallelism = iprot.readI32();
+        struct.set_parallelism_isSet(true);
+      }
     }
   }
 

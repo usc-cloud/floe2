@@ -84,8 +84,6 @@ public class PrintPellet implements Pellet {
         } else {
             LOGGER.info("Received: " + t.getDummy());
         }
-
-
     }
 
     /**

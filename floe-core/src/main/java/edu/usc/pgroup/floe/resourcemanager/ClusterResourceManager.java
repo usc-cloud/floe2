@@ -20,6 +20,7 @@ import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.ContainerInfo;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
+import edu.usc.pgroup.floe.thriftgen.TPellet;
 import edu.usc.pgroup.floe.utils.RetryLoop;
 import edu.usc.pgroup.floe.utils.RetryPolicy;
 import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -98,10 +100,23 @@ public class ClusterResourceManager extends ResourceManager {
         }
 
         int i = 0;
-        for (String tPelletId: app.get_pellets().keySet()) {
-            mapping.createNewInstance(tPelletId,
-                    containers.get(i++));
-            if (i == containers.size()) { i = 0; }
+        for (Map.Entry<String, TPellet> pelletEntry
+                : app.get_pellets().entrySet()) {
+
+            int numInstances = 1;
+
+            if (pelletEntry.getValue().get_parallelism() > 0) {
+                numInstances = pelletEntry.getValue().get_parallelism();
+            }
+
+            for (int cnt = 0; cnt < numInstances; cnt++) {
+                mapping.createNewInstance(pelletEntry.getKey(),
+                        containers.get(i++));
+
+                if (i == containers.size()) {
+                    i = 0;
+                }
+            }
         }
         return  mapping;
     }

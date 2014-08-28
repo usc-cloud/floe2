@@ -45,6 +45,7 @@ struct TPellet {
     2: required list<TEdge> incomingEdges;
     3: required list<TEdge> outgoingEdges;
     4: required binary serializedPellet;
+    5: optional i32 parallelism;
         //2: required list<TTupleArgTypes> outputFieldTypes;
         //3: required list<string> orderedInputFieldNames;
         //4: required map<string, TTupleArgTypes> inputFieldTypes;
