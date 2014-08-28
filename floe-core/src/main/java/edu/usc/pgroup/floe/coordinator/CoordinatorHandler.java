@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.coordinator;
 
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TCoordinator;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -314,6 +315,37 @@ public class CoordinatorHandler implements TCoordinator.Iface {
     public final void submitApp(final String appName, final TFloeApp app)
             throws TException {
         Coordinator.getInstance().submitApp(appName, app);
+    }
+
+    /**
+     * Service call to handle the scale event at runtime.
+     * @param direction direction of scaling
+     * @param appName name of the app
+     * @param pelletName name of the pellet
+     * @param count number of instances to be scaled up or down.
+     * throws InsufficientResourcesException if enough containers are not
+     * available.
+     * throws AppNotFoundException if the given appName does is not running.
+     * throws PelletNotFoundException if the application does not contain a
+     * pellet with the given name.
+     * @throws TException Any other exceptions wrapped into TException.
+     */
+    @Override
+    public final void scale(final ScaleDirection direction,
+                            final String appName,
+                            final String pelletName, final int count)
+            throws
+            //InsufficientResourcesException,
+            //AppNotFoundException,
+            //PelletNotFoundException,
+            TException {
+
+            Coordinator.getInstance().scale(
+                    direction,
+                    appName,
+                    pelletName,
+                    count
+            );
     }
 
 

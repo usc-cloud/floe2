@@ -64,8 +64,21 @@ exception DuplicateException {
     1: required string msg;
 }
 
+exception AppNotFoundException {
+    1: required string msg;
+}
+
+exception PelletNotFoundException {
+    1: required string msg;
+}
+
 exception InvalidAppException {
     1: required string msg;
+}
+
+enum ScaleDirection {
+    up,
+    down
 }
 
 service TCoordinator
@@ -84,4 +97,11 @@ service TCoordinator
     (1: InsufficientResourcesException ire,
     2: DuplicateException de,
     3: InvalidAppException iae);
+
+
+    void scale(1: ScaleDirection direction, 2: string appName,
+    3: string pelletName, 4: i32 count) throws
+    (1: InsufficientResourcesException ire,
+    2: AppNotFoundException anfe,
+    3: PelletNotFoundException pnfe)
 }

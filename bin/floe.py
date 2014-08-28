@@ -136,14 +136,30 @@ def container(klass="edu.usc.pgroup.floe.container.ContainerService"):
     """
 
     jvmopts = [
-       "-Dlogfile.name=coordinator.log",
-       "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",
-    ]
+        "-Dlogfile.name=coordinator.log",
+        "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",
+        ]
     exec_floe_class(
        klass,
        jvmtype="-server",
        jvmopts=jvmopts,
        fork=True)
+
+def scale(*args):
+    """
+    Syntax: [floe scale -dir up/down -app <appname> -pellet <pelletname> -cnt <cnt>
+    Sends the scale up/down command to the coordinator.
+    """
+    klass="edu.usc.pgroup.floe.commands.Scale"
+    jvmopts = [
+        "-Dlogfile.name=coordinator.log",
+        "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",
+        ]
+    exec_floe_class(klass,
+                    jvmtype="-client",
+                    jvmopts=jvmopts,
+                    fork=False,
+                    args=args)
 
 
 
@@ -209,6 +225,7 @@ def unknown_command(*args):
 COMMANDS = {"jar": jar, "kill": kill, "coordinator": coordinator,
             "container": container, "classpath": print_classpath,
             "dev-zookeeper": dev_zookeeper,
+            "scale": scale,
             "help": print_usage}
 
 def parse_config_opts(args):

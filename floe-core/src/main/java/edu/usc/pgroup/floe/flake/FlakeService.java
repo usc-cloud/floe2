@@ -51,6 +51,7 @@ public final class FlakeService {
 
     /**
      * constructor.
+     * @param pid Unique Pellet id/name received from the user.
      * @param fid flake's id. (the container decides a unique id for the
      *                flake)
      * @param cid container's id. This will be appended by fid to get the
@@ -63,12 +64,13 @@ public final class FlakeService {
      *                       control signal) because this depends only on
      *                       static application configuration and not on
      */
-    private FlakeService(final String fid,
+    private FlakeService(final String pid,
+                         final String fid,
                          final String cid,
                          final String appName,
                          final String jar,
                          final int[] listeningPorts) {
-        flake = new Flake(fid,
+        flake = new Flake(pid, fid,
                 cid,
                 appName,
                 jar,
@@ -92,6 +94,11 @@ public final class FlakeService {
 
 
         Options options = new Options();
+
+        Option pidOption = OptionBuilder.withArgName("Pellet id")
+                .hasArg().isRequired()
+                .withDescription("Pellet id/name that should run on the flake")
+                .create("pid");
 
         Option idOption = OptionBuilder.withArgName("flakeId")
                                  .hasArg().isRequired()
@@ -120,6 +127,8 @@ public final class FlakeService {
                 .withDescription("App's jar file name containing the pellets")
                 .create("ports");
 
+
+        options.addOption(pidOption);
         options.addOption(idOption);
         options.addOption(cidOption);
         options.addOption(appNameOption);
@@ -139,6 +148,7 @@ public final class FlakeService {
             return;
         }
 
+        String pid = line.getOptionValue("pid");
         String id = line.getOptionValue("id");
         String cid = line.getOptionValue("cid");
         String appName = line.getOptionValue("appname");
@@ -148,6 +158,7 @@ public final class FlakeService {
         }
         String[] sports = line.getOptionValues("ports");
 
+        LOGGER.info("pid: {}", pid);
         LOGGER.info("id: {}", id);
         LOGGER.info("cid: {}", cid);
         LOGGER.info("app: {}", appName);
@@ -159,7 +170,8 @@ public final class FlakeService {
             for (int i = 0; i < sports.length; i++) {
                 ports[i] = Integer.parseInt(sports[i]);
             }
-            new FlakeService(id,
+            new FlakeService(pid,
+                    id,
                     cid,
                     appName,
                     jar,
@@ -168,71 +180,5 @@ public final class FlakeService {
             LOGGER.error("Invalid port number: Exception: {}", e);
             return;
         }
-
-        /*LOGGER.info(FloeConfig.getConfig().getString(
-                ConfigProperties.SYS_JAVA_LIB_PATH));
-
-        LOGGER.info(FloeConfig.getConfig().getString(
-                ConfigProperties.SYS_JAVA_CLASS_PATH));
-
-        //Testing ZMQ
-        LOGGER.info(String.format("Version string: {}, Version int: {}",
-                ZMQ.getVersionString(),
-                ZMQ.getFullVersion()));*/
-
-
-
-        //TESTING..
-        /*String fileSeperator = FloeConfig.getConfig().getString(
-                ConfigProperties.SYS_FILE_SEPARATOR);
-
-        String flakesDir = FloeConfig.getConfig().getString(
-                ConfigProperties.FLOE_EXEC_SCRATCH_FOLDER)
-                + fileSeperator
-                + FloeConfig.getConfig().getString(
-                    ConfigProperties.CONTAINER_LOCAL_FOLDER)
-                + fileSeperator
-                + FloeConfig.getConfig().getString(
-                ConfigProperties.FLAKE_LOCAL_FOLDER)
-                + fileSeperator
-                + "f1";
-
-
-        Path flakesPath = Paths.get(flakesDir);
-        LOGGER.error(flakesPath.toAbsolutePath().toString());
-
-        DirectoryCache dirCache = new DirectoryCache(flakesPath, true);
-
-        dirCache.addListener(new DirectoryUpdateListener() {
-            @Override
-            public void childrenListInitialized(
-                    final Collection<FileInfo> initialChildren) {
-                LOGGER.error("Initial List: {}", initialChildren);
-            }
-
-            @Override
-            public void childAdded(final FileInfo addedChild) {
-                LOGGER.error("Child Added {}", addedChild.getFileName());
-            }
-
-            @Override
-            public void childRemoved(final FileInfo removedChild) {
-                LOGGER.error("Child Removed {}", removedChild.getFileName());
-            }
-
-            @Override
-            public void childUpdated(final FileInfo updatedChild) {
-                LOGGER.error("Child Modified {}",
-                        updatedChild.getFileName());
-            }
-        });
-
-        try {
-            dirCache.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
-
     }
 }

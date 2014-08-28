@@ -59,14 +59,21 @@ public final class FlakeInfo implements Serializable {
      */
     private long uptime;
 
+    /**
+     * Pellet id (same as pellet name).
+     */
+    private String pelletId;
+
 
     /**
      * private constructor that sets the constant or default values. Hidden
      * from others since this is a singleton class.
+     * @param pid pellet id (same as pellet name)
      * @param fid Flake's id.
      * @param cid Container id.
      */
-    public FlakeInfo(final String fid, final String cid) {
+    public FlakeInfo(final String pid, final String fid, final String cid) {
+        this.pelletId = pid;
         this.flakeId = fid;
         this.containerId = cid;
     }
@@ -108,5 +115,12 @@ public final class FlakeInfo implements Serializable {
      */
     public String getContainerId() {
         return containerId;
+    }
+
+    /**
+     * @return pellet id.
+     */
+    public String getPelletId() {
+        return pelletId;
     }
 }

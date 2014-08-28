@@ -67,7 +67,8 @@
               files="FlakeMessageReceiver.java"/>
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.TodoCommentCheck"
               files="ResourceMapping.java"/>
-
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.TodoCommentCheck"
+              files="ClusterResourceManager.java"/>
 
     <!-- for the PosixJNAAffinity file. cant fix -->
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.AvoidInlineConditionalsCheck"

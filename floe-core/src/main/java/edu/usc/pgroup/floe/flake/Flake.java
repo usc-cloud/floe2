@@ -79,21 +79,27 @@ public class Flake {
      * the list of ports to start the zmq sockets, one for each edge in the
      * application graph.
      */
-    private int[] ports;
+    private final int[] ports;
 
     /**
      * Shared ZMQ Context.
      */
-    private ZMQ.Context sharedContext;
+    private final ZMQ.Context sharedContext;
 
     /**
      * Container id.
      */
-    private String containerId;
+    private final String containerId;
+
+    /**
+     * Pellet id/name.
+     */
+    private final String pelletId;
 
 
     /**
      * Constructor.
+     * @param pid pellet id/name.
      * @param fid flake's id. (the container decides a unique id for the
      *                flake)
      * @param cid container's id. This will be appended by fid to get the
@@ -106,7 +112,8 @@ public class Flake {
      *                       control signal) because this depends only on
      *                       static application configuration and not on
      */
-    public Flake(final String fid,
+    public Flake(final String pid,
+                 final String fid,
                  final String cid,
                  final String appName,
                  final String jar,
@@ -116,6 +123,8 @@ public class Flake {
         this.ports = listeningPorts;
         this.app = appName;
         this.appJar = jar;
+        this.sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
+        this.pelletId = pid;
     }
 
     /**
@@ -167,10 +176,8 @@ public class Flake {
      * setup the flakeInfo object (for heartbeat)
      */
     private void initializeFlake() {
-        flakeInfo = new FlakeInfo(flakeId, containerId);
+        flakeInfo = new FlakeInfo(pelletId, flakeId, containerId);
         flakeInfo.setStartTime(new Date().getTime());
-        sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
-
         //Load the given jar into class path.
     }
 

@@ -16,10 +16,19 @@
 
 package edu.usc.pgroup.floe.resourcemanager;
 
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.ContainerInfo;
+import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
+import edu.usc.pgroup.floe.utils.RetryLoop;
+import edu.usc.pgroup.floe.utils.RetryPolicy;
+import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Resource manager interface.
@@ -27,6 +36,11 @@ import java.util.List;
  */
 public abstract class ResourceManager {
 
+    /**
+     * Logger.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ResourceManager.class);
 
     /**
      * Cluster resource monitor. This monitors the the containers which are
@@ -47,6 +61,45 @@ public abstract class ResourceManager {
      */
     protected final List<ContainerInfo> getAvailableContainers() {
         return clusterResourceMonitor.getAvailableContainers();
+    }
+
+    /**
+     * @return the list of containers who have registered with the resource
+     * manager.
+     */
+    protected final List<ContainerInfo> getAvailableContainersWithRetry() {
+        List<ContainerInfo> containers = null;
+
+
+        RetryPolicy retryPolicy = RetryPolicyFactory.getRetryPolicy(
+                FloeConfig.getConfig().getString(ConfigProperties
+                        .RESOURCEMANAGER_RETRYPOLICY),
+                FloeConfig.getConfig().getStringArray(ConfigProperties
+                        .RESOURCEMANAGER_RETRYPOLICY_ARGS)
+        );
+
+        try {
+            containers = RetryLoop.callWithRetry(retryPolicy,
+                    new Callable<List<ContainerInfo>>() {
+                        @Override
+                        public List<ContainerInfo> call() throws Exception {
+                            List<ContainerInfo> containers
+                                    = getAvailableContainers();
+                            if (containers == null || containers.size() <= 0) {
+                                throw new Exception(
+                                        "No Containers registered yet");
+                            }
+                            return containers;
+                        }
+                    }
+            );
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while acquiring and all attempts to "
+                    + "retry have failed. Exception: {} ", e);
+            return null;
+        }
+
+        return  containers;
     }
 
     /**
@@ -72,4 +125,19 @@ public abstract class ResourceManager {
      */
     public abstract ResourceMapping updateResourceMapping(TFloeApp app,
                                           ResourceMapping current);
+
+
+    /**
+     * Scales the given pellet up or down for the given number of instances.
+     * @param current the current resource mapping.
+     * @param direction direction of scaling.
+     * @param pelletName name of the pellet to scale.
+     * @param count the number of instances to scale up/down.
+     * @return the updated resource mapping with the ResourceMappingDelta set
+     * appropriately.
+     */
+    public abstract ResourceMapping scale(ResourceMapping current,
+                                          ScaleDirection direction,
+                                          String pelletName,
+                                          int count);
 }

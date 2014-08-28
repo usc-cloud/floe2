@@ -19,8 +19,10 @@ package edu.usc.pgroup.floe.coordinator;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManager;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManagerFactory;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
+import edu.usc.pgroup.floe.thriftgen.AppNotFoundException;
 import edu.usc.pgroup.floe.thriftgen.DuplicateException;
 import edu.usc.pgroup.floe.thriftgen.InsufficientResourcesException;
+import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.RetryLoop;
 import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
@@ -189,11 +191,86 @@ public final class Coordinator {
             throw new Exception(e);
         }
 
-        //verify topology.
         if (applications.contains(appName)) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Service call to handle the scale event at runtime.
+     * @param direction direction of scaling
+     * @param appName name of the app
+     * @param pelletName name of the pellet
+     * @param count number of instances to be scaled up or down.
+     * throws InsufficientResourcesException if enough containers are not
+     * available.
+     * throws AppNotFoundException if the given appName does is not running.
+     * throws PelletNotFoundException if the application does not contain a
+     * pellet with the given name.
+     * @throws TException Any exceptions wrapped into TException.
+     */
+    public void scale(final ScaleDirection direction,
+                      final String appName,
+                      final String pelletName,
+                      final int count) throws TException {
+        LOGGER.info("Received submit app request for: {}", appName);
+
+        //verify name does not exist.
+        try {
+            if (!appExists(appName)) {
+                LOGGER.error("Application does not exist.");
+                throw new AppNotFoundException();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while checking existing "
+                    + "applications: {}", e);
+            throw new TException(e);
+        }
+
+        //get current resource mapping from zk.
+        String appPath = ZKUtils.getApplicationPath(appName);
+        ResourceMapping currentMapping;
+        LOGGER.info("App Path to get the configuration:" + appPath);
+        try {
+            byte[] childData = ZKClient.getInstance().getCuratorClient()
+                    .getData().forPath(appPath);
+
+            currentMapping  = (ResourceMapping) Utils.deserialize(childData);
+        } catch (Exception e) {
+            LOGGER.error("Could not access ZK to store the application "
+                    + "mapping");
+            throw new TException(e);
+        }
+
+        //get the resource manager and request for resource mapping from
+        // scheduler.
+        ResourceMapping mapping = ResourceManagerFactory.getResourceManager()
+                .scale(currentMapping, direction, pelletName, count);
+
+        LOGGER.info("New resource mapping: {}", mapping);
+        LOGGER.info("Resource Mapping Delta: {}", mapping.getDelta());
+
+        if (mapping == null) {
+            LOGGER.warn("Insufficient resources to deploy the application.");
+            throw new InsufficientResourcesException("Unable to acquire "
+                    + "required resources.");
+        }
+
+
+        //Put the updated mapping back into ZK for each container to start
+        // pulling data.
+        LOGGER.info("App Path to store the configuration:" + appPath);
+
+        try {
+            ZKClient.getInstance().getCuratorClient()
+                    .setData().forPath(appPath,
+                            Utils.serialize(mapping));
+        } catch (Exception e) {
+            LOGGER.error("Could not access ZK to store the application "
+                    + "mapping");
+            throw new TException(e);
+        }
     }
 }

@@ -58,6 +58,11 @@ public class ResourceMapping implements Serializable {
     private Map<String, List<FlakeInstance>> pidFlakeMap;
 
     /**
+     * Resource mapping delta to be used during runtime adaptation.
+     */
+    private ResourceMappingDelta mappingDelta;
+
+    /**
      * Resource map for a given application.
      * @param name Application's name.
      * @param app the Application object received from the user's submit
@@ -70,7 +75,9 @@ public class ResourceMapping implements Serializable {
         this.floeApp = app;
         this.containerMap = new HashMap<>();
         this.pidFlakeMap = new HashMap<>();
+        this.mappingDelta = null;
     }
+
 
 
     /**
@@ -103,8 +110,11 @@ public class ResourceMapping implements Serializable {
         FlakeInstance fl = containerInstance.getFlake(pelletId);
         if (fl == null) {
             fl = containerInstance.createFlake(pelletId);
+            if (mappingDelta != null) {
+                mappingDelta.flakeAdded(container.getContainerId(),
+                        fl);
+            }
         }
-        fl.createPelletInstance();
 
         List<FlakeInstance> pidFlakes = null;
         if (pidFlakeMap.containsKey(pelletId)) {
@@ -115,6 +125,13 @@ public class ResourceMapping implements Serializable {
         }
 
         pidFlakes.add(fl);
+
+        fl.createPelletInstance();
+        if (mappingDelta != null) {
+            mappingDelta.flakeUpdated(container.getContainerId(),
+                    fl,
+                    ResourceMappingDelta.UpdateType.InstanceAdded);
+        }
     }
 
 
@@ -168,6 +185,24 @@ public class ResourceMapping implements Serializable {
      */
     public final String getAppName() {
         return appName;
+    }
+
+    /**
+     * Reset the mapping delta.
+     */
+    public final void resetDelta() {
+        if (mappingDelta != null) {
+            mappingDelta.reset();
+        } else {
+            mappingDelta = new ResourceMappingDelta(floeApp);
+        }
+    }
+
+    /**
+     * @return resource mapping delta since last reset.
+     */
+    public final ResourceMappingDelta getDelta() {
+        return mappingDelta;
     }
 
     /**
@@ -278,11 +313,6 @@ public class ResourceMapping implements Serializable {
     public class FlakeInstance implements Serializable {
 
         /**
-         * Pellet instances running on this flake.
-         */
-        private final List<PelletInstance> pelletInstances;
-
-        /**
          * Pellet id for which this flake runs the instances.
          */
         private final String pelletId;
@@ -306,6 +336,11 @@ public class ResourceMapping implements Serializable {
         private final byte[] serializedPellet;
 
         /**
+         * Number of pellet instance on this flake.
+         */
+        private int numPelletInstances;
+
+        /**
          * Constructor.
          * @param pid Pelletid for which this flake will run the instances.
          * @param hostnameOrIpAddr Host name or ip address of the container
@@ -316,9 +351,9 @@ public class ResourceMapping implements Serializable {
                              final int[] flPorts, final byte[] serPellet) {
             this.pelletId = pid;
             this.host = hostnameOrIpAddr;
-            this.pelletInstances = new ArrayList<>();
             this.listeningPorts = new HashMap<>();
             this.serializedPellet = serPellet;
+            this.numPelletInstances = 0;
 
             TPellet tPellet = floeApp.get_pellets().get(pid);
 
@@ -346,10 +381,7 @@ public class ResourceMapping implements Serializable {
          * Create a new pellet instance on this flake.
          */
         public final void createPelletInstance() {
-            PelletInstance pelletInstance = new PelletInstance(
-                    pelletId
-            );
-            pelletInstances.add(pelletInstance);
+            numPelletInstances++;
         }
 
         /**
@@ -394,7 +426,7 @@ public class ResourceMapping implements Serializable {
             builder.append("]");
 
             builder.append(",[");
-            builder.append(pelletInstances.size());
+            builder.append(numPelletInstances);
             builder.append("]");
             builder.append("); ");
             return builder.toString();
@@ -403,34 +435,14 @@ public class ResourceMapping implements Serializable {
         /**
          * @return the list of pellet instances to run on the flake.
          */
-        public final List<PelletInstance> getPelletInstances() {
-            return pelletInstances;
-        }
-    }
-
-    /**
-     * Internal pellet instance class.
-     */
-    public class PelletInstance implements Serializable {
-
-        /**
-         * The pellet's id.
-         */
-        private final String pelletId;
-
-
-        /**
-         * Constructor.
-         * @param pId The id of the pellet to which this instance belongs.
-         */
-        public PelletInstance(final String pId) {
-            this.pelletId = pId;
+        public final int getNumPelletInstances() {
+            return numPelletInstances;
         }
 
         /**
-         * @return get the instance's corresponding pellet id.
+         * @return the name of the pellet that this flake runs.
          */
-        public final String getPelletId() {
+        public final String getCorrespondingPelletId() {
             return pelletId;
         }
     }

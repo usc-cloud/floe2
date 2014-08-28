@@ -39,9 +39,9 @@ public final class HelloWorldApp {
         System.out.println("Hello World!");
         ApplicationBuilder builder = new ApplicationBuilder();
 
-        builder.addPellet("word", new WordPellet()).setParallelism(2);
+        builder.addPellet("word", new WordPellet()).setParallelism(1);
         builder.addPellet("print", new PrintPellet("Prefix:"))
-                .subscribe("word").setParallelism(2);
+                .subscribe("word").setParallelism(1);
 
         try {
             AppSubmitter.submitApp("helloworld", builder.generateApp());

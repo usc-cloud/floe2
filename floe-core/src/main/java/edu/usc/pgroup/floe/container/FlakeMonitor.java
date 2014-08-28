@@ -48,6 +48,7 @@ public final class FlakeMonitor {
 
     /**
      * Map containing all the flakes running on the container.
+     * Map from Pellet name to FlakeInfo (NOT FID).
      */
     private Map<String, FlakeInfo> flakeMap;
 
@@ -96,7 +97,7 @@ public final class FlakeMonitor {
      * @param finfo the flake info object sent by the heartbeat.
      */
     private synchronized void updateFlakeHB(final FlakeInfo finfo) {
-        flakeMap.put(finfo.getFlakeId(), finfo);
+        flakeMap.put(finfo.getPelletId(), finfo);
     }
 
     /**
@@ -118,6 +119,15 @@ public final class FlakeMonitor {
         return info;
     }
 
+
+    /**
+     * @return a map from PelletName to flakeInfo objects for each flake
+     * running on this container.
+     */
+    public Map<String, FlakeInfo> getFlakes() {
+        return flakeMap;
+    }
+
     /**
      * Internal monitor class to listen for heartbeats from flakes.
      */
@@ -136,7 +146,7 @@ public final class FlakeMonitor {
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] hb = heartBeatSoc.recv();
                 FlakeInfo finfo = (FlakeInfo) Utils.deserialize(hb);
-                LOGGER.debug("Received hb from:{}", finfo.getFlakeId());
+                LOGGER.info("Received hb from:{}", finfo.getFlakeId());
                 updateFlakeHB(finfo);
             }
         }

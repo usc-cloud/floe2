@@ -16,13 +16,21 @@
 
 package edu.usc.pgroup.floe.container;
 
+import edu.usc.pgroup.floe.flake.FlakeInfo;
 import edu.usc.pgroup.floe.flake.FlakeService;
+import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
+import edu.usc.pgroup.floe.resourcemanager.ResourceMappingDelta;
+import edu.usc.pgroup.floe.utils.RetryLoop;
+import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * @author kumbhare
@@ -45,7 +53,7 @@ public final class ContainerUtils {
      * Launches a new Flake instance.
      * Currently its a in proc. Think about if we need to do this in a new
      * process?
-     *
+     * @param pid pellet id/name.
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
      * @param cid container's id on which this flake resides.
@@ -54,7 +62,9 @@ public final class ContainerUtils {
      * @return the flake id of the launched flake.
      */
     public static synchronized String launchFlake(
-            final String appName, final String applicationJarPath,
+            final String pid,
+            final String appName,
+            final String applicationJarPath,
             final String cid,
             final Integer[] listeningPorts) {
 
@@ -63,6 +73,8 @@ public final class ContainerUtils {
 
         List<String> args = new ArrayList<>();
 
+        args.add("-pid");
+        args.add(pid);
         args.add("-id");
         args.add(fid);
         args.add("-appname");
@@ -82,7 +94,7 @@ public final class ContainerUtils {
         final String[] argsarr = new String[args.size()];
         args.toArray(argsarr);
 
-        LOGGER.info("args: {}", argsarr);
+        LOGGER.info("args: {}", args);
 
 
         Thread t = new Thread(
@@ -156,5 +168,221 @@ public final class ContainerUtils {
                 serializedPellet
         );
         FlakeControlSignalSender.getInstance().send(fid, command);
+    }
+
+
+    /**
+     * sends the decrement pellet command to the given flake. (using ipc)
+     * @param fid flake id to terminate a pellet instance.
+     */
+    private static void sendDecrementPelletCommand(final String fid) {
+        FlakeControlCommand command = new FlakeControlCommand(
+                FlakeControlCommand.Command.DECREMENT_PELLET,
+                null
+        );
+        FlakeControlSignalSender.getInstance().send(fid, command);
+    }
+
+    /**
+     * Launches flakes and initializes pellets based on the list of flakes
+     * given.
+     * @param resourceMapping current resource mapping as determined by the
+     *                        resource manager.
+     * @param containerId container id.
+     * @param flakes map of pellet id/name to flake instances from the
+     *               resource mapping allocated to this container.
+     */
+    public static void launchFlakesAndInitializePellets(
+            final ResourceMapping resourceMapping,
+            final String containerId,
+            final Map<String, ResourceMapping.FlakeInstance> flakes) {
+
+        //we can go ahead and create the flakes since this is a newly
+        // added application.
+        if (flakes != null && flakes.size() > 0) {
+            //Step 1. Launch Flakes.
+            Map<String, String> pidToFidMap = createFlakes(
+                    resourceMapping.getAppName(),
+                    resourceMapping.getApplicationJarPath(),
+                    containerId,
+                    flakes);
+
+            if (pidToFidMap == null) {
+                //TODO: write status to zookeeper.
+                LOGGER.error("Could not launch the appropriate flakes "
+                        + "suggested by the resource manager.");
+                return;
+            }
+
+            //Step 2. Send connect signals to the flakes.
+            //It has to connect to all the preceding signals.
+            for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
+                    : flakes.entrySet()) {
+
+                String pid = flakeEntry.getKey();
+                List<ResourceMapping.FlakeInstance> preds
+                        = resourceMapping
+                        .getPrecedingFlakes(pid);
+
+                for (ResourceMapping.FlakeInstance pred: preds) {
+                    int assignedPort = pred.getAssignedPort(pid);
+                    String host = pred.getHost();
+                    ContainerUtils.sendConnectCommand(
+                            pidToFidMap.get(pid),
+                            host, assignedPort);
+                }
+            }
+
+            //Step 3. Launch pellets.
+            for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
+                    : flakes.entrySet()) {
+                String pid = flakeEntry.getKey();
+
+                ResourceMapping.FlakeInstance flakeInstance
+                        = flakeEntry.getValue();
+
+                for (int i = 0;
+                     i < flakeInstance.getNumPelletInstances();
+                     i++) {
+                    ContainerUtils.sendIncrementPelletCommand(
+                            pidToFidMap.get(pid),
+                            flakeInstance.getSerializedPellet()
+                    );
+                }
+
+            }
+        }
+    }
+
+    /**
+     * updates the flakes by adding or removing the pellet instances based on
+     * the flake deltas.
+     * @param resourceMapping current resource mapping as determined by the
+     *                        resource manager.
+     * @param flakeDeltas the updates to the flakes containing information
+     *                    about flakes that have to be updated by adding or
+     *                    removing the pellet instances.
+     */
+    public static void updateFlakes(
+            final ResourceMapping resourceMapping,
+            final Map<String,
+                    ResourceMappingDelta.FlakeInstanceDelta> flakeDeltas) {
+
+        if (flakeDeltas != null && flakeDeltas.size() > 0) {
+
+
+            for (Map.Entry<String,
+                    ResourceMappingDelta.FlakeInstanceDelta> entry
+                    : flakeDeltas.entrySet()) {
+
+
+                final String pelletId = entry.getKey();
+                ResourceMappingDelta.FlakeInstanceDelta delta
+                        = entry.getValue();
+
+                try {
+                    FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory
+                                    .getDefaultPolicy(),
+                            new Callable<FlakeInfo>() {
+                                @Override
+                                public FlakeInfo call() throws Exception {
+                                    return FlakeMonitor.getInstance()
+                                            .getFlakeInfo(pelletId);
+                                }
+                            });
+                    LOGGER.info("Found Flake:{}", info.getFlakeId());
+
+
+                    //update flake here.
+
+                    int diffPellets = delta.getNumInstancesAdded()
+                            - delta.getNumInstancesRemoved();
+
+
+                    if (diffPellets > 0) {
+                        //TO INCREMENT.
+                        LOGGER.info("Incrementing pellet instances for flake: "
+                                + "{} by {}", info.getFlakeId(), diffPellets);
+                        for (int i = 0;
+                             i < diffPellets;
+                             i++) {
+                            ContainerUtils.sendIncrementPelletCommand(
+                                    info.getFlakeId(),
+                                    delta.getFlakeInstance()
+                                            .getSerializedPellet()
+                            );
+                        }
+                    } else if (diffPellets < 0) {
+                        //TO Decrement.
+                        diffPellets = Math.abs(diffPellets);
+                        LOGGER.info("Decrementing pellet instances for flake: "
+                                + "{} by {}", info.getFlakeId(), diffPellets);
+                        for (int i = 0;
+                             i < diffPellets;
+                             i++) {
+                            ContainerUtils.sendDecrementPelletCommand(
+                                    info.getFlakeId()
+                            );
+                        }
+                    }
+
+                } catch (Exception e) {
+                    LOGGER.error("Could not start flake");
+                    return;
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Function to launch flakes within the container. This will launch
+     * flakes and wait for a heartbeat from each of them.
+     *
+     * @param appName application name.
+     * @param applicationJarPath application's jar file name.
+     * @param containerId Container id.
+     * @param flakes list of flake instances from the resource mapping.
+     * @return the pid to fid map.
+     */
+    private static Map<String, String> createFlakes(
+            final String appName, final String applicationJarPath,
+            final String containerId,
+            final Map<String, ResourceMapping.FlakeInstance> flakes) {
+
+        Map<String, String> pidToFidMap = new HashMap<>();
+
+
+
+        for (Map.Entry<String, ResourceMapping.FlakeInstance> entry
+                : flakes.entrySet()) {
+            final String pid = entry.getKey();
+
+            ResourceMapping.FlakeInstance flakeInstance = entry.getValue();
+            final String fid = ContainerUtils.launchFlake(
+                    pid,
+                    appName,
+                    applicationJarPath,
+                    containerId,
+                    flakeInstance.getListeningPorts());
+
+            try {
+                FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory
+                                .getDefaultPolicy(),
+                        new Callable<FlakeInfo>() {
+                            @Override
+                            public FlakeInfo call() throws Exception {
+                                return FlakeMonitor.getInstance()
+                                        .getFlakeInfo(pid);
+                            }
+                        });
+                LOGGER.info("Flake started:{}", info.getFlakeId());
+                pidToFidMap.put(entry.getKey(), info.getFlakeId());
+            } catch (Exception e) {
+                LOGGER.error("Could not start flake");
+                return null;
+            }
+        }
+        return pidToFidMap;
     }
 }

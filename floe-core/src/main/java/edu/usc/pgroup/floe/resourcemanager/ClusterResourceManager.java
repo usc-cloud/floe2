@@ -16,20 +16,15 @@
 
 package edu.usc.pgroup.floe.resourcemanager;
 
-import edu.usc.pgroup.floe.config.ConfigProperties;
-import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.ContainerInfo;
+import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
-import edu.usc.pgroup.floe.utils.RetryLoop;
-import edu.usc.pgroup.floe.utils.RetryPolicy;
-import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * @author kumbhare
@@ -63,35 +58,7 @@ public class ClusterResourceManager extends ResourceManager {
             final TFloeApp app) {
         ResourceMapping mapping = new ResourceMapping(appName, app);
 
-        List<ContainerInfo> containers = null;
-
-
-        RetryPolicy retryPolicy = RetryPolicyFactory.getRetryPolicy(
-                FloeConfig.getConfig().getString(ConfigProperties
-                        .RESOURCEMANAGER_RETRYPOLICY),
-                FloeConfig.getConfig().getStringArray(ConfigProperties
-                        .RESOURCEMANAGER_RETRYPOLICY_ARGS)
-        );
-
-        try {
-            containers = RetryLoop.callWithRetry(retryPolicy,
-                new Callable<List<ContainerInfo>>() {
-                    @Override
-                    public List<ContainerInfo> call() throws Exception {
-                        List<ContainerInfo> containers
-                                = getAvailableContainers();
-                        if (containers == null || containers.size() <= 0) {
-                            throw new Exception("No Containers registered yet");
-                        }
-                        return containers;
-                    }
-                }
-            );
-        } catch (Exception e) {
-            LOGGER.error("Error occurred while acquiring and all attempts to "
-                    + "retry have failed. Exception: {} ", e);
-            return null;
-        }
+        List<ContainerInfo> containers = getAvailableContainersWithRetry();
 
         if (containers == null || containers.size() <= 0) {
             LOGGER.error("Error occurred while acquiring and all attempts to "
@@ -112,7 +79,6 @@ public class ClusterResourceManager extends ResourceManager {
             for (int cnt = 0; cnt < numInstances; cnt++) {
                 mapping.createNewInstance(pelletEntry.getKey(),
                         containers.get(i++));
-
                 if (i == containers.size()) {
                     i = 0;
                 }
@@ -137,5 +103,43 @@ public class ClusterResourceManager extends ResourceManager {
             final TFloeApp app,
             final ResourceMapping current) {
         return null;
+    }
+
+    /**
+     * Scales the given pellet up or down for the given number of instances.
+     *
+     * @param current    the current resource mapping.
+     * @param direction  direction of scaling.
+     * @param pelletName name of the pellet to scale.
+     * @param count      the number of instances to scale up/down.
+     * @return the updated resource mapping with the ResourceMappingDelta set
+     * appropriately.
+     */
+    @Override
+    public final ResourceMapping scale(final ResourceMapping current,
+                                 final ScaleDirection direction,
+                                 final String pelletName, final int count) {
+
+        List<ContainerInfo> containers = getAvailableContainersWithRetry();
+
+        if (containers == null || containers.size() <= 0) {
+            LOGGER.error("Error occurred while acquiring and all attempts to "
+                    + "retry have failed.");
+            return null;
+        }
+
+        //TODO: Order containers w.r.t availability.
+
+        int cindex = 0;
+
+        current.resetDelta();
+        for (int i = 0; i < count; i++) {
+            current.createNewInstance(pelletName, containers.get(cindex++));
+            if (cindex == containers.size()) {
+                cindex = 0;
+            }
+        }
+
+        return current;
     }
 }
