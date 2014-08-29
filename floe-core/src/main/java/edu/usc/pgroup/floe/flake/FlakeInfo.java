@@ -45,6 +45,11 @@ public final class FlakeInfo implements Serializable {
     private final String containerId;
 
     /**
+     * Application name.
+     */
+    private final String appName;
+
+    /**
      * A container-local unique flake id.
      */
     private String flakeId;
@@ -71,11 +76,14 @@ public final class FlakeInfo implements Serializable {
      * @param pid pellet id (same as pellet name)
      * @param fid Flake's id.
      * @param cid Container id.
+     * @param app application name to which this pellet belongs.
      */
-    public FlakeInfo(final String pid, final String fid, final String cid) {
+    public FlakeInfo(final String pid, final String fid, final String cid,
+                     final String app) {
         this.pelletId = pid;
         this.flakeId = fid;
         this.containerId = cid;
+        this.appName = app;
     }
 
     /**
@@ -123,4 +131,9 @@ public final class FlakeInfo implements Serializable {
     public String getPelletId() {
         return pelletId;
     }
+
+    /**
+     * @return application name.
+     */
+    public String getAppName() { return appName; }
 }

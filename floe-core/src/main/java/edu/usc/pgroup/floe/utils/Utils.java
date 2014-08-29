@@ -310,6 +310,14 @@ public final class Utils {
         public static final String FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
                 = "inproc://receiver-backend-";
 
+
+        /**
+         * Flake receiver backed for signals. This is suffixed by flake id.
+         * Used to publish the signal to all pellet instances. Hence uses the
+         * PUB/SUB model.
+         */
+        public static final String FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
+                = "inproc://receiver-signal-backend-";
         /**
          * Flake receiver Control socket prefix (this is suffixed by flake id).
          * Used for receiving control signals from the container.

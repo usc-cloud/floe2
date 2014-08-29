@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.flake;
 
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.messaging.FlakeMessageReceiver;
 import edu.usc.pgroup.floe.messaging.FlakeMessageSender;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -46,7 +47,7 @@ public class Flake {
     /**
      * Application name to which this flake belongs.
      */
-    private final String app;
+    private final String appName;
 
     /**
      * Application's jar file name stored in the container's local store.
@@ -105,7 +106,7 @@ public class Flake {
      * @param cid container's id. This will be appended by fid to get the
      *            actual globally unique flake id. This is to support
      *            psuedo-distributed mode with multiple containers. Bug#1.
-     * @param appName application's name to which this flake belongs.
+     * @param app application's name to which this flake belongs.
      * @param jar the application's jar file name.
      * @param listeningPorts the list of ports on which this flake should
      *                       listen on. Note: This is fine here (and not as a
@@ -115,13 +116,13 @@ public class Flake {
     public Flake(final String pid,
                  final String fid,
                  final String cid,
-                 final String appName,
+                 final String app,
                  final String jar,
                  final int[] listeningPorts) {
         this.flakeId = Utils.generateFlakeId(cid, fid);
         this.containerId = cid;
         this.ports = listeningPorts;
-        this.app = appName;
+        this.appName = app;
         this.appJar = jar;
         this.sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
         this.pelletId = pid;
@@ -176,7 +177,7 @@ public class Flake {
      * setup the flakeInfo object (for heartbeat)
      */
     private void initializeFlake() {
-        flakeInfo = new FlakeInfo(pelletId, flakeId, containerId);
+        flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
         //Load the given jar into class path.
     }
@@ -208,15 +209,15 @@ public class Flake {
      */
     public final void incrementPellet(final byte[] p) {
         LOGGER.info("Starting pellet");
-        new PelletExecutor(p, app, appJar, flakeId,
+        new PelletExecutor(p, appName, appJar, flakeId,
                 sharedContext).start();
     }
 
     /**
      * @return the application name.
      */
-    public final String getApp() {
-        return app;
+    public final String getAppName() {
+        return appName;
     }
 
     /**
@@ -224,5 +225,36 @@ public class Flake {
      */
     public final String getAppJar() {
         return appJar;
+    }
+
+    /**
+     * Process control signal received from the container.
+     * @param command Flake Command.
+     * @return the result after processing the command.
+     */
+    public final byte[] processControlSignal(
+            final FlakeControlCommand command) {
+
+        LOGGER.warn("Processing command: " + command);
+        switch (command.getCommand()) {
+            case INCREMENT_PELLET:
+                byte[] bpellet = (byte[]) command.getData();
+                LOGGER.info("CREATING PELLET: on " + getId());
+                incrementPellet(bpellet);
+                break;
+            case DECREMENT_PELLET:
+                String dpid = (String) command.getData();
+                LOGGER.info("REMOVING PELLET: " + dpid + " on "
+                        + getId());
+                //flake.incrementPellet();
+                break;
+            default:
+                LOGGER.warn("Unrecognized command: " + command);
+                break;
+        }
+
+        //Get valid results here. Must define a results format.
+        byte[] result = new byte[]{'1'};
+        return result;
     }
 }

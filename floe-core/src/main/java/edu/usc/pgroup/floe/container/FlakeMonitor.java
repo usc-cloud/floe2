@@ -146,7 +146,7 @@ public final class FlakeMonitor {
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] hb = heartBeatSoc.recv();
                 FlakeInfo finfo = (FlakeInfo) Utils.deserialize(hb);
-                LOGGER.info("Received hb from:{}", finfo.getFlakeId());
+                LOGGER.debug("Received hb from:{}", finfo.getFlakeId());
                 updateFlakeHB(finfo);
             }
         }

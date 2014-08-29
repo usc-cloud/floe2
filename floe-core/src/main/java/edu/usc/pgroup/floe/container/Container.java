@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.container;
 
+import edu.usc.pgroup.floe.app.signals.SignalMonitor;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -45,6 +46,10 @@ public class Container {
      */
     private AppsAssignmentMonitor appsAssignmentMonitor;
 
+    /**
+     * Signal monitor.
+     */
+    private SignalMonitor signalMonitor;
 
     /**
      * Flake monitor.
@@ -64,6 +69,10 @@ public class Container {
         LOGGER.info("Starting application resource mapping monitor");
         startResourceMappingMonitor();
 
+
+        LOGGER.info("Starting Signal Monitor.");
+        startSignalMonitor();
+
         LOGGER.info("Starting flake Monitor");
         LOGGER.info("Flake port range start: {}", FloeConfig.getConfig().getInt(
                 ConfigProperties.FLAKE_RECEIVER_PORT
@@ -80,6 +89,15 @@ public class Container {
         flakeMonitor = FlakeMonitor.getInstance();
         flakeMonitor.initialize(ContainerInfo.getInstance().getContainerId());
         flakeMonitor.startMonitor();
+    }
+
+
+    /**
+     * Starts the curator cache for monitoring the signals.
+     */
+    private void startSignalMonitor() {
+        signalMonitor = new SignalMonitor(ContainerInfo
+                .getInstance().getContainerId());
     }
 
     /**

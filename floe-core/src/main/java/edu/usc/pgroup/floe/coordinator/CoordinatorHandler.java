@@ -16,11 +16,13 @@
 
 package edu.usc.pgroup.floe.coordinator;
 
+import edu.usc.pgroup.floe.app.signals.SignalHandler;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TCoordinator;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
+import edu.usc.pgroup.floe.thriftgen.TSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 
 import org.apache.thrift.TException;
@@ -340,14 +342,32 @@ public class CoordinatorHandler implements TCoordinator.Iface {
             //PelletNotFoundException,
             TException {
 
-            Coordinator.getInstance().scale(
-                    direction,
-                    appName,
-                    pelletName,
-                    count
-            );
+        Coordinator.getInstance().scale(
+                direction,
+                appName,
+                pelletName,
+                count
+        );
     }
 
+    /**
+     * Service call to handle the signal event at runtime.
+     * @param signal the TSignal object sent by the client.
+     * @throws TException Thrift exception wrapper.
+     */
+    @Override
+    public final void signal(final TSignal signal)
+            throws
+            //AppNotFoundException,
+            //PelletNotFoundException,
+            TException {
+
+        SignalHandler.getInstance().signal(
+                signal.get_destApp(),
+                signal.get_destPellet(),
+                signal.get_data()
+        );
+    }
 
     /**
      * Returns an available fid.

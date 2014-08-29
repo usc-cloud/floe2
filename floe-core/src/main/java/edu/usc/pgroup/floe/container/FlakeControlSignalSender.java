@@ -123,7 +123,6 @@ public final class FlakeControlSignalSender {
             sender.send(data, 0);
             byte[] results = sender.recv();
             LOGGER.info("Received data: {} to flake", results[0]);
-
         }
     }
 }

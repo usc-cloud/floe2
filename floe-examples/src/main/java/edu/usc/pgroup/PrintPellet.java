@@ -17,15 +17,17 @@
 package edu.usc.pgroup;
 
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.Pellet;
+import edu.usc.pgroup.floe.app.SignallablePellet;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.signals.Signal;
+import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author kumbhare
  */
-public class PrintPellet implements Pellet {
+public class PrintPellet implements SignallablePellet {
 
 
     /**
@@ -103,5 +105,16 @@ public class PrintPellet implements Pellet {
     @Override
     public final String getDummy() {
         return dummy;
+    }
+
+    /**
+     * Called when a signal is received for the component.
+     *
+     * @param signal the signal received for this pellet.
+     */
+    @Override
+    public final void onSignal(final Signal signal) {
+        LOGGER.info("RECEIVED SIGNAL: {}",
+                Utils.deserialize(signal.getSignalData()));
     }
 }

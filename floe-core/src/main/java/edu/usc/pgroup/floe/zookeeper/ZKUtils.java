@@ -62,4 +62,24 @@ public final class ZKUtils {
             appName
         );
     }
+
+    /**
+     * @return the root path for coordinating signals.
+     */
+    public static String getSignalsRootPath() {
+        return ZKPaths.makePath(ZKConstants.Coordinator.ROOT_NODE,
+                ZKConstants.Coordinator.SIGNAL_NODE);
+    }
+
+    /**
+     * @param appName the application name.
+     * @param pelletName pellet name.
+     * @return the path to the signal corresponding to the give
+     * application+pellet.
+     */
+    public static String getSingalPath(final String appName,
+                                       final String pelletName) {
+        return ZKPaths.makePath(getSignalsRootPath(),
+                appName + "-" + pelletName);
+    }
 }

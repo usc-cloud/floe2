@@ -53,6 +53,8 @@ public class TCoordinator {
 
     public void scale(ScaleDirection direction, String appName, String pelletName, int count) throws InsufficientResourcesException, AppNotFoundException, PelletNotFoundException, org.apache.thrift.TException;
 
+    public void signal(TSignal signal) throws AppNotFoundException, PelletNotFoundException, org.apache.thrift.TException;
+
   }
 
   public interface AsyncIface {
@@ -72,6 +74,8 @@ public class TCoordinator {
     public void submitApp(String appName, TFloeApp app, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
     public void scale(ScaleDirection direction, String appName, String pelletName, int count, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
+
+    public void signal(TSignal signal, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -281,6 +285,32 @@ public class TCoordinator {
       if (result.ire != null) {
         throw result.ire;
       }
+      if (result.anfe != null) {
+        throw result.anfe;
+      }
+      if (result.pnfe != null) {
+        throw result.pnfe;
+      }
+      return;
+    }
+
+    public void signal(TSignal signal) throws AppNotFoundException, PelletNotFoundException, org.apache.thrift.TException
+    {
+      send_signal(signal);
+      recv_signal();
+    }
+
+    public void send_signal(TSignal signal) throws org.apache.thrift.TException
+    {
+      signal_args args = new signal_args();
+      args.set_signal(signal);
+      sendBase("signal", args);
+    }
+
+    public void recv_signal() throws AppNotFoundException, PelletNotFoundException, org.apache.thrift.TException
+    {
+      signal_result result = new signal_result();
+      receiveBase(result, "signal");
       if (result.anfe != null) {
         throw result.anfe;
       }
@@ -579,6 +609,38 @@ public class TCoordinator {
       }
     }
 
+    public void signal(TSignal signal, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      signal_call method_call = new signal_call(signal, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class signal_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private TSignal signal;
+      public signal_call(TSignal signal, org.apache.thrift.async.AsyncMethodCallback resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.signal = signal;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("signal", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        signal_args args = new signal_args();
+        args.set_signal(signal);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws AppNotFoundException, PelletNotFoundException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_signal();
+      }
+    }
+
   }
 
   public static class Processor<I extends Iface> extends org.apache.thrift.TBaseProcessor<I> implements org.apache.thrift.TProcessor {
@@ -600,6 +662,7 @@ public class TCoordinator {
       processMap.put("downloadChunk", new downloadChunk());
       processMap.put("submitApp", new submitApp());
       processMap.put("scale", new scale());
+      processMap.put("signal", new signal());
       return processMap;
     }
 
@@ -781,6 +844,32 @@ public class TCoordinator {
       }
     }
 
+    public static class signal<I extends Iface> extends org.apache.thrift.ProcessFunction<I, signal_args> {
+      public signal() {
+        super("signal");
+      }
+
+      public signal_args getEmptyArgsInstance() {
+        return new signal_args();
+      }
+
+      protected boolean isOneway() {
+        return false;
+      }
+
+      public signal_result getResult(I iface, signal_args args) throws org.apache.thrift.TException {
+        signal_result result = new signal_result();
+        try {
+          iface.signal(args.signal);
+        } catch (AppNotFoundException anfe) {
+          result.anfe = anfe;
+        } catch (PelletNotFoundException pnfe) {
+          result.pnfe = pnfe;
+        }
+        return result;
+      }
+    }
+
   }
 
   public static class AsyncProcessor<I extends AsyncIface> extends org.apache.thrift.TBaseAsyncProcessor<I> {
@@ -802,6 +891,7 @@ public class TCoordinator {
       processMap.put("downloadChunk", new downloadChunk());
       processMap.put("submitApp", new submitApp());
       processMap.put("scale", new scale());
+      processMap.put("signal", new signal());
       return processMap;
     }
 
@@ -1240,6 +1330,67 @@ public class TCoordinator {
 
       public void start(I iface, scale_args args, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws TException {
         iface.scale(args.direction, args.appName, args.pelletName, args.count,resultHandler);
+      }
+    }
+
+    public static class signal<I extends AsyncIface> extends org.apache.thrift.AsyncProcessFunction<I, signal_args, Void> {
+      public signal() {
+        super("signal");
+      }
+
+      public signal_args getEmptyArgsInstance() {
+        return new signal_args();
+      }
+
+      public AsyncMethodCallback<Void> getResultHandler(final AsyncFrameBuffer fb, final int seqid) {
+        final org.apache.thrift.AsyncProcessFunction fcall = this;
+        return new AsyncMethodCallback<Void>() { 
+          public void onComplete(Void o) {
+            signal_result result = new signal_result();
+            try {
+              fcall.sendResponse(fb,result, org.apache.thrift.protocol.TMessageType.REPLY,seqid);
+              return;
+            } catch (Exception e) {
+              LOGGER.error("Exception writing to internal frame buffer", e);
+            }
+            fb.close();
+          }
+          public void onError(Exception e) {
+            byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;
+            org.apache.thrift.TBase msg;
+            signal_result result = new signal_result();
+            if (e instanceof AppNotFoundException) {
+                        result.anfe = (AppNotFoundException) e;
+                        result.set_anfe_isSet(true);
+                        msg = result;
+            }
+            else             if (e instanceof PelletNotFoundException) {
+                        result.pnfe = (PelletNotFoundException) e;
+                        result.set_pnfe_isSet(true);
+                        msg = result;
+            }
+             else 
+            {
+              msgType = org.apache.thrift.protocol.TMessageType.EXCEPTION;
+              msg = (org.apache.thrift.TBase)new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, e.getMessage());
+            }
+            try {
+              fcall.sendResponse(fb,msg,msgType,seqid);
+              return;
+            } catch (Exception ex) {
+              LOGGER.error("Exception writing to internal frame buffer", ex);
+            }
+            fb.close();
+          }
+        };
+      }
+
+      protected boolean isOneway() {
+        return false;
+      }
+
+      public void start(I iface, signal_args args, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws TException {
+        iface.signal(args.signal,resultHandler);
       }
     }
 
@@ -7717,6 +7868,835 @@ public class TCoordinator {
           struct.set_anfe_isSet(true);
         }
         if (incoming.get(2)) {
+          struct.pnfe = new PelletNotFoundException();
+          struct.pnfe.read(iprot);
+          struct.set_pnfe_isSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class signal_args implements org.apache.thrift.TBase<signal_args, signal_args._Fields>, java.io.Serializable, Cloneable, Comparable<signal_args>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("signal_args");
+
+    private static final org.apache.thrift.protocol.TField SIGNAL_FIELD_DESC = new org.apache.thrift.protocol.TField("signal", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new signal_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new signal_argsTupleSchemeFactory());
+    }
+
+    private TSignal signal; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SIGNAL((short)1, "signal");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // SIGNAL
+            return SIGNAL;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SIGNAL, new org.apache.thrift.meta_data.FieldMetaData("signal", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TSignal.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(signal_args.class, metaDataMap);
+    }
+
+    public signal_args() {
+    }
+
+    public signal_args(
+      TSignal signal)
+    {
+      this();
+      this.signal = signal;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public signal_args(signal_args other) {
+      if (other.is_set_signal()) {
+        this.signal = new TSignal(other.signal);
+      }
+    }
+
+    public signal_args deepCopy() {
+      return new signal_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.signal = null;
+    }
+
+    public TSignal get_signal() {
+      return this.signal;
+    }
+
+    public void set_signal(TSignal signal) {
+      this.signal = signal;
+    }
+
+    public void unset_signal() {
+      this.signal = null;
+    }
+
+    /** Returns true if field signal is set (has been assigned a value) and false otherwise */
+    public boolean is_set_signal() {
+      return this.signal != null;
+    }
+
+    public void set_signal_isSet(boolean value) {
+      if (!value) {
+        this.signal = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SIGNAL:
+        if (value == null) {
+          unset_signal();
+        } else {
+          set_signal((TSignal)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SIGNAL:
+        return get_signal();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SIGNAL:
+        return is_set_signal();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof signal_args)
+        return this.equals((signal_args)that);
+      return false;
+    }
+
+    public boolean equals(signal_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_signal = true && this.is_set_signal();
+      boolean that_present_signal = true && that.is_set_signal();
+      if (this_present_signal || that_present_signal) {
+        if (!(this_present_signal && that_present_signal))
+          return false;
+        if (!this.signal.equals(that.signal))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_signal = true && (is_set_signal());
+      builder.append(present_signal);
+      if (present_signal)
+        builder.append(signal);
+
+      return builder.toHashCode();
+    }
+
+    @Override
+    public int compareTo(signal_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+
+      lastComparison = Boolean.valueOf(is_set_signal()).compareTo(other.is_set_signal());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (is_set_signal()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.signal, other.signal);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("signal_args(");
+      boolean first = true;
+
+      sb.append("signal:");
+      if (this.signal == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.signal);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+      // check for sub-struct validity
+      if (signal != null) {
+        signal.validate();
+      }
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class signal_argsStandardSchemeFactory implements SchemeFactory {
+      public signal_argsStandardScheme getScheme() {
+        return new signal_argsStandardScheme();
+      }
+    }
+
+    private static class signal_argsStandardScheme extends StandardScheme<signal_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, signal_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // SIGNAL
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.signal = new TSignal();
+                struct.signal.read(iprot);
+                struct.set_signal_isSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, signal_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.signal != null) {
+          oprot.writeFieldBegin(SIGNAL_FIELD_DESC);
+          struct.signal.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class signal_argsTupleSchemeFactory implements SchemeFactory {
+      public signal_argsTupleScheme getScheme() {
+        return new signal_argsTupleScheme();
+      }
+    }
+
+    private static class signal_argsTupleScheme extends TupleScheme<signal_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, signal_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.is_set_signal()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.is_set_signal()) {
+          struct.signal.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, signal_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.signal = new TSignal();
+          struct.signal.read(iprot);
+          struct.set_signal_isSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class signal_result implements org.apache.thrift.TBase<signal_result, signal_result._Fields>, java.io.Serializable, Cloneable, Comparable<signal_result>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("signal_result");
+
+    private static final org.apache.thrift.protocol.TField ANFE_FIELD_DESC = new org.apache.thrift.protocol.TField("anfe", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField PNFE_FIELD_DESC = new org.apache.thrift.protocol.TField("pnfe", org.apache.thrift.protocol.TType.STRUCT, (short)2);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new signal_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new signal_resultTupleSchemeFactory());
+    }
+
+    private AppNotFoundException anfe; // required
+    private PelletNotFoundException pnfe; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ANFE((short)1, "anfe"),
+      PNFE((short)2, "pnfe");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ANFE
+            return ANFE;
+          case 2: // PNFE
+            return PNFE;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ANFE, new org.apache.thrift.meta_data.FieldMetaData("anfe", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      tmpMap.put(_Fields.PNFE, new org.apache.thrift.meta_data.FieldMetaData("pnfe", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(signal_result.class, metaDataMap);
+    }
+
+    public signal_result() {
+    }
+
+    public signal_result(
+      AppNotFoundException anfe,
+      PelletNotFoundException pnfe)
+    {
+      this();
+      this.anfe = anfe;
+      this.pnfe = pnfe;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public signal_result(signal_result other) {
+      if (other.is_set_anfe()) {
+        this.anfe = new AppNotFoundException(other.anfe);
+      }
+      if (other.is_set_pnfe()) {
+        this.pnfe = new PelletNotFoundException(other.pnfe);
+      }
+    }
+
+    public signal_result deepCopy() {
+      return new signal_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.anfe = null;
+      this.pnfe = null;
+    }
+
+    public AppNotFoundException get_anfe() {
+      return this.anfe;
+    }
+
+    public void set_anfe(AppNotFoundException anfe) {
+      this.anfe = anfe;
+    }
+
+    public void unset_anfe() {
+      this.anfe = null;
+    }
+
+    /** Returns true if field anfe is set (has been assigned a value) and false otherwise */
+    public boolean is_set_anfe() {
+      return this.anfe != null;
+    }
+
+    public void set_anfe_isSet(boolean value) {
+      if (!value) {
+        this.anfe = null;
+      }
+    }
+
+    public PelletNotFoundException get_pnfe() {
+      return this.pnfe;
+    }
+
+    public void set_pnfe(PelletNotFoundException pnfe) {
+      this.pnfe = pnfe;
+    }
+
+    public void unset_pnfe() {
+      this.pnfe = null;
+    }
+
+    /** Returns true if field pnfe is set (has been assigned a value) and false otherwise */
+    public boolean is_set_pnfe() {
+      return this.pnfe != null;
+    }
+
+    public void set_pnfe_isSet(boolean value) {
+      if (!value) {
+        this.pnfe = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ANFE:
+        if (value == null) {
+          unset_anfe();
+        } else {
+          set_anfe((AppNotFoundException)value);
+        }
+        break;
+
+      case PNFE:
+        if (value == null) {
+          unset_pnfe();
+        } else {
+          set_pnfe((PelletNotFoundException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ANFE:
+        return get_anfe();
+
+      case PNFE:
+        return get_pnfe();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ANFE:
+        return is_set_anfe();
+      case PNFE:
+        return is_set_pnfe();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof signal_result)
+        return this.equals((signal_result)that);
+      return false;
+    }
+
+    public boolean equals(signal_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_anfe = true && this.is_set_anfe();
+      boolean that_present_anfe = true && that.is_set_anfe();
+      if (this_present_anfe || that_present_anfe) {
+        if (!(this_present_anfe && that_present_anfe))
+          return false;
+        if (!this.anfe.equals(that.anfe))
+          return false;
+      }
+
+      boolean this_present_pnfe = true && this.is_set_pnfe();
+      boolean that_present_pnfe = true && that.is_set_pnfe();
+      if (this_present_pnfe || that_present_pnfe) {
+        if (!(this_present_pnfe && that_present_pnfe))
+          return false;
+        if (!this.pnfe.equals(that.pnfe))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_anfe = true && (is_set_anfe());
+      builder.append(present_anfe);
+      if (present_anfe)
+        builder.append(anfe);
+
+      boolean present_pnfe = true && (is_set_pnfe());
+      builder.append(present_pnfe);
+      if (present_pnfe)
+        builder.append(pnfe);
+
+      return builder.toHashCode();
+    }
+
+    @Override
+    public int compareTo(signal_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+
+      lastComparison = Boolean.valueOf(is_set_anfe()).compareTo(other.is_set_anfe());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (is_set_anfe()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.anfe, other.anfe);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(is_set_pnfe()).compareTo(other.is_set_pnfe());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (is_set_pnfe()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.pnfe, other.pnfe);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("signal_result(");
+      boolean first = true;
+
+      sb.append("anfe:");
+      if (this.anfe == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.anfe);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("pnfe:");
+      if (this.pnfe == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.pnfe);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+      // check for sub-struct validity
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class signal_resultStandardSchemeFactory implements SchemeFactory {
+      public signal_resultStandardScheme getScheme() {
+        return new signal_resultStandardScheme();
+      }
+    }
+
+    private static class signal_resultStandardScheme extends StandardScheme<signal_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, signal_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ANFE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.anfe = new AppNotFoundException();
+                struct.anfe.read(iprot);
+                struct.set_anfe_isSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // PNFE
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.pnfe = new PelletNotFoundException();
+                struct.pnfe.read(iprot);
+                struct.set_pnfe_isSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, signal_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.anfe != null) {
+          oprot.writeFieldBegin(ANFE_FIELD_DESC);
+          struct.anfe.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.pnfe != null) {
+          oprot.writeFieldBegin(PNFE_FIELD_DESC);
+          struct.pnfe.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class signal_resultTupleSchemeFactory implements SchemeFactory {
+      public signal_resultTupleScheme getScheme() {
+        return new signal_resultTupleScheme();
+      }
+    }
+
+    private static class signal_resultTupleScheme extends TupleScheme<signal_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, signal_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.is_set_anfe()) {
+          optionals.set(0);
+        }
+        if (struct.is_set_pnfe()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.is_set_anfe()) {
+          struct.anfe.write(oprot);
+        }
+        if (struct.is_set_pnfe()) {
+          struct.pnfe.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, signal_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.anfe = new AppNotFoundException();
+          struct.anfe.read(iprot);
+          struct.set_anfe_isSet(true);
+        }
+        if (incoming.get(1)) {
           struct.pnfe = new PelletNotFoundException();
           struct.pnfe.read(iprot);
           struct.set_pnfe_isSet(true);

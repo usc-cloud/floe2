@@ -81,6 +81,16 @@ public class FlakeMessageReceiver extends Thread {
         backend.bind(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
                 + flake.getId());
 
+
+        LOGGER.info("Starting inproc socket to send signals to pellets: "
+                + Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
+                + flake.getId());
+        ZMQ.Socket signal = ctx.socket(ZMQ.PUB);
+        signal.bind(Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
+                + flake.getId());
+
+
+
         LOGGER.info("Starting backend ipc socket for control channel at: "
                 + Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
                 + flake.getId());
@@ -102,11 +112,14 @@ public class FlakeMessageReceiver extends Thread {
                 backend.send(message, 0);
             } else if (pollerItems.pollin(1)) {
                 message = controlSocket.recv();
+
+                byte[] result = new byte[]{'1'};
+
                 //process control message.
                 FlakeControlCommand command
                         = (FlakeControlCommand) Utils.deserialize(
                         message);
-                        /*FlakeCommandExecutor.execute(command);*/
+
                 LOGGER.warn("Received command: " + command);
                 switch (command.getCommand()) {
                     case CONNECT_PRED:
@@ -119,35 +132,19 @@ public class FlakeMessageReceiver extends Thread {
                         LOGGER.info("disconnecting from: " + disconnectstr);
                         frontend.disconnect(disconnectstr);
                         break;
-                    case INCREMENT_PELLET:
-                        byte[] bpellet = (byte[]) command.getData();
-
-                        LOGGER.info("CREATING PELLET: on " + flake.getId());
-                        flake.incrementPellet(bpellet);
-                        break;
-                    case DECREMENT_PELLET:
-                        String dpid = (String) command.getData();
-                        LOGGER.info("REMOVING PELLET: " + dpid + " on "
-                                + flake.getId());
-                        //flake.incrementPellet();
+                    case PELLET_SIGNAL:
+                        LOGGER.info("Received signal for: " + flake.getId());
+                        signal.send((byte[]) command.getData(), 0);
                         break;
                     default:
-                        LOGGER.warn("Unrecognized command: " + command);
-                        break;
+                        result = flake.processControlSignal(command);
                 }
 
-                //TODO: Get valid results here. Must define a results format.
-                byte[] result = new byte[]{'a'};
                 controlSocket.send(result, 0);
             }
         }
-
-        //Route all incoming messages "equally" among the various pellets.
-        //THIS PROXY WONT WORK. WE WILL HAVE TO DO CUSTOM HERE. SINCE
-        //1. WE CANNOT USE THE SOCKET OBJECT IN DIFFERENT THREAD.
-        //2. WE WANT TO RECEIVE CONTROL SIGNALS TO SCALE UP/SCALE DOWN.
-        ZMQ.proxy(frontend, backend, null);
-
-        ctx.close();
+        controlSocket.close();
+        signal.close();
+        backend.close();
     }
 }

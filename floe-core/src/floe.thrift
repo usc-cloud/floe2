@@ -81,6 +81,12 @@ enum ScaleDirection {
     down
 }
 
+struct TSignal {
+    1: required string destApp;
+    2: required string destPellet;
+    3: required binary data;
+}
+
 service TCoordinator
 {
     //returns pingText back
@@ -103,5 +109,8 @@ service TCoordinator
     3: string pelletName, 4: i32 count) throws
     (1: InsufficientResourcesException ire,
     2: AppNotFoundException anfe,
-    3: PelletNotFoundException pnfe)
+    3: PelletNotFoundException pnfe);
+
+    void signal(1: TSignal signal) throws
+      (1: AppNotFoundException anfe, 2: PelletNotFoundException pnfe);
 }

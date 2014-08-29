@@ -65,9 +65,15 @@ public final class ZKConstants {
         public static final String ROOT_NODE = "/coordinator";
 
         /**
-         * The root node, relative to the coordinator, for the applications.
+         * The Application root node, relative to the coordinator
+         * for the applications.
          */
         public static final String APP_NODE = "apps";
+
+        /**
+         * The signals root node, relative to the coordinator.
+         */
+        public static final String SIGNAL_NODE = "signals";
     }
 
     /**

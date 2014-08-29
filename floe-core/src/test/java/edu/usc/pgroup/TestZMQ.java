@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe;
+package edu.usc.pgroup;
 
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.nio.charset.Charset;

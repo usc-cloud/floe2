@@ -44,7 +44,11 @@ public class FlakeControlCommand implements Serializable {
         /**
          * Command to decrement the number of pellet instances.
          */
-        DECREMENT_PELLET
+        DECREMENT_PELLET,
+        /**
+         * Pellet signal command.
+         */
+        PELLET_SIGNAL
     }
 
     /**

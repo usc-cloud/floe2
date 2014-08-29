@@ -18,6 +18,8 @@ package edu.usc.pgroup.floe.flake;
 
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.signals.Signal;
+import edu.usc.pgroup.floe.app.signals.Signallable;
 import edu.usc.pgroup.floe.messaging.MessageEmitter;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
@@ -155,11 +157,15 @@ public class PelletExecutor extends Thread {
      */
     @Override
     public final void run() {
-        ZMQ.Socket reader = context.socket(ZMQ.PULL);
-        //reader.connect("inproc://receiver-backend-" + fid);
-        reader.connect(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
+        ZMQ.Socket dataReceiver = context.socket(ZMQ.PULL);
+        dataReceiver.connect(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
                 + flakeId);
 
+        ZMQ.Socket signalReceiver = context.socket(ZMQ.SUB);
+        signalReceiver.connect(
+                Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
+                + flakeId);
+        signalReceiver.subscribe("".getBytes()); //dummy topic.
 
         //Create the emitter.
         MessageEmitter emitter = new MessageEmitter(flakeId,
@@ -168,15 +174,34 @@ public class PelletExecutor extends Thread {
         //Dummy execute with null values.
         pellet.execute(null, emitter);
 
+        ZMQ.Poller pollerItems = new ZMQ.Poller(2);
+        pollerItems.register(dataReceiver, ZMQ.Poller.POLLIN);
+        pollerItems.register(signalReceiver, ZMQ.Poller.POLLIN);
+
         while (!Thread.currentThread().isInterrupted()) {
-            byte[] serializedTuple = reader.recv();
+            byte[] message;
+            LOGGER.debug("POLLING: ");
+            pollerItems.poll();
+            if (pollerItems.pollin(0)) {
+                byte[] serializedTuple = dataReceiver.recv();
+                Tuple tuple = tupleSerializer.deserialize(serializedTuple);
+                //Run pellet.execute here.
+                pellet.execute(tuple, emitter);
+            } else if (pollerItems.pollin(1)) {
+                byte[] serializedSignal = signalReceiver.recv();
+                Signal signal = (Signal) Utils.deserialize(serializedSignal);
+                //Run pellet.execute here.
+                if (pellet instanceof Signallable) {
+                    ((Signallable) pellet).onSignal(signal);
+                } else {
+                    LOGGER.warn("Pellet is not signallable.");
+                }
+            }
 
-            Tuple tuple = tupleSerializer.deserialize(serializedTuple);
-
-            //Run pellet.execute here.
-            pellet.execute(tuple, emitter);
         }
 
+        dataReceiver.close();
+        signalReceiver.close();
         //context.destroy();
     }
 }
