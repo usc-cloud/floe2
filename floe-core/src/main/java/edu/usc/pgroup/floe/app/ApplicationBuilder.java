@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.app;
 
+import edu.usc.pgroup.floe.thriftgen.TAlternate;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
@@ -52,13 +53,41 @@ public final class ApplicationBuilder {
      */
     public PelletBuilder addPellet(final String pelletId, final Pellet p) {
         TPellet tPellet = new TPellet();
+        TAlternate alternate = new TAlternate();
+        alternate.set_serializedPellet(Utils.serialize(p));
+        alternate.set_value(1.0);
+
+        tPellet.set_alternates(new HashMap<String, TAlternate>());
+        tPellet.get_alternates().put(Utils.Constants.DEFAULT_ALTERNATE_NAME,
+                alternate);
+        tPellet.set_activeAlternate(Utils.Constants.DEFAULT_ALTERNATE_NAME);
+
         tPellet.set_id(pelletId);
-        tPellet.set_serializedPellet(Utils.serialize(p));
         tPellet.set_incomingEdges(new ArrayList<TEdge>());
         tPellet.set_outgoingEdges(new ArrayList<TEdge>());
 
         pellets.put(pelletId, tPellet);
         return new PelletBuilder(tPellet);
+    }
+
+
+    /**final
+     * Add a dynamic pellet to the topology.
+     * @param pelletId Pellet id
+     * @return A DynamicPelletBuilder to configure the pellet (e.g. subscribe
+     * to streams etc.) and add alternates as required.
+     */
+    public DynamicPelletBuilder addDynamicPellet(final String pelletId) {
+        TPellet tPellet = new TPellet();
+
+        tPellet.set_alternates(new HashMap<String, TAlternate>());
+
+        tPellet.set_id(pelletId);
+        tPellet.set_incomingEdges(new ArrayList<TEdge>());
+        tPellet.set_outgoingEdges(new ArrayList<TEdge>());
+
+        pellets.put(pelletId, tPellet);
+        return new DynamicPelletBuilder(tPellet);
     }
 
     /**
@@ -81,6 +110,15 @@ public final class ApplicationBuilder {
          * Underlying pellet object.
          */
         private TPellet pellet;
+
+
+        /**
+         * Protected default constructor for subclass (such as dynamic
+         * pellets to handle TPellets as they wish).
+         */
+        protected PelletBuilder() {
+
+        }
 
         /**
          * Constructor.
@@ -116,6 +154,68 @@ public final class ApplicationBuilder {
          */
         public final PelletBuilder setParallelism(final int numInstances) {
             pellet.set_parallelism(numInstances);
+            return this;
+        }
+    }
+
+
+    /**
+     * Dynamic Pellet Builder class using the builder pattern.
+     */
+    public class DynamicPelletBuilder extends PelletBuilder {
+
+        /**
+         * Underlying pellet object.
+         */
+        private final TPellet pellet;
+
+        /**
+         * Constructor.
+         *
+         * @param p The TPellet instance to configure.
+         */
+        public DynamicPelletBuilder(final TPellet p) {
+            super(p);
+            this.pellet = p;
+        }
+
+
+        /**
+         * Adds an alternate to the given dynamic pellet.
+         * @param alternateName name of the alternate. (this can be used
+         *                      later at runtime to tell the coordinator to
+         *                      switch the alternate)
+         * @param value The relative value associated with this alternate.
+         * @param p A pellet instance (implementation) for this alternate.
+         * @return The builder pattern's object to further configure the pellet.
+         */
+        public final DynamicPelletBuilder addAlternate(
+                final String alternateName,
+                final Double value,
+                final Pellet p) {
+
+            TAlternate alternate = new TAlternate();
+            alternate.set_serializedPellet(Utils.serialize(p));
+            alternate.set_value(value);
+
+            this.pellet.get_alternates().put(alternateName, alternate);
+            return this;
+        }
+
+        /**
+         * Sets the given alternate as active during deployment.
+         * @param alternateName name of the alternate to mark as active.
+         * @return The builder pattern's object to further configure the pellet.
+         */
+        public final DynamicPelletBuilder setActiveAlternate(
+                final String alternateName) {
+            if (this.pellet.get_alternates().containsKey(alternateName)) {
+                this.pellet.set_activeAlternate(alternateName);
+            } else {
+                throw new IllegalArgumentException("Illegal alternate name: "
+                        + alternateName + ". "
+                        + "Given alternate does not exist for the pellet.");
+            }
             return this;
         }
     }

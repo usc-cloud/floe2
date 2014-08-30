@@ -15,7 +15,7 @@
  */
 
 /**
- * Sample application.
+ * Floe examples.
  * @author kumbhare
  */
-package edu.usc.pgroup;
+package edu.usc.pgroup.floe;

@@ -1,4 +1,4 @@
-package edu.usc.pgroup;
+package edu.usc.pgroup.floe.SimpleLinearPipeline;
 
 import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.client.AppSubmitter;
@@ -39,8 +39,10 @@ public final class HelloWorldApp {
         System.out.println("Hello World!");
         ApplicationBuilder builder = new ApplicationBuilder();
 
-        builder.addPellet("word", new WordPellet()).setParallelism(1);
-        builder.addPellet("print", new PrintPellet("Prefix:"))
+        String[] words = {"John", "Jane", "Maverick", "Alok"};
+
+        builder.addPellet("word", new WordPellet(words)).setParallelism(1);
+        builder.addPellet("print", new PrintPellet())
                 .subscribe("word").setParallelism(1);
 
         try {

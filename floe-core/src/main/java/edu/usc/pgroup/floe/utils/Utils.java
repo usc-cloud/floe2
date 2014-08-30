@@ -368,5 +368,10 @@ public final class Utils {
          * Apps folder name relative to container local folder.
          */
         public static final String CONTAINER_APP_FOLDER = "apps";
+
+        /**
+         * Name of the default alternate.
+         */
+        public static final String DEFAULT_ALTERNATE_NAME = "default_alternate";
     }
 }

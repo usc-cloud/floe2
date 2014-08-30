@@ -40,12 +40,18 @@ struct TEdge {
     3: required TChannelType channelType;
 }
 
+struct TAlternate {
+    1: required binary serializedPellet;
+    2: required double value;
+}
+
 struct TPellet {
     1: required string id;
     2: required list<TEdge> incomingEdges;
     3: required list<TEdge> outgoingEdges;
-    4: required binary serializedPellet;
-    5: optional i32 parallelism;
+    4: required map<string, TAlternate> alternates;
+    5: required string activeAlternate;
+    6: optional i32 parallelism;
         //2: required list<TTupleArgTypes> outputFieldTypes;
         //3: required list<string> orderedInputFieldNames;
         //4: required map<string, TTupleArgTypes> inputFieldTypes;

@@ -439,16 +439,16 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
           case 1: // PELLETS
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                org.apache.thrift.protocol.TMap _map16 = iprot.readMapBegin();
-                struct.pellets = new HashMap<String,TPellet>(2*_map16.size);
-                for (int _i17 = 0; _i17 < _map16.size; ++_i17)
+                org.apache.thrift.protocol.TMap _map26 = iprot.readMapBegin();
+                struct.pellets = new HashMap<String,TPellet>(2*_map26.size);
+                for (int _i27 = 0; _i27 < _map26.size; ++_i27)
                 {
-                  String _key18;
-                  TPellet _val19;
-                  _key18 = iprot.readString();
-                  _val19 = new TPellet();
-                  _val19.read(iprot);
-                  struct.pellets.put(_key18, _val19);
+                  String _key28;
+                  TPellet _val29;
+                  _key28 = iprot.readString();
+                  _val29 = new TPellet();
+                  _val29.read(iprot);
+                  struct.pellets.put(_key28, _val29);
                 }
                 iprot.readMapEnd();
               }
@@ -482,10 +482,10 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
         oprot.writeFieldBegin(PELLETS_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.pellets.size()));
-          for (Map.Entry<String, TPellet> _iter20 : struct.pellets.entrySet())
+          for (Map.Entry<String, TPellet> _iter30 : struct.pellets.entrySet())
           {
-            oprot.writeString(_iter20.getKey());
-            _iter20.getValue().write(oprot);
+            oprot.writeString(_iter30.getKey());
+            _iter30.getValue().write(oprot);
           }
           oprot.writeMapEnd();
         }
@@ -517,10 +517,10 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
       TTupleProtocol oprot = (TTupleProtocol) prot;
       {
         oprot.writeI32(struct.pellets.size());
-        for (Map.Entry<String, TPellet> _iter21 : struct.pellets.entrySet())
+        for (Map.Entry<String, TPellet> _iter31 : struct.pellets.entrySet())
         {
-          oprot.writeString(_iter21.getKey());
-          _iter21.getValue().write(oprot);
+          oprot.writeString(_iter31.getKey());
+          _iter31.getValue().write(oprot);
         }
       }
       BitSet optionals = new BitSet();
@@ -537,16 +537,16 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
     public void read(org.apache.thrift.protocol.TProtocol prot, TFloeApp struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       {
-        org.apache.thrift.protocol.TMap _map22 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-        struct.pellets = new HashMap<String,TPellet>(2*_map22.size);
-        for (int _i23 = 0; _i23 < _map22.size; ++_i23)
+        org.apache.thrift.protocol.TMap _map32 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+        struct.pellets = new HashMap<String,TPellet>(2*_map32.size);
+        for (int _i33 = 0; _i33 < _map32.size; ++_i33)
         {
-          String _key24;
-          TPellet _val25;
-          _key24 = iprot.readString();
-          _val25 = new TPellet();
-          _val25.read(iprot);
-          struct.pellets.put(_key24, _val25);
+          String _key34;
+          TPellet _val35;
+          _key34 = iprot.readString();
+          _val35 = new TPellet();
+          _val35.read(iprot);
+          struct.pellets.put(_key34, _val35);
         }
       }
       struct.set_pellets_isSet(true);

@@ -267,7 +267,9 @@ public class ResourceMapping implements Serializable {
 
             FlakeInstance flakeInstance = new FlakeInstance(pid,
                     containerInfo.getHostnameOrIpAddr(), flPorts,
-                    tPellet.get_serializedPellet());
+                    tPellet.get_alternates()
+                            .get(tPellet.get_activeAlternate())
+                            .get_serializedPellet());
             flakeMap.put(pid, flakeInstance);
             return  flakeInstance;
         }
