@@ -267,7 +267,7 @@ public class AppsAssignmentMonitor {
             }
 
             //Update any flakes if required (i.e. increase or decrease pellet
-            // instances.).
+            // instances or change the active alternate).
             Map<String,
                     ResourceMappingDelta.FlakeInstanceDelta> flakeDeltasUpdated
                     = resourceMapping.getDelta().getUpdatedFlakes(containerId);

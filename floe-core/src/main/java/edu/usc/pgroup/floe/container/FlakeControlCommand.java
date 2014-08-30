@@ -46,6 +46,10 @@ public class FlakeControlCommand implements Serializable {
          */
         DECREMENT_PELLET,
         /**
+         * Command to switch the pellet's active alternate.
+         */
+        SWITCH_ALTERNATE,
+        /**
          * Pellet signal command.
          */
         PELLET_SIGNAL

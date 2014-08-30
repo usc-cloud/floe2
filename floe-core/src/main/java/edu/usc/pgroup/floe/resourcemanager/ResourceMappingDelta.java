@@ -89,12 +89,12 @@ public class ResourceMappingDelta implements Serializable {
 
     /**
      * called whenever a new flake is added to the resource mapping.
-     * @param containerId container to which flake was added.
      * @param fl the flake instance that was added
      */
-    public final void flakeAdded(final String containerId,
-                           final ResourceMapping.FlakeInstance fl) {
+    public final void flakeAdded(final ResourceMapping.FlakeInstance fl) {
         Map<String, FlakeInstanceDelta> flMap = null;
+        String containerId = fl.getContainerId();
+
         if (addedFlakes.containsKey(containerId)) {
             flMap = addedFlakes.get(containerId);
         } else {
@@ -124,15 +124,15 @@ public class ResourceMappingDelta implements Serializable {
 
     /**
      * called when a flake is updated by the resource manager.
-     * @param containerId container to which flake belongs.
      * @param fl the flake instance that was updated.
      * @param type the update type (i.e. instance added or removed).
      */
-    public final void flakeUpdated(final String containerId,
-                                   final ResourceMapping.FlakeInstance fl,
+    public final void flakeUpdated(final ResourceMapping.FlakeInstance fl,
                                    final UpdateType type) {
 
         Map<String, FlakeInstanceDelta> flMap = null;
+        String containerId = fl.getContainerId();
+
         //check if the flake was newly added/or already removed or udpdated?
         if (addedFlakes.containsKey(containerId)) {
             flMap = addedFlakes.get(containerId);
@@ -159,17 +159,18 @@ public class ResourceMappingDelta implements Serializable {
             flDelta.instanceAdded();
         } else if (type == UpdateType.InstanceRemoved) {
             flDelta.instanceRemoved();
+        } else if (type == UpdateType.ActiveAlternateChanged) {
+            flDelta.activeAlternateChanged();
         }
     }
 
     /**
      * Flake removed from resource mapping.
-     * @param containerId container to which flake belongs.
      * @param fl the flake instance that was removed.
      */
-    public final void flakeRemoved(final String containerId,
-                                   final ResourceMapping.FlakeInstance fl) {
+    public final void flakeRemoved(final ResourceMapping.FlakeInstance fl) {
         Map<String, FlakeInstanceDelta> flMap = null;
+        String containerId = fl.getContainerId();
         if (removedFlakes.containsKey(containerId)) {
             flMap = removedFlakes.get(containerId);
         } else {
@@ -326,10 +327,18 @@ public class ResourceMappingDelta implements Serializable {
          */
         private int numInstancesRemoved;
 
+
+        /**
+         * number of instances removed.
+         */
+        private boolean activeAlternateChanged;
+
+
         /**
          * flake instance.
          */
         private final ResourceMapping.FlakeInstance flakeInstance;
+
 
         /**
          * Constructor.
@@ -340,6 +349,7 @@ public class ResourceMappingDelta implements Serializable {
             this.flakeInstance = instance;
             this.numInstancesAdded = 0;
             this.numInstancesRemoved = 0;
+            this.activeAlternateChanged = false;
         }
 
         /**
@@ -357,6 +367,14 @@ public class ResourceMappingDelta implements Serializable {
         }
 
         /**
+         * flag this flake as the active alternate has changed.
+         */
+        public final void activeAlternateChanged() {
+            this.activeAlternateChanged = true;
+        }
+
+
+        /**
          * @return number of instances added to this flake.
          */
         public final int getNumInstancesAdded() {
@@ -368,6 +386,15 @@ public class ResourceMappingDelta implements Serializable {
          */
         public final int getNumInstancesRemoved() {
             return this.numInstancesRemoved;
+        }
+
+
+        /**
+         * @return true if the alternate for this flake has changed. Use the
+         * TFloeApp to get the actual active alternate.
+         */
+        public final boolean isAlternateChanged() {
+            return activeAlternateChanged;
         }
 
         /**
@@ -389,6 +416,10 @@ public class ResourceMappingDelta implements Serializable {
         /**
          * Instance removed update type.
          */
-        InstanceRemoved
+        InstanceRemoved,
+        /**
+         * Active Alternate changed update type.
+         */
+        ActiveAlternateChanged
     }
 }

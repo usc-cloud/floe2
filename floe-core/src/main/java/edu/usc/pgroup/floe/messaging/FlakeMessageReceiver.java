@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.messaging;
 
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.Flake;
+import edu.usc.pgroup.floe.utils.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,6 +137,16 @@ public class FlakeMessageReceiver extends Thread {
                         LOGGER.info("Received signal for: " + flake.getId());
                         signal.send((byte[]) command.getData(), 0);
                         break;
+                    case SWITCH_ALTERNATE:
+                        LOGGER.info("Switching alternate for: "
+                                + flake.getId());
+                        SystemSignal systemSignal = new SystemSignal(
+                                flake.getAppName(),
+                                flake.getPelletId(),
+                                SystemSignal.SystemSignalType.SwitchAlternate,
+                                (byte[]) command.getData()
+                        );
+                        signal.send(Utils.serialize(systemSignal), 0);
                     default:
                         result = flake.processControlSignal(command);
                 }

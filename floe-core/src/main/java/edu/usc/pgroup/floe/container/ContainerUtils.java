@@ -20,6 +20,7 @@ import edu.usc.pgroup.floe.flake.FlakeInfo;
 import edu.usc.pgroup.floe.flake.FlakeService;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMappingDelta;
+import edu.usc.pgroup.floe.thriftgen.TPellet;
 import edu.usc.pgroup.floe.utils.RetryLoop;
 import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -184,6 +185,24 @@ public final class ContainerUtils {
     }
 
     /**
+     * sends a switch alternate command to the given flake with the new
+     * alternate's implementation sent as data. NOTE: Not send the jar since
+     * for current version we assume all implementations are available in the
+     * initially submitted jar file.
+     * @param fid flake id to switch the alternate.
+     * @param activeAlternate new alternate implementation.
+     */
+    private static void sendSwitchAlternateCommand(
+            final String fid,
+            final byte[] activeAlternate) {
+        FlakeControlCommand command = new FlakeControlCommand(
+                FlakeControlCommand.Command.SWITCH_ALTERNATE,
+                activeAlternate
+        );
+        FlakeControlSignalSender.getInstance().send(fid, command);
+    }
+
+    /**
      * Launches flakes and initializes pellets based on the list of flakes
      * given.
      * @param resourceMapping current resource mapping as determined by the
@@ -241,12 +260,19 @@ public final class ContainerUtils {
                 ResourceMapping.FlakeInstance flakeInstance
                         = flakeEntry.getValue();
 
+                TPellet pellet = resourceMapping.getFloeApp().get_pellets()
+                        .get(flakeInstance.getCorrespondingPelletId());
+
+                byte[] activeAlternate = pellet.get_alternates().get(
+                        pellet.get_activeAlternate()
+                ).get_serializedPellet();
+
                 for (int i = 0;
                      i < flakeInstance.getNumPelletInstances();
                      i++) {
                     ContainerUtils.sendIncrementPelletCommand(
                             pidToFidMap.get(pid),
-                            flakeInstance.getSerializedPellet()
+                            activeAlternate
                     );
                 }
 
@@ -269,8 +295,6 @@ public final class ContainerUtils {
                     ResourceMappingDelta.FlakeInstanceDelta> flakeDeltas) {
 
         if (flakeDeltas != null && flakeDeltas.size() > 0) {
-
-
             for (Map.Entry<String,
                     ResourceMappingDelta.FlakeInstanceDelta> entry
                     : flakeDeltas.entrySet()) {
@@ -279,6 +303,14 @@ public final class ContainerUtils {
                 final String pelletId = entry.getKey();
                 ResourceMappingDelta.FlakeInstanceDelta delta
                         = entry.getValue();
+
+                TPellet pellet = resourceMapping.getFloeApp().get_pellets()
+                        .get(delta.getFlakeInstance()
+                                .getCorrespondingPelletId());
+
+                byte[] activeAlternate = pellet.get_alternates().get(
+                        pellet.get_activeAlternate()
+                ).get_serializedPellet();
 
                 try {
                     FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory
@@ -308,8 +340,7 @@ public final class ContainerUtils {
                              i++) {
                             ContainerUtils.sendIncrementPelletCommand(
                                     info.getFlakeId(),
-                                    delta.getFlakeInstance()
-                                            .getSerializedPellet()
+                                    activeAlternate
                             );
                         }
                     } else if (diffPellets < 0) {
@@ -320,10 +351,21 @@ public final class ContainerUtils {
                         for (int i = 0;
                              i < diffPellets;
                              i++) {
-                            ContainerUtils.sendDecrementPelletCommand(
-                                    info.getFlakeId()
+                            ContainerUtils.sendSwitchAlternateCommand(
+                                    info.getFlakeId(),
+                                    activeAlternate
                             );
                         }
+                    }
+
+                    if (delta.isAlternateChanged()) {
+                        LOGGER.info("Alternate Changed for :{}",
+                                info.getFlakeId());
+
+                        ContainerUtils.sendSwitchAlternateCommand(
+                                info.getFlakeId(),
+                                activeAlternate
+                        );
                     }
 
                 } catch (Exception e) {

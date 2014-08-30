@@ -23,6 +23,7 @@ import edu.usc.pgroup.floe.app.signals.Signallable;
 import edu.usc.pgroup.floe.messaging.MessageEmitter;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
+import edu.usc.pgroup.floe.utils.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +73,12 @@ public class PelletExecutor extends Thread {
      */
     private final TupleSerializer tupleSerializer;
 
+
+    /**
+     * Class loader for loading pellet classes from a jar file.
+     */
+    private URLClassLoader loader;
+
     /**
      * hiding default constructor.
      * @param sharedContext shared ZMQ context to be used in inproc comm. for
@@ -91,7 +98,7 @@ public class PelletExecutor extends Thread {
      *                      receiving message from the flake.
      * @param fid flake's id to which this pellet belongs.
      */
-    PelletExecutor(final String fqdnClass, final String fid,
+    public PelletExecutor(final String fqdnClass, final String fid,
                    final ZMQ.Context sharedContext) {
         this(sharedContext, fid);
         this.pelletClass = fqdnClass;
@@ -136,7 +143,7 @@ public class PelletExecutor extends Thread {
                     "file://" + relativeJarLoc.getAbsolutePath());
 
             LOGGER.info("Loading jar: {} into class loader.", jarLoc);
-            URLClassLoader loader = URLClassLoader.newInstance(
+            loader = URLClassLoader.newInstance(
                     new URL[]{jarLoc},
                     getClass().getClassLoader()
             );
@@ -190,11 +197,15 @@ public class PelletExecutor extends Thread {
             } else if (pollerItems.pollin(1)) {
                 byte[] serializedSignal = signalReceiver.recv();
                 Signal signal = (Signal) Utils.deserialize(serializedSignal);
-                //Run pellet.execute here.
-                if (pellet instanceof Signallable) {
-                    ((Signallable) pellet).onSignal(signal);
+
+                if (signal instanceof  SystemSignal) {
+                    processSystemSignal((SystemSignal) signal);
                 } else {
-                    LOGGER.warn("Pellet is not signallable.");
+                    if (pellet instanceof Signallable) {
+                        ((Signallable) pellet).onSignal(signal);
+                    } else {
+                        LOGGER.warn("Pellet is not signallable.");
+                    }
                 }
             }
 
@@ -203,5 +214,22 @@ public class PelletExecutor extends Thread {
         dataReceiver.close();
         signalReceiver.close();
         //context.destroy();
+    }
+
+    /**
+     * processes the system signal for the pellet.
+     * @param signal system signal.
+     */
+    private void processSystemSignal(final SystemSignal signal) {
+        LOGGER.warn("System signal received: ");
+        switch (signal.getSystemSignalType()) {
+            case SwitchAlternate:
+                LOGGER.warn("Switching pellet alternate.");
+                this.pellet = (Pellet) Utils.deserialize(signal.getSignalData(),
+                        loader);
+                break;
+            default:
+                LOGGER.warn("Unknown signal command.");
+        }
     }
 }

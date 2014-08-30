@@ -39,6 +39,7 @@ public class Signal implements Serializable {
      */
     private final byte[] signalData;
 
+
     /**
      * Constructor.
      * @param app destination application name.
@@ -72,5 +73,21 @@ public class Signal implements Serializable {
      */
     public final String getDestPellet() {
         return destPellet;
+    }
+
+    /**
+     * Signal type enum.
+     */
+    public enum SignalType {
+        /**
+         * System type signal. Used by flake to send a command to ALL the
+         * pellet instances running on that flake.
+         */
+        SystemSignal,
+        /**
+         * User type signal. Signals that are sent by the user. By default
+         * the signal is considered as user type.
+         */
+        UserSignal
     }
 }

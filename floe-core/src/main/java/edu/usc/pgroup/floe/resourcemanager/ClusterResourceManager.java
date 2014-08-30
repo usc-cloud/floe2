@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.resourcemanager;
 
 import edu.usc.pgroup.floe.container.ContainerInfo;
+import edu.usc.pgroup.floe.thriftgen.AlternateNotFoundException;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
@@ -141,5 +142,34 @@ public class ClusterResourceManager extends ResourceManager {
         }
 
         return current;
+    }
+
+    /**
+     * Switches the active alternate for the pellet.
+     *
+     * @param currentMapping the current resource mapping (this is for a
+     *                       particular app, so no need floe app parameter).
+     * @param pelletName     name of the pellet to switch alternate for.
+     * @param alternateName  the name of the alternate to switch to.
+     * @return the updated resource mapping with the ResourceMappingDelta set
+     * appropriately.
+     * @throws edu.usc.pgroup.floe.thriftgen.AlternateNotFoundException if
+     * the alternate is not found for the given pellet.
+     */
+    @Override
+    public final ResourceMapping switchAlternate(
+            final  ResourceMapping currentMapping,
+            final String pelletName,
+            final String alternateName) throws AlternateNotFoundException {
+
+        currentMapping.resetDelta();
+        if (!currentMapping.switchAlternate(pelletName, alternateName)) {
+            LOGGER.error("The given alternate: {} for pellet: {} does not "
+                            + "exist.", pelletName, alternateName);
+            throw new AlternateNotFoundException("The given alternate: "
+                    + pelletName + " for pellet: " + alternateName + " does "
+                    + "not exist.");
+        }
+        return currentMapping;
     }
 }

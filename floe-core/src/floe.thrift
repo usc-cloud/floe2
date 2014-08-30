@@ -78,6 +78,10 @@ exception PelletNotFoundException {
     1: required string msg;
 }
 
+exception AlternateNotFoundException {
+    1: required string msg;
+}
+
 exception InvalidAppException {
     1: required string msg;
 }
@@ -119,4 +123,8 @@ service TCoordinator
 
     void signal(1: TSignal signal) throws
       (1: AppNotFoundException anfe, 2: PelletNotFoundException pnfe);
+
+    void switchAlternate(1: string appName, 2: string pelletName,
+          3: string alternateName) throws (1: AppNotFoundException anfe,
+          2: PelletNotFoundException pnfe, 3: AlternateNotFoundException alnfe);
 }

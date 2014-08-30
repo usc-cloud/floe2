@@ -370,6 +370,30 @@ public class CoordinatorHandler implements TCoordinator.Iface {
     }
 
     /**
+     * Service call to handle switch alternate.
+     * @param appName name of the app.
+     * @param pelletName name of the pellet.
+     * @param alternateName alternate to switch to.
+     * @throws TException TException Thrift exception wrapper.
+     */
+    @Override
+    public final void switchAlternate(final String appName,
+                                      final String pelletName,
+                                      final String alternateName)
+            throws
+            //AppNotFoundException,
+            //PelletNotFoundException,
+            //AlternateNotFoundException,
+            TException {
+
+        Coordinator.getInstance().switchAlternate(
+            appName,
+            pelletName,
+            alternateName
+        );
+    }
+
+    /**
      * Returns an available fid.
      * Note: this is a synchronized function so that multiple accesses are
      * handled correctly.

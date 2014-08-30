@@ -177,6 +177,23 @@ def signal(*args):
                     fork=False,
                     args=args)
 
+
+def switch_alternate(*args):
+    """
+    Syntax: [floe signal -app <appname> -pellet <pelletname> -data <data>
+    Sends the given signal command to the coordinator to be sent to the given app/pellet.
+    """
+    klass="edu.usc.pgroup.floe.commands.SwitchAlternate"
+    jvmopts = [
+        "-Dlogfile.name=coordinator.log",
+        "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",
+        ]
+    exec_floe_class(klass,
+                    jvmtype="-client",
+                    jvmopts=jvmopts,
+                    fork=False,
+                    args=args)
+
 def dev_zookeeper():
     """Syntax: [floe dev-zookeeper]
 
@@ -241,6 +258,7 @@ COMMANDS = {"jar": jar, "kill": kill, "coordinator": coordinator,
             "dev-zookeeper": dev_zookeeper,
             "scale": scale,
             "signal": signal,
+            "switch-alternate": switch_alternate,
             "help": print_usage}
 
 def parse_config_opts(args):

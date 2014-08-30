@@ -111,8 +111,7 @@ public class ResourceMapping implements Serializable {
         if (fl == null) {
             fl = containerInstance.createFlake(pelletId);
             if (mappingDelta != null) {
-                mappingDelta.flakeAdded(container.getContainerId(),
-                        fl);
+                mappingDelta.flakeAdded(fl);
             }
         }
 
@@ -128,12 +127,49 @@ public class ResourceMapping implements Serializable {
 
         fl.createPelletInstance();
         if (mappingDelta != null) {
-            mappingDelta.flakeUpdated(container.getContainerId(),
-                    fl,
+            mappingDelta.flakeUpdated(fl,
                     ResourceMappingDelta.UpdateType.InstanceAdded);
         }
     }
 
+    /**
+     * Switch Alternate for given pellet to the given alternate.
+     * @param pelletName the pellet name/id.
+     * @param alternateName the alternate name to switch to.
+     * @return true if the given alternate exists for the pellet,
+     * false otherwise.
+     */
+    public final boolean switchAlternate(final String pelletName,
+                                         final String alternateName) {
+
+
+        List<FlakeInstance> pidFlakes = null;
+        if (pidFlakeMap.containsKey(pelletName)) {
+            pidFlakes = pidFlakeMap.get(pelletName);
+        } else {
+            //Pellet not found.
+            return false;
+        }
+
+        TPellet pellet = floeApp.get_pellets().get(pelletName);
+        if (pellet == null) {
+            return false;
+        }
+
+        if (!pellet.get_alternates().containsKey(alternateName)) {
+            return false;
+        }
+
+        pellet.set_activeAlternate(alternateName);
+
+        if (mappingDelta != null) {
+            for (FlakeInstance fl : pidFlakes) {
+                mappingDelta.flakeUpdated(fl,
+                        ResourceMappingDelta.UpdateType.ActiveAlternateChanged);
+            }
+        }
+        return true;
+    }
 
     /**
      * Gets the list of all preceding flakes to which the given flake should
@@ -196,6 +232,13 @@ public class ResourceMapping implements Serializable {
         } else {
             mappingDelta = new ResourceMappingDelta(floeApp);
         }
+    }
+
+    /**
+     * @return Returns the corresponding floe application
+     */
+    public final TFloeApp getFloeApp() {
+        return floeApp;
     }
 
     /**
@@ -265,11 +308,8 @@ public class ResourceMapping implements Serializable {
                 flPorts[i] = getNextAvailablePort();
             }
 
-            FlakeInstance flakeInstance = new FlakeInstance(pid,
-                    containerInfo.getHostnameOrIpAddr(), flPorts,
-                    tPellet.get_alternates()
-                            .get(tPellet.get_activeAlternate())
-                            .get_serializedPellet());
+            FlakeInstance flakeInstance = new FlakeInstance(pid, containerId,
+                    containerInfo.getHostnameOrIpAddr(), flPorts);
             flakeMap.put(pid, flakeInstance);
             return  flakeInstance;
         }
@@ -332,10 +372,9 @@ public class ResourceMapping implements Serializable {
         private final Map<String, Integer> listeningPorts;
 
         /**
-         * Serialized pellet.
-         * TODO: Support other pellet types. (v2 or later.)
+         * Container id to which this flake belongs.
          */
-        private final byte[] serializedPellet;
+        private final String containerId;
 
         /**
          * Number of pellet instance on this flake.
@@ -345,16 +384,17 @@ public class ResourceMapping implements Serializable {
         /**
          * Constructor.
          * @param pid Pelletid for which this flake will run the instances.
+         * @param cid Container id to which this flake belongs.
          * @param hostnameOrIpAddr Host name or ip address of the container
          * @param flPorts ports on which this flake should listen for
-         * @param serPellet serialized version of the pellet.
          */
-        public FlakeInstance(final String pid, final String hostnameOrIpAddr,
-                             final int[] flPorts, final byte[] serPellet) {
+        public FlakeInstance(final String pid, final String cid,
+                             final String hostnameOrIpAddr,
+                             final int[] flPorts) {
+            this.containerId = cid;
             this.pelletId = pid;
             this.host = hostnameOrIpAddr;
             this.listeningPorts = new HashMap<>();
-            this.serializedPellet = serPellet;
             this.numPelletInstances = 0;
 
             TPellet tPellet = floeApp.get_pellets().get(pid);
@@ -403,13 +443,6 @@ public class ResourceMapping implements Serializable {
         }
 
         /**
-         * @return the serialized version of the pellet.
-         */
-        public final byte[] getSerializedPellet() {
-            return serializedPellet;
-        }
-
-        /**
          * @return string rep. of all pellet instances on the flake.
          */
         @Override
@@ -446,6 +479,13 @@ public class ResourceMapping implements Serializable {
          */
         public final String getCorrespondingPelletId() {
             return pelletId;
+        }
+
+        /**
+         * @return container id to which this flake belongs.
+         */
+        public final String getContainerId() {
+            return containerId;
         }
     }
 }

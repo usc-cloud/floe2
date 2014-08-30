@@ -19,6 +19,7 @@ package edu.usc.pgroup.floe.resourcemanager;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.ContainerInfo;
+import edu.usc.pgroup.floe.thriftgen.AlternateNotFoundException;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.RetryLoop;
@@ -120,8 +121,9 @@ public abstract class ResourceManager {
      * @param app The current application status. (the perf numbers are not
      *            included, which can be fetched from the Zookeeper)
      * @param current Current resource mapping.
-     * @return will return ONLY the updated (added/removed/changed) mapping
-     * parameters. anything not included should remain the same.
+     * @return the updated resource mapping with the ResourceMappingDelta set
+     * appropriately.
+     *
      */
     public abstract ResourceMapping updateResourceMapping(TFloeApp app,
                                           ResourceMapping current);
@@ -140,4 +142,20 @@ public abstract class ResourceManager {
                                           ScaleDirection direction,
                                           String pelletName,
                                           int count);
+
+    /**
+     * Switches the active alternate for the pellet.
+     * @param currentMapping the current resource mapping (this is for a
+     *                       particular app, so no need floe app parameter).
+     * @param pelletName name of the pellet to switch alternate for.
+     * @param alternateName the name of the alternate to switch to.
+     * @return the updated resource mapping with the ResourceMappingDelta set
+     * appropriately.
+     * @throws edu.usc.pgroup.floe.thriftgen.AlternateNotFoundException if
+     * the alternate is not found for the given pellet.
+     */
+    public abstract ResourceMapping switchAlternate(
+            ResourceMapping currentMapping,
+            String pelletName,
+            String alternateName) throws AlternateNotFoundException;
 }

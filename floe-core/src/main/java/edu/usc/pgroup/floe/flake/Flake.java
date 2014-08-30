@@ -135,6 +135,14 @@ public class Flake {
         return flakeId;
     }
 
+
+    /**
+     * @return pellet id (same as name).
+     */
+    public final String getPelletId() {
+        return pelletId;
+    }
+
     /**
      * Starts the server and the schedules the heartbeats.
      */
@@ -246,7 +254,7 @@ public class Flake {
                 String dpid = (String) command.getData();
                 LOGGER.info("REMOVING PELLET: " + dpid + " on "
                         + getId());
-                //flake.incrementPellet();
+                //decrementPellet();
                 break;
             default:
                 LOGGER.warn("Unrecognized command: " + command);
