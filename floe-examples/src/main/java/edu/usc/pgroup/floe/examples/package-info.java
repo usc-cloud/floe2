@@ -15,7 +15,7 @@
  */
 
 /**
- * A simple example of a linear pipeline with two pellets.
+ * Floe examples.
  * @author kumbhare
  */
-package edu.usc.pgroup.floe.SimpleDynamicPellets;
+package edu.usc.pgroup.floe.examples;

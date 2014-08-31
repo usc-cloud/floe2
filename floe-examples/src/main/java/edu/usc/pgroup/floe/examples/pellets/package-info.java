@@ -15,7 +15,7 @@
  */
 
 /**
- * Floe examples.
+ * Floe sample pellets.
  * @author kumbhare
  */
-package edu.usc.pgroup.floe;
+package edu.usc.pgroup.floe.examples.pellets;

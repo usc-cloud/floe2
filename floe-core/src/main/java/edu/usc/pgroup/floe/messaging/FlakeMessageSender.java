@@ -69,7 +69,10 @@ public class FlakeMessageSender extends Thread {
      */
     public final void run() {
         new MiddleEnd().start();
-        new BackEnd().start();
+        for (int port: ports) {
+            new BackEnd(port).start();
+        }
+
     }
 
     /**
@@ -78,6 +81,22 @@ public class FlakeMessageSender extends Thread {
      * responsible for sending data from the middleend to that port.
      */
     private class BackEnd extends Thread {
+
+        /**
+         * port on which the back end should listen for
+         *             connections from downstream.
+         */
+        private final int port;
+
+        /**
+         * constructor.
+         * @param p port on which the back end should listen for
+         *             connections from downstream.
+         */
+        public BackEnd(final int p) {
+            this.port = p;
+        }
+
         /**
          * Backend thread's run method. This is responsible for the routing.
          */
@@ -92,11 +111,10 @@ public class FlakeMessageSender extends Thread {
 
 
             ZMQ.Socket backend  = ctx.socket(ZMQ.PUSH);
-            for (int port: ports) {
-                backend.bind(
-                        Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
-                                + port);
-            }
+            backend.bind(
+                  Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
+                    + port);
+
             ZMQ.proxy(middleendreceiver, backend, null);
         }
     }

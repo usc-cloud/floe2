@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.SimpleLinearPipeline;
+package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.Pellet;
+import edu.usc.pgroup.floe.app.SignallablePellet;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.signals.Signal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,26 +27,14 @@ import org.slf4j.LoggerFactory;
 /**
  * @author kumbhare
  */
-public class WordPellet implements Pellet {
+public class HelloGreetingPellet implements SignallablePellet {
 
-    /**
-     * List of words to emmit in a loop.
-     */
-    private final String[] words;
-
-    /**
-     * Constructor.
-     * @param w List of words to emmit in a loop.
-     */
-    public WordPellet(final String[] w) {
-        this.words = w;
-    }
 
     /**
      * the global logger instance.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(WordPellet.class);
+            LoggerFactory.getLogger(HelloGreetingPellet.class);
 
     /**
      * The setup function is called once to let the pellet initialize.
@@ -61,13 +50,14 @@ public class WordPellet implements Pellet {
      * pellet which does not depend on external data source but generates
      * tuples on its own.
      *
-     * @param emitter An output emitter which may be used by the user to emmit
+     * @param emitter An ouput emitter which may be used by the user to emmit
      *                results.
      */
     @Override
     public void onStart(final Emitter emitter) {
 
     }
+
 
     /**
      * The execute method which is called for each tuple.
@@ -77,21 +67,10 @@ public class WordPellet implements Pellet {
      */
     @Override
     public final void execute(final Tuple t, final Emitter emitter) {
-        LOGGER.info("Executing word pellet.");
-        int i = 0;
-        while (true) {
-            if (i == words.length) {
-                i = 0;
-            }
-            Tuple ot = new Tuple(words[i]);
-            emitter.emit(ot);
-            try {
-                Thread.sleep(Utils.Constants.MILLI);
-            } catch (InterruptedException e) {
-                LOGGER.error("Exception: {}", e);
-                break;
-            }
-            i++;
+        if (t == null) {
+            LOGGER.info("Dummy execute PRINT.");
+        } else {
+            LOGGER.info("Hello " + t.getDummy());
         }
     }
 
@@ -102,5 +81,16 @@ public class WordPellet implements Pellet {
     @Override
     public void teardown() {
 
+    }
+
+    /**
+     * Called when a signal is received for the component.
+     *
+     * @param signal the signal received for this pellet.
+     */
+    @Override
+    public final void onSignal(final Signal signal) {
+        LOGGER.info("RECEIVED SIGNAL: {}",
+                Utils.deserialize(signal.getSignalData()));
     }
 }

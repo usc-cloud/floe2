@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.SimpleDynamicPellets;
+package edu.usc.pgroup.floe.examples;
 
-import edu.usc.pgroup.floe.SimpleLinearPipeline.WordPellet;
 import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.client.AppSubmitter;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.examples.pellets.HelloGreetingPellet;
+import edu.usc.pgroup.floe.examples.pellets.WelcomeGreetingPellet;
+import edu.usc.pgroup.floe.examples.pellets.WordPellet;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -30,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * Hello world!
  *
  */
-public final class SimpleDynamicApp {
+public final class SimpleAndSplit {
 
     /**
      * Time for which to run the application.
@@ -38,27 +40,15 @@ public final class SimpleDynamicApp {
     private static final int APP_RUNNING_TIME = 100;
 
     /**
-     * Time for which to run the application.
-     */
-    private static final double WELCOME_GREET_VALUE = 0.5;
-
-
-    /**
-     * Time for which to run the application.
-     */
-    private static final double HELLO_GREET_VALUE = 1.0;
-
-
-    /**
      * the global logger instance.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(SimpleDynamicApp.class);
+            LoggerFactory.getLogger(SimpleAndSplit.class);
 
     /**
      * Hiding the public constructor.
      */
-    private SimpleDynamicApp() {
+    private SimpleAndSplit() {
 
     }
 
@@ -70,17 +60,15 @@ public final class SimpleDynamicApp {
         System.out.println("Hello World!");
         ApplicationBuilder builder = new ApplicationBuilder();
 
-        String[] words = {"John", "Jane", "Maverick", "Alok"};
+        String[] names = {"0", "1", "2", "3", "4"};
 
-        builder.addPellet("word", new WordPellet(words)).setParallelism(1);
+        builder.addPellet("names", new WordPellet(names)).setParallelism(1);
 
-        builder.addDynamicPellet("greeting")
-                .addAlternate("hello", HELLO_GREET_VALUE
-                        , new HelloGreetingPellet())
-                .addAlternate("welcome", WELCOME_GREET_VALUE
-                        , new WelcomeGreetingPellet())
-                .setActiveAlternate("welcome")
-                .subscribe("word").setParallelism(1);
+        builder.addPellet("hello", new HelloGreetingPellet())
+                .subscribe("names").setParallelism(1);
+
+        builder.addPellet("welcome", new WelcomeGreetingPellet())
+                .subscribe("names").setParallelism(1);
 
         try {
             AppSubmitter.submitApp("helloworld", builder.generateApp());
@@ -88,19 +76,14 @@ public final class SimpleDynamicApp {
            LOGGER.error("Error while deploying app. Exception {}", e);
         }
 
-
         if (FloeConfig.getConfig().getString(ConfigProperties.FLOE_EXEC_MODE)
                 .equalsIgnoreCase("local")) {
             try {
                 Thread.sleep(APP_RUNNING_TIME * Utils.Constants.MILLI);
-                AppSubmitter.shutdown();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        } else {
-            LOGGER.info("Application submitted.");
+            AppSubmitter.shutdown();
         }
-
-
     }
 }

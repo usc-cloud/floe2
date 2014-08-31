@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.SimpleDynamicPellets;
+package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.SignallablePellet;
