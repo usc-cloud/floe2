@@ -97,7 +97,11 @@ public final class FlakeMonitor {
      * @param finfo the flake info object sent by the heartbeat.
      */
     private synchronized void updateFlakeHB(final FlakeInfo finfo) {
-        flakeMap.put(finfo.getPelletId(), finfo);
+        if (!finfo.isTerminated()) {
+            flakeMap.put(finfo.getPelletId(), finfo);
+        } else {
+            flakeMap.remove(finfo.getPelletId());
+        }
     }
 
     /**
@@ -147,6 +151,9 @@ public final class FlakeMonitor {
                 byte[] hb = heartBeatSoc.recv();
                 FlakeInfo finfo = (FlakeInfo) Utils.deserialize(hb);
                 LOGGER.debug("Received hb from:{}", finfo.getFlakeId());
+                if (finfo.isTerminated()) {
+                    LOGGER.info("Flake {} terminated.", finfo.getFlakeId());
+                }
                 updateFlakeHB(finfo);
             }
         }

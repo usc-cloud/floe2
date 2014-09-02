@@ -247,6 +247,7 @@ public final class ContainerUtils {
 
             //Step 2. Send connect signals to the flakes.
             //It has to connect to all the preceding signals.
+            LOGGER.info("Sending connect signals.");
             for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
                     : flakes.entrySet()) {
 
@@ -265,6 +266,7 @@ public final class ContainerUtils {
             }
 
             //Step 3. Launch pellets.
+            LOGGER.info("Launching pellets.");
             for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
                     : flakes.entrySet()) {
                 String pid = flakeEntry.getKey();
@@ -279,6 +281,8 @@ public final class ContainerUtils {
                         pellet.get_activeAlternate()
                 ).get_serializedPellet();
 
+                LOGGER.info("Creating {} instances.",
+                        flakeInstance.getNumPelletInstances());
                 for (int i = 0;
                      i < flakeInstance.getNumPelletInstances();
                      i++) {
@@ -429,7 +433,8 @@ public final class ContainerUtils {
                                         .getFlakeInfo(pid);
                             }
                         });
-                LOGGER.info("Flake started:{}", info.getFlakeId());
+                LOGGER.info("Flake started (at container):{}",
+                        info.getFlakeId());
                 pidToFidMap.put(entry.getKey(), info.getFlakeId());
             } catch (Exception e) {
                 LOGGER.error("Could not start flake");

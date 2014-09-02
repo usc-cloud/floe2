@@ -69,6 +69,11 @@ public final class FlakeInfo implements Serializable {
      */
     private String pelletId;
 
+    /**
+     * flag to indicate if the flake has been terminated.
+     */
+    private boolean terminated;
+
 
     /**
      * private constructor that sets the constant or default values. Hidden
@@ -84,6 +89,7 @@ public final class FlakeInfo implements Serializable {
         this.flakeId = fid;
         this.containerId = cid;
         this.appName = app;
+        this.terminated = false;
     }
 
     /**
@@ -136,4 +142,15 @@ public final class FlakeInfo implements Serializable {
      * @return application name.
      */
     public String getAppName() { return appName; }
+
+    /**
+     * @return true if the flake has been marked for termination.
+     */
+    public boolean isTerminated() { return terminated; }
+
+    /**
+     * Marks the flake as terminated, which will be used by the container to
+     * cleanup.
+     */
+    public void setTerminated() { this.terminated = true; }
 }

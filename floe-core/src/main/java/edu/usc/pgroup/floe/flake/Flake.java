@@ -63,6 +63,11 @@ public class Flake {
     private Timer heartBeatTimer;
 
     /**
+     * Flake heartbeat task.
+     */
+    private FlakeHeartbeatTask flakeHeartbeatTask;
+
+    /**
      * the flakeInfo object sent during heartbeats.
      */
     private FlakeInfo flakeInfo;
@@ -195,9 +200,10 @@ public class Flake {
         startFlakeSender();
 
         LOGGER.info("Scheduling flake heartbeat.");
-        scheduleHeartBeat(new FlakeHeartbeatTask(flakeInfo, sharedContext));
+        flakeHeartbeatTask = new FlakeHeartbeatTask(flakeInfo, sharedContext);
+        scheduleHeartBeat();
 
-        LOGGER.info("Terminating Flake.");
+        LOGGER.info("Initializing kill socket for Flake.");
         killsock  = sharedContext.socket(ZMQ.PUB);
         killsock.bind(
                 Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
@@ -223,7 +229,7 @@ public class Flake {
         killsock.send(dummy, 0);
 
         //stop heartbeat.
-        heartBeatTimer.cancel();
+        flakeHeartbeatTask.setCancelled();
 
         //close kill sock.
         killsock.close();
@@ -231,11 +237,8 @@ public class Flake {
 
     /**
      * Schedules and starts recurring the flake heartbeat.
-     *
-     * @param flakeHeartbeatTask Heartbeat timer task.
      */
-    private void scheduleHeartBeat(final FlakeHeartbeatTask
-                                           flakeHeartbeatTask) {
+    private void scheduleHeartBeat() {
         long delay = FloeConfig.getConfig().getInt(ConfigProperties
                 .FLAKE_HEARTBEAT_PERIOD) * Utils.Constants.MILLI;
         if (heartBeatTimer == null) {

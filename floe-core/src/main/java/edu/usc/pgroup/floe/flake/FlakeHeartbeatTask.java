@@ -53,6 +53,12 @@ public class FlakeHeartbeatTask extends TimerTask {
     private ZMQ.Socket hsoc;
 
     /**
+     * indicates whether this task has been cancelled (e.g. when the flake is
+     * terminated).
+     */
+    private Boolean cancelled;
+
+    /**
      * Constructor.
      * @param info the flake info object associated with this flake.
      * @param context the shared ZMQ context.
@@ -62,6 +68,7 @@ public class FlakeHeartbeatTask extends TimerTask {
         this.finfo = info;
         this.zcontext = context;
         this.hsoc = null;
+        this.cancelled = false;
     }
 
     /**
@@ -83,6 +90,22 @@ public class FlakeHeartbeatTask extends TimerTask {
         //TODO: Update other flake information here.
         //send heartbeat via ZMQ.
         LOGGER.debug("Sending heartbeat: " + finfo.getFlakeId());
+
+        synchronized (cancelled) {
+            if (cancelled) {
+                finfo.setTerminated();
+                cancel();
+            }
+        }
+
         hsoc.send(Utils.serialize(finfo), 0);
+    }
+
+    /**
+     * Sets the task as cancelled. The next execution of the run method will
+     * guaranteed to be the last.
+     */
+    public final synchronized void setCancelled() {
+        this.cancelled = true;
     }
 }
