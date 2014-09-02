@@ -245,27 +245,7 @@ public final class ContainerUtils {
                 return;
             }
 
-            //Step 2. Send connect signals to the flakes.
-            //It has to connect to all the preceding signals.
-            LOGGER.info("Sending connect signals.");
-            for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
-                    : flakes.entrySet()) {
-
-                String pid = flakeEntry.getKey();
-                List<ResourceMapping.FlakeInstance> preds
-                        = resourceMapping
-                        .getPrecedingFlakes(pid);
-
-                for (ResourceMapping.FlakeInstance pred: preds) {
-                    int assignedPort = pred.getAssignedPort(pid);
-                    String host = pred.getHost();
-                    ContainerUtils.sendConnectCommand(
-                            pidToFidMap.get(pid),
-                            host, assignedPort);
-                }
-            }
-
-            //Step 3. Launch pellets.
+            //Step 2, previously Step 3. Launch pellets.
             LOGGER.info("Launching pellets.");
             for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
                     : flakes.entrySet()) {
@@ -292,6 +272,26 @@ public final class ContainerUtils {
                     );
                 }
 
+            }
+
+            //Step 3, previously Step 2. Send connect signals to the flakes.
+            //It has to connect to all the preceding signals.
+            LOGGER.info("Sending connect signals.");
+            for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
+                    : flakes.entrySet()) {
+
+                String pid = flakeEntry.getKey();
+                List<ResourceMapping.FlakeInstance> preds
+                        = resourceMapping
+                        .getPrecedingFlakes(pid);
+
+                for (ResourceMapping.FlakeInstance pred: preds) {
+                    int assignedPort = pred.getAssignedPort(pid);
+                    String host = pred.getHost();
+                    ContainerUtils.sendConnectCommand(
+                            pidToFidMap.get(pid),
+                            host, assignedPort);
+                }
             }
         }
     }
