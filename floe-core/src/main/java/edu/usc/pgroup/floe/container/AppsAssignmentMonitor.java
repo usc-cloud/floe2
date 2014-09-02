@@ -278,7 +278,14 @@ public class AppsAssignmentMonitor {
             }
 
             //Remove any flakes if required.
+            Map<String,
+                    ResourceMappingDelta.FlakeInstanceDelta> flakeDeltasRemoved
+                    = resourceMapping.getDelta().getRemovedFlakes(containerId);
 
+            if (flakeDeltasRemoved != null) {
+                ContainerUtils.terminateFlakes(resourceMapping,
+                        flakeDeltasRemoved);
+            }
         }
 
 

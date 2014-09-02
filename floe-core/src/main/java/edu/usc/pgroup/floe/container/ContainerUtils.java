@@ -203,6 +203,18 @@ public final class ContainerUtils {
     }
 
     /**
+     * sends a kill self command to the flake.
+     * @param fid flake id which has to be killed.
+     */
+    private static void sendKillFlakeCommand(final String fid) {
+        FlakeControlCommand command = new FlakeControlCommand(
+                FlakeControlCommand.Command.TERMINATE,
+                null
+        );
+        FlakeControlSignalSender.getInstance().send(fid, command);
+    }
+
+    /**
      * Launches flakes and initializes pellets based on the list of flakes
      * given.
      * @param resourceMapping current resource mapping as determined by the
@@ -351,9 +363,8 @@ public final class ContainerUtils {
                         for (int i = 0;
                              i < diffPellets;
                              i++) {
-                            ContainerUtils.sendSwitchAlternateCommand(
-                                    info.getFlakeId(),
-                                    activeAlternate
+                            ContainerUtils.sendDecrementPelletCommand(
+                                    info.getFlakeId()
                             );
                         }
                     }
@@ -426,5 +437,46 @@ public final class ContainerUtils {
             }
         }
         return pidToFidMap;
+    }
+
+    /**
+     * Removes the flakes from the container.
+     * @param resourceMapping current resource mapping as determined by the
+     *                        resource manager.
+     * @param flakeDeltas the updates to the flakes containing information
+     *                    about flakes that have to be removed.
+     */
+    public static void terminateFlakes(
+            final ResourceMapping resourceMapping,
+            final Map<String,
+                    ResourceMappingDelta.FlakeInstanceDelta> flakeDeltas
+    ) {
+        if (flakeDeltas != null && flakeDeltas.size() > 0) {
+            for (Map.Entry<String,
+                    ResourceMappingDelta.FlakeInstanceDelta> entry
+                    : flakeDeltas.entrySet()) {
+                final String pelletId = entry.getKey();
+                ResourceMappingDelta.FlakeInstanceDelta delta
+                        = entry.getValue();
+
+                try {
+                    FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory
+                                    .getDefaultPolicy(),
+                            new Callable<FlakeInfo>() {
+                                @Override
+                                public FlakeInfo call() throws Exception {
+                                    return FlakeMonitor.getInstance()
+                                            .getFlakeInfo(pelletId);
+                                }
+                            });
+                    LOGGER.info("Found Flake:{}. Sending terminate signal",
+                            info.getFlakeId());
+                    ContainerUtils.sendKillFlakeCommand(info.getFlakeId());
+                } catch (Exception e) {
+                    LOGGER.error("Could not kill flake.");
+                    return;
+                }
+            }
+        }
     }
 }

@@ -54,6 +54,12 @@ public class SystemSignal extends Signal {
      * Enum for system signal types.
      */
     public enum SystemSignalType {
+
+        /**
+         * System signal sent to a pellet instance to kill itself.
+         */
+        KillInstance,
+
         /**
          * System signal for switching alternates.
          */

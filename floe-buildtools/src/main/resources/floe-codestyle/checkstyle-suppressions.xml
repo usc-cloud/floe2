@@ -86,5 +86,7 @@
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.SimplifyBooleanReturnCheck"
               files="RetryNPolicy.java"/>
 
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.MagicNumberCheck"
+              files="FlakeMessageReceiver.java"/>
 
 </suppressions>

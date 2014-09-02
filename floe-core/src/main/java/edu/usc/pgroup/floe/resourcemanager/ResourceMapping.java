@@ -20,6 +20,8 @@ import edu.usc.pgroup.floe.container.ContainerInfo;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -33,6 +35,13 @@ import java.util.Map;
  * @author kumbhare
  */
 public class ResourceMapping implements Serializable {
+
+
+    /**
+     * Logger.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ResourceMapping.class);
 
     /**
      * Floe Application.
@@ -129,6 +138,52 @@ public class ResourceMapping implements Serializable {
         if (mappingDelta != null) {
             mappingDelta.flakeUpdated(fl,
                     ResourceMappingDelta.UpdateType.InstanceAdded);
+        }
+    }
+
+
+    /**
+     * Removes an instance of the pellet from the given container.
+     * @param pelletName the pellet name/id.
+     * @param flakeInstance A particular flake instance from which the
+     *                      instance should be removed.
+     */
+    public final void removePelletInstance(
+            final String pelletName,
+            final FlakeInstance flakeInstance) {
+
+        flakeInstance.removePelletInstance();
+        if (mappingDelta != null) {
+            mappingDelta.flakeUpdated(flakeInstance,
+                    ResourceMappingDelta.UpdateType.InstanceRemoved);
+        }
+
+        if (flakeInstance.getNumPelletInstances() == 0) {
+            ContainerInstance containerInstance = null;
+            if (!containerMap.containsKey(flakeInstance.getContainerId())) {
+                LOGGER.error("Invalid configuration. The Flake {} not found "
+                                + "on container {}",
+                        flakeInstance.getCorrespondingPelletId(),
+                        flakeInstance.getContainerId());
+                return;
+            } else {
+                containerInstance = containerMap.get(
+                        flakeInstance.getContainerId());
+            }
+
+            if (containerInstance != null) {
+                containerInstance.removeFlake(
+                        flakeInstance.getCorrespondingPelletId());
+                if (mappingDelta != null) {
+                    mappingDelta.flakeRemoved(flakeInstance);
+                }
+            } else {
+                LOGGER.error("Invalid configuration. The Flake {} not found "
+                                + "on container {}",
+                        flakeInstance.getCorrespondingPelletId(),
+                        flakeInstance.getContainerId());
+                return;
+            }
         }
     }
 
@@ -248,6 +303,21 @@ public class ResourceMapping implements Serializable {
         return mappingDelta;
     }
 
+
+    /**
+     * @param pelletName the pellet name/id.
+     * @return the list of flake instances running atleast one instance of
+     * the pellet.
+     */
+    public final List<FlakeInstance> getFlakeInstancesForPellet(
+            final String pelletName) {
+        if (pidFlakeMap.containsKey(pelletName)) {
+            return pidFlakeMap.get(pelletName);
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Internal container instance class.
      */
@@ -312,6 +382,24 @@ public class ResourceMapping implements Serializable {
                     containerInfo.getHostnameOrIpAddr(), flPorts);
             flakeMap.put(pid, flakeInstance);
             return  flakeInstance;
+        }
+
+
+        /**
+         * Removes the empty flake from the container.
+         * @param pid create flake for the given pid in the current container.
+         * @return true if the flake was empty and removed,
+         * false otherwise.
+         */
+        public final boolean removeFlake(final String pid) {
+            FlakeInstance flInstance = flakeMap.get(pid);
+            if (flInstance.getNumPelletInstances() > 0) {
+                LOGGER.warn("Flake not empty");
+                return false;
+            }
+
+            flakeMap.remove(pid);
+            return true;
         }
 
         /**
@@ -426,6 +514,19 @@ public class ResourceMapping implements Serializable {
             numPelletInstances++;
         }
 
+        /**
+         * Removes one pellet instance from the flake.
+         */
+        public final void removePelletInstance() {
+
+            if (numPelletInstances > 0) {
+                numPelletInstances--;
+            } else {
+                LOGGER.error("NumPeleltInstance: " + numPelletInstances);
+                throw new IllegalArgumentException("The flake has zero "
+                        + "pellets running on it.");
+            }
+        }
         /**
          * @return the host on which this flake runs (this can be used by
          * other flakeMap to connect to this flake).

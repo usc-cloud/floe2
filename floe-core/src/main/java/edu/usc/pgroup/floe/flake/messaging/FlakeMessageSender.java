@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.messaging;
+package edu.usc.pgroup.floe.flake.messaging;
 
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -72,7 +72,6 @@ public class FlakeMessageSender extends Thread {
         for (int port: ports) {
             new BackEnd(port).start();
         }
-
     }
 
     /**
@@ -103,19 +102,44 @@ public class FlakeMessageSender extends Thread {
         public void run() {
 
             ZMQ.Socket middleendreceiver  = ctx.socket(ZMQ.SUB);
+
             middleendreceiver.connect(
                     Utils.Constants.FLAKE_SENDER_MIDDLEEND_SOCK_PREFIX + fid);
+
             //dummy topic. THIS IS A PREFIX MATCH. USE THIS LATER FOR CUSTOM
             // DISPERSION STRATEGIES.
             middleendreceiver.subscribe("".getBytes());
 
+            ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
+            killsock.connect(
+                    Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
+                            + fid);
+            killsock.subscribe(Utils.Constants.PUB_ALL.getBytes());
 
             ZMQ.Socket backend  = ctx.socket(ZMQ.PUSH);
             backend.bind(
                   Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
                     + port);
 
-            ZMQ.proxy(middleendreceiver, backend, null);
+            ZMQ.Poller pollerItems = new ZMQ.Poller(2);
+            pollerItems.register(middleendreceiver, ZMQ.Poller.POLLIN);
+            pollerItems.register(killsock, ZMQ.Poller.POLLIN);
+
+            while (!Thread.currentThread().isInterrupted()) {
+                byte[] message;
+                pollerItems.poll();
+                if (pollerItems.pollin(0)) {
+                    message = middleendreceiver.recv();
+                    backend.send(message, 0);
+                } else if (pollerItems.pollin(1)) {
+                    break;
+                }
+            }
+            //ZMQ.proxy(middleendreceiver, backend, null);
+            LOGGER.warn("Closing flake backend sockets");
+            middleendreceiver.close();
+            backend.close();
+            killsock.close();
         }
     }
 
@@ -141,7 +165,31 @@ public class FlakeMessageSender extends Thread {
                     Utils.Constants.FLAKE_SENDER_MIDDLEEND_SOCK_PREFIX
                             + fid);
 
-            ZMQ.proxy(frontend, middleend, null);
+
+            ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
+            killsock.connect(
+                    Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
+                            + fid);
+            killsock.subscribe(Utils.Constants.PUB_ALL.getBytes());
+
+            ZMQ.Poller pollerItems = new ZMQ.Poller(2);
+            pollerItems.register(frontend, ZMQ.Poller.POLLIN);
+            pollerItems.register(killsock, ZMQ.Poller.POLLIN);
+
+            while (!Thread.currentThread().isInterrupted()) {
+                byte[] message;
+                pollerItems.poll();
+                if (pollerItems.pollin(0)) {
+                    message = frontend.recv();
+                    middleend.send(message, 0);
+                } else if (pollerItems.pollin(1)) {
+                    break;
+                }
+            }
+            LOGGER.warn("Closing flake middleend sockets");
+            frontend.close();
+            middleend.close();
+            killsock.close();
         }
     }
 }

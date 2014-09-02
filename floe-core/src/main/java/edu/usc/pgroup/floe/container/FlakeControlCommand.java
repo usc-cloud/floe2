@@ -52,7 +52,11 @@ public class FlakeControlCommand implements Serializable {
         /**
          * Pellet signal command.
          */
-        PELLET_SIGNAL
+        PELLET_SIGNAL,
+        /**
+         * Command to terminate self.
+         */
+        TERMINATE
     }
 
     /**

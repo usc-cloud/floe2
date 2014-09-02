@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.messaging;
+package edu.usc.pgroup.floe.flake.messaging;
 
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.Flake;
@@ -77,31 +77,38 @@ public class FlakeMessageReceiver extends Thread {
         LOGGER.info("Starting backend inproc socket to communicate with "
                 + "pellets at: "
                 + Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
-                + flake.getId());
+                + flake.getFlakeId());
         ZMQ.Socket backend = ctx.socket(ZMQ.PUSH);
         backend.bind(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
-                + flake.getId());
+                + flake.getFlakeId());
 
 
         LOGGER.info("Starting inproc socket to send signals to pellets: "
                 + Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
-                + flake.getId());
+                + flake.getFlakeId());
         ZMQ.Socket signal = ctx.socket(ZMQ.PUB);
         signal.bind(Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
-                + flake.getId());
+                + flake.getFlakeId());
 
 
 
         LOGGER.info("Starting backend ipc socket for control channel at: "
                 + Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
-                + flake.getId());
+                + flake.getFlakeId());
         ZMQ.Socket controlSocket = ctx.socket(ZMQ.REP);
         controlSocket.bind(Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
-                + flake.getId());
+                + flake.getFlakeId());
 
-        ZMQ.Poller pollerItems = new ZMQ.Poller(2);
+        ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
+        killsock.connect(
+                Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
+                        + flake.getFlakeId());
+        killsock.subscribe(Utils.Constants.PUB_ALL.getBytes());
+
+        ZMQ.Poller pollerItems = new ZMQ.Poller(3);
         pollerItems.register(frontend, ZMQ.Poller.POLLIN);
         pollerItems.register(controlSocket, ZMQ.Poller.POLLIN);
+        pollerItems.register(killsock, ZMQ.Poller.POLLIN);
 
         while (!Thread.currentThread().isInterrupted()) {
             byte[] message;
@@ -134,26 +141,34 @@ public class FlakeMessageReceiver extends Thread {
                         frontend.disconnect(disconnectstr);
                         break;
                     case PELLET_SIGNAL:
-                        LOGGER.info("Received signal for: " + flake.getId());
+                        LOGGER.info("Received signal for: "
+                                + flake.getFlakeId());
+                        signal.sendMore(Utils.Constants.PUB_ALL);
                         signal.send((byte[]) command.getData(), 0);
                         break;
                     case SWITCH_ALTERNATE:
                         LOGGER.info("Switching alternate for: "
-                                + flake.getId());
+                                + flake.getFlakeId());
                         SystemSignal systemSignal = new SystemSignal(
                                 flake.getAppName(),
                                 flake.getPelletId(),
                                 SystemSignal.SystemSignalType.SwitchAlternate,
                                 (byte[]) command.getData()
                         );
+                        signal.sendMore(Utils.Constants.PUB_ALL);
                         signal.send(Utils.serialize(systemSignal), 0);
+                        break;
                     default:
-                        result = flake.processControlSignal(command);
+                        result = flake.processControlSignal(command, signal);
                 }
-
                 controlSocket.send(result, 0);
+            } else if (pollerItems.pollin(2)) {
+
+                break;
             }
         }
+        LOGGER.warn("Closing flake receiver sockets");
+        frontend.close();
         controlSocket.close();
         signal.close();
         backend.close();

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * @author kumbhare
@@ -121,23 +122,50 @@ public class ClusterResourceManager extends ResourceManager {
                                  final ScaleDirection direction,
                                  final String pelletName, final int count) {
 
-        List<ContainerInfo> containers = getAvailableContainersWithRetry();
-
-        if (containers == null || containers.size() <= 0) {
-            LOGGER.error("Error occurred while acquiring and all attempts to "
-                    + "retry have failed.");
-            return null;
-        }
-
-        //TODO: Order containers w.r.t availability.
-
-        int cindex = 0;
-
         current.resetDelta();
-        for (int i = 0; i < count; i++) {
-            current.createNewInstance(pelletName, containers.get(cindex++));
-            if (cindex == containers.size()) {
-                cindex = 0;
+
+        if (direction == ScaleDirection.up) {
+            List<ContainerInfo> containers = getAvailableContainersWithRetry();
+
+            if (containers == null || containers.size() <= 0) {
+                LOGGER.error("Error occurred while acquiring and all attempts"
+                        + "to retry have failed.");
+                return null;
+            }
+
+            //TODO: Order containers w.r.t availability.
+
+            int cindex = new Random().nextInt(containers.size());
+
+            //Add to containers in round robin fashion.
+            for (int i = 0; i < count; i++) {
+                current.createNewInstance(pelletName, containers.get(cindex++));
+                if (cindex == containers.size()) {
+                    cindex = 0;
+                }
+            }
+        } else if (direction == ScaleDirection.down) {
+
+            List<ResourceMapping.FlakeInstance> flakes
+                    = current.getFlakeInstancesForPellet(pelletName);
+
+            if (flakes == null || flakes.size() <= 0) {
+                LOGGER.error("No flakes executing the given pellet exist.");
+                return null;
+            }
+
+            //TODO: Order containers w.r.t availability.
+
+            //Randomly select a flake to remove instance.
+            int cindex = new Random().nextInt(flakes.size());
+
+            //Remove from containers in round robin fashion.
+            for (int i = 0; i < count; i++) {
+                current.removePelletInstance(pelletName,
+                        flakes.get(cindex++));
+                if (cindex == flakes.size()) {
+                    cindex = 0;
+                }
             }
         }
 

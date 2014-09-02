@@ -19,14 +19,17 @@ package edu.usc.pgroup.floe.flake;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
-import edu.usc.pgroup.floe.messaging.FlakeMessageReceiver;
-import edu.usc.pgroup.floe.messaging.FlakeMessageSender;
+import edu.usc.pgroup.floe.flake.messaging.FlakeMessageReceiver;
+import edu.usc.pgroup.floe.flake.messaging.FlakeMessageSender;
+import edu.usc.pgroup.floe.utils.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 
 /**
@@ -97,6 +100,15 @@ public class Flake {
      */
     private final String pelletId;
 
+    /**
+     * the kill socket used while terminating the flake.
+     */
+    private ZMQ.Socket killsock;
+
+    /**
+     * List of pellet instances running on the flake.
+     */
+    private final List<PelletExecutor> runningPelletInstances;
 
     /**
      * Constructor.
@@ -126,12 +138,13 @@ public class Flake {
         this.appJar = jar;
         this.sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
         this.pelletId = pid;
+        this.runningPelletInstances = new ArrayList<>();
     }
 
     /**
      * @return the flake's id.
      */
-    public final String getId() {
+    public final String getFlakeId() {
         return flakeId;
     }
 
@@ -149,17 +162,6 @@ public class Flake {
     public final void start() {
         LOGGER.info("Initializing flake.");
         initializeFlake();
-
-        LOGGER.info("Setting up Flake Receiver");
-        startFlakeReciever();
-
-        LOGGER.info("Start the command receiver");
-        startFlakeSender();
-
-        LOGGER.info("Scheduling flake heartbeat.");
-        scheduleHeartBeat(new FlakeHeartbeatTask(flakeInfo, sharedContext));
-
-        LOGGER.info("flake Started: {}.", getId());
     }
 
     /**
@@ -176,8 +178,6 @@ public class Flake {
     private void startFlakeSender() {
         flakeSender = new FlakeMessageSender(sharedContext, flakeId, ports);
         flakeSender.start();
-        /*receiverThread = new Thread(flakeRecevier);
-        receiverThread.start();*/
     }
 
     /**
@@ -187,7 +187,46 @@ public class Flake {
     private void initializeFlake() {
         flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
-        //Load the given jar into class path.
+
+        LOGGER.info("Setting up Flake Receiver");
+        startFlakeReciever();
+
+        LOGGER.info("Start the command receiver");
+        startFlakeSender();
+
+        LOGGER.info("Scheduling flake heartbeat.");
+        scheduleHeartBeat(new FlakeHeartbeatTask(flakeInfo, sharedContext));
+
+        LOGGER.info("Terminating Flake.");
+        killsock  = sharedContext.socket(ZMQ.PUB);
+        killsock.bind(
+                Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
+                        + flakeId);
+
+        LOGGER.info("flake Started: {}.", getFlakeId());
+    }
+
+    /**
+     * Terminates all the relevant threads of the flake.
+     */
+    private void terminateFlake() {
+        if (runningPelletInstances.size() > 0) {
+            LOGGER.error("Cannot terminate. Pellets are running. Use "
+                    + "Decrement Pellet command to kill all pellet "
+                    + "instances.");
+            return;
+        }
+
+        LOGGER.info("Sending Kill Signal to receiver/sender Flake.");
+        byte[] dummy = new byte[]{1};
+        killsock.sendMore(Utils.Constants.PUB_ALL);
+        killsock.send(dummy, 0);
+
+        //stop heartbeat.
+        heartBeatTimer.cancel();
+
+        //close kill sock.
+        killsock.close();
     }
 
     /**
@@ -217,8 +256,20 @@ public class Flake {
      */
     public final void incrementPellet(final byte[] p) {
         LOGGER.info("Starting pellet");
-        new PelletExecutor(p, appName, appJar, flakeId,
-                sharedContext).start();
+        int nextPEIdx = 0;
+
+        if (runningPelletInstances.size() > 0) {
+            nextPEIdx = runningPelletInstances.get(
+                    runningPelletInstances.size() - 1)
+                    .getPelletInstanceIndex() + 1;
+        }
+
+        PelletExecutor pe = new PelletExecutor(nextPEIdx, p, appName, appJar,
+                flakeId,
+                sharedContext);
+
+        runningPelletInstances.add(pe);
+        pe.start();
     }
 
     /**
@@ -238,23 +289,44 @@ public class Flake {
     /**
      * Process control signal received from the container.
      * @param command Flake Command.
+     * @param signal Signal socket to be used to send signals to the pellet
+     *               instances. //ugly.. :( find a better way.
      * @return the result after processing the command.
      */
     public final byte[] processControlSignal(
-            final FlakeControlCommand command) {
+            final FlakeControlCommand command,
+            final ZMQ.Socket signal) {
 
         LOGGER.warn("Processing command: " + command);
         switch (command.getCommand()) {
             case INCREMENT_PELLET:
                 byte[] bpellet = (byte[]) command.getData();
-                LOGGER.info("CREATING PELLET: on " + getId());
+                LOGGER.info("CREATING PELLET: on " + getFlakeId());
                 incrementPellet(bpellet);
                 break;
             case DECREMENT_PELLET:
                 String dpid = (String) command.getData();
                 LOGGER.info("REMOVING PELLET: " + dpid + " on "
-                        + getId());
+                        + getFlakeId());
+                if (runningPelletInstances.size() > 0) {
+                    //NEED TO DO ERROR HANDLING HERE.
+                    PelletExecutor insToRemove
+                            = runningPelletInstances.remove(0);
+                    signal.sendMore(insToRemove.getPelletInstanceId());
+                    SystemSignal systemSignal = new SystemSignal(appName,
+                            pelletId,
+                            SystemSignal.SystemSignalType.KillInstance,
+                            null);
+                    signal.send(Utils.serialize(systemSignal), 0);
+                } else {
+                    LOGGER.error("Flake {} does not have any running pellet "
+                            + "instances.", getFlakeId());
+                }
                 //decrementPellet();
+                break;
+            case TERMINATE:
+                //No pellet should be running
+                terminateFlake();
                 break;
             default:
                 LOGGER.warn("Unrecognized command: " + command);

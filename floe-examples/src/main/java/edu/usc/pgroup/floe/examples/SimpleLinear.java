@@ -47,7 +47,7 @@ public final class SimpleLinear {
 
         builder.addPellet("word", new WordPellet(words)).setParallelism(1);
         builder.addPellet("print", new PrintPellet())
-                .subscribe("word").setParallelism(1);
+                .subscribe("word").setParallelism(2 * 2);
 
         try {
             AppSubmitter.submitApp("helloworld", builder.generateApp());

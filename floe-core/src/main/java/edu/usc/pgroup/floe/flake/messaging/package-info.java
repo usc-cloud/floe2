@@ -19,4 +19,4 @@
  * messaging.
  * @author kumbhare
  */
-package edu.usc.pgroup.floe.messaging;
+package edu.usc.pgroup.floe.flake.messaging;

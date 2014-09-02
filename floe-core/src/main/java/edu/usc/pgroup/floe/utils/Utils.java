@@ -325,6 +325,14 @@ public final class Utils {
         public static final String FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
                 = "ipc://flake-control-";
 
+
+        /**
+         * Flake receiver Control socket prefix (this is suffixed by flake id).
+         * Used for receiving control signals from the container.
+         */
+        public static final String FLAKE_KILL_CONTROL_SOCK_PREFIX
+                = "inproc://flake-control-kill-";
+
         /**
          * Flake sender front-end prefix (this is suffixed by flake id).
          * Used for receiving data messages from all pellet instances.
@@ -373,5 +381,11 @@ public final class Utils {
          * Name of the default alternate.
          */
         public static final String DEFAULT_ALTERNATE_NAME = "default_alternate";
+
+        /**
+         * Name of the default publisher key to send messages to all
+         * subscribers.
+         */
+        public static final String PUB_ALL = "all";
     }
 }
