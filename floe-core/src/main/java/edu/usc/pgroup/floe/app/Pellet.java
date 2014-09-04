@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.app;
 
 import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -57,4 +58,10 @@ public interface Pellet extends Serializable {
      * Or when the Pellet instance is scaled down.
      */
     void teardown();
+
+    /**
+     * @return The names of the streams to be used later during emitting
+     * messages.
+     */
+    List<String> getOutputStreamNames();
 }

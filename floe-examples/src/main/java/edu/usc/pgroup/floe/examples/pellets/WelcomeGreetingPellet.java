@@ -16,8 +16,8 @@
 
 package edu.usc.pgroup.floe.examples.pellets;
 
+import edu.usc.pgroup.floe.app.BasePellet;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.SignallablePellet;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.app.signals.Signal;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author kumbhare
  */
-public class WelcomeGreetingPellet implements SignallablePellet {
+public class WelcomeGreetingPellet extends BasePellet {
 
 
     /**
@@ -73,7 +73,7 @@ public class WelcomeGreetingPellet implements SignallablePellet {
     @Override
     public final void execute(final Tuple t, final Emitter emitter) {
         if (t == null) {
-            LOGGER.info("Dummy execute PRINT.");
+            LOGGER.info("Dummy execute Welcome.");
         } else {
             LOGGER.info("Welcome " + t.getDummy());
         }

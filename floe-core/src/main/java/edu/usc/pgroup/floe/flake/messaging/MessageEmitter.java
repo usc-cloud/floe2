@@ -86,7 +86,17 @@ public class MessageEmitter implements Emitter {
      */
     @Override
     public final void emit(final Tuple message) {
+        emit(Utils.Constants.DEFAULT_STREAM_NAME, message);
+    }
+
+    /**
+     * To emmit a single tuple to the given output stream.
+     * @param streamName name of the stream
+     * @param message a tuple message to emit
+     */
+    public final void emit(final String streamName, final Tuple message) {
         byte[] serialized = serializer.serialize(message);
+        this.socket.sendMore(streamName);
         this.socket.send(serialized, 0);
     }
 }

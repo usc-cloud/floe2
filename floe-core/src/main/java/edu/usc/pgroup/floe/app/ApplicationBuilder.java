@@ -25,6 +25,7 @@ import edu.usc.pgroup.floe.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,19 +53,15 @@ public final class ApplicationBuilder {
      * streams etc.)
      */
     public PelletBuilder addPellet(final String pelletId, final Pellet p) {
-        TPellet tPellet = new TPellet();
+
+        TPellet tPellet = initializePellet(pelletId);
+
         TAlternate alternate = new TAlternate();
         alternate.set_serializedPellet(Utils.serialize(p));
         alternate.set_value(1.0);
-
-        tPellet.set_alternates(new HashMap<String, TAlternate>());
         tPellet.get_alternates().put(Utils.Constants.DEFAULT_ALTERNATE_NAME,
                 alternate);
         tPellet.set_activeAlternate(Utils.Constants.DEFAULT_ALTERNATE_NAME);
-
-        tPellet.set_id(pelletId);
-        tPellet.set_incomingEdges(new ArrayList<TEdge>());
-        tPellet.set_outgoingEdges(new ArrayList<TEdge>());
 
         pellets.put(pelletId, tPellet);
         return new PelletBuilder(tPellet);
@@ -78,16 +75,27 @@ public final class ApplicationBuilder {
      * to streams etc.) and add alternates as required.
      */
     public DynamicPelletBuilder addDynamicPellet(final String pelletId) {
-        TPellet tPellet = new TPellet();
 
-        tPellet.set_alternates(new HashMap<String, TAlternate>());
+        TPellet tPellet = initializePellet(pelletId);
+        pellets.put(pelletId, tPellet);
+        return new DynamicPelletBuilder(tPellet);
+    }
+
+    /**
+     * Initializes a new TPellet.
+     * @param pelletId pellet name/id.
+     * @return a new initialized TPellet object.
+     */
+    private TPellet initializePellet(final String pelletId) {
+        TPellet tPellet = new TPellet();
 
         tPellet.set_id(pelletId);
         tPellet.set_incomingEdges(new ArrayList<TEdge>());
-        tPellet.set_outgoingEdges(new ArrayList<TEdge>());
-
-        pellets.put(pelletId, tPellet);
-        return new DynamicPelletBuilder(tPellet);
+        tPellet.set_outputStreamNames(new ArrayList<String>());
+        tPellet.set_outgoingEdgesWithSubscribedStreams(
+                new HashMap<TEdge, List<String>>());
+        tPellet.set_alternates(new HashMap<String, TAlternate>());
+        return tPellet;
     }
 
     /**
@@ -129,21 +137,49 @@ public final class ApplicationBuilder {
         }
 
         /**
-         * Subscribe to a stream.
+         * Subscribe to the default stream.
          * @param inputPelletName    name of the preceding pellet.
          * @return The builder pattern's object to further configure the pellet.
          */
         public final PelletBuilder subscribe(final String inputPelletName) {
-            TPellet inputPellet = pellets.get(inputPelletName);
-            //TEdge edge = new TEdge(pellet.get_id(), TChannelType.roundrobin);
-            TEdge edge = new TEdge(inputPellet.get_id(), pellet.get_id(),
-                    TChannelType.roundrobin);
-            pellet.get_incomingEdges().add(edge);
-            inputPellet.get_outgoingEdges().add(edge);
-            //inputPellet.get_incomingEdges().add(edge);
+            subscribe(inputPelletName, Utils.Constants.DEFAULT_STREAM_NAME);
             return this;
         }
 
+        /**
+         * Subscribe to a stream.
+         * @param inputPelletName name of the preceding pellet.
+         * @param outputStreamName the name of the stream to subscribe.
+         * @return The builder pattern's object to further configure the pellet.
+         */
+        public final PelletBuilder subscribe(
+                final String inputPelletName,
+                final String... outputStreamName) {
+
+            TPellet inputPellet = pellets.get(inputPelletName);
+
+            TEdge edge = new TEdge(inputPellet.get_id(),
+                    pellet.get_id(),
+                    TChannelType.roundrobin);
+            pellet.get_incomingEdges().add(edge);
+
+            List<String> subscribedStreams = new ArrayList<>();
+            if (outputStreamName != null && outputStreamName.length > 0) {
+                for (String osn: outputStreamName) {
+                    if (osn == null) {
+                        continue;
+                    }
+
+                    subscribedStreams.add(osn);
+                }
+            } else {
+                subscribedStreams.add(Utils.Constants.DEFAULT_STREAM_NAME);
+            }
+
+            inputPellet.get_outgoingEdgesWithSubscribedStreams().put(edge,
+                    subscribedStreams);
+            return this;
+        }
 
         /**
          * Set the parallelism for the pellet (across the cluster). This

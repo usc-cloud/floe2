@@ -38,10 +38,11 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
 
   private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField INCOMING_EDGES_FIELD_DESC = new org.apache.thrift.protocol.TField("incomingEdges", org.apache.thrift.protocol.TType.LIST, (short)2);
-  private static final org.apache.thrift.protocol.TField OUTGOING_EDGES_FIELD_DESC = new org.apache.thrift.protocol.TField("outgoingEdges", org.apache.thrift.protocol.TType.LIST, (short)3);
-  private static final org.apache.thrift.protocol.TField ALTERNATES_FIELD_DESC = new org.apache.thrift.protocol.TField("alternates", org.apache.thrift.protocol.TType.MAP, (short)4);
-  private static final org.apache.thrift.protocol.TField ACTIVE_ALTERNATE_FIELD_DESC = new org.apache.thrift.protocol.TField("activeAlternate", org.apache.thrift.protocol.TType.STRING, (short)5);
-  private static final org.apache.thrift.protocol.TField PARALLELISM_FIELD_DESC = new org.apache.thrift.protocol.TField("parallelism", org.apache.thrift.protocol.TType.I32, (short)6);
+  private static final org.apache.thrift.protocol.TField OUTPUT_STREAM_NAMES_FIELD_DESC = new org.apache.thrift.protocol.TField("outputStreamNames", org.apache.thrift.protocol.TType.LIST, (short)3);
+  private static final org.apache.thrift.protocol.TField OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS_FIELD_DESC = new org.apache.thrift.protocol.TField("outgoingEdgesWithSubscribedStreams", org.apache.thrift.protocol.TType.MAP, (short)4);
+  private static final org.apache.thrift.protocol.TField ALTERNATES_FIELD_DESC = new org.apache.thrift.protocol.TField("alternates", org.apache.thrift.protocol.TType.MAP, (short)5);
+  private static final org.apache.thrift.protocol.TField ACTIVE_ALTERNATE_FIELD_DESC = new org.apache.thrift.protocol.TField("activeAlternate", org.apache.thrift.protocol.TType.STRING, (short)6);
+  private static final org.apache.thrift.protocol.TField PARALLELISM_FIELD_DESC = new org.apache.thrift.protocol.TField("parallelism", org.apache.thrift.protocol.TType.I32, (short)7);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -51,7 +52,8 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
 
   private String id; // required
   private List<TEdge> incomingEdges; // required
-  private List<TEdge> outgoingEdges; // required
+  private List<String> outputStreamNames; // required
+  private Map<TEdge,List<String>> outgoingEdgesWithSubscribedStreams; // required
   private Map<String,TAlternate> alternates; // required
   private String activeAlternate; // required
   private int parallelism; // optional
@@ -60,10 +62,11 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ID((short)1, "id"),
     INCOMING_EDGES((short)2, "incomingEdges"),
-    OUTGOING_EDGES((short)3, "outgoingEdges"),
-    ALTERNATES((short)4, "alternates"),
-    ACTIVE_ALTERNATE((short)5, "activeAlternate"),
-    PARALLELISM((short)6, "parallelism");
+    OUTPUT_STREAM_NAMES((short)3, "outputStreamNames"),
+    OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS((short)4, "outgoingEdgesWithSubscribedStreams"),
+    ALTERNATES((short)5, "alternates"),
+    ACTIVE_ALTERNATE((short)6, "activeAlternate"),
+    PARALLELISM((short)7, "parallelism");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -82,13 +85,15 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
           return ID;
         case 2: // INCOMING_EDGES
           return INCOMING_EDGES;
-        case 3: // OUTGOING_EDGES
-          return OUTGOING_EDGES;
-        case 4: // ALTERNATES
+        case 3: // OUTPUT_STREAM_NAMES
+          return OUTPUT_STREAM_NAMES;
+        case 4: // OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS
+          return OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS;
+        case 5: // ALTERNATES
           return ALTERNATES;
-        case 5: // ACTIVE_ALTERNATE
+        case 6: // ACTIVE_ALTERNATE
           return ACTIVE_ALTERNATE;
-        case 6: // PARALLELISM
+        case 7: // PARALLELISM
           return PARALLELISM;
         default:
           return null;
@@ -141,9 +146,14 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     tmpMap.put(_Fields.INCOMING_EDGES, new org.apache.thrift.meta_data.FieldMetaData("incomingEdges", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TEdge.class))));
-    tmpMap.put(_Fields.OUTGOING_EDGES, new org.apache.thrift.meta_data.FieldMetaData("outgoingEdges", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.OUTPUT_STREAM_NAMES, new org.apache.thrift.meta_data.FieldMetaData("outputStreamNames", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TEdge.class))));
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+    tmpMap.put(_Fields.OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS, new org.apache.thrift.meta_data.FieldMetaData("outgoingEdgesWithSubscribedStreams", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TEdge.class), 
+            new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+                new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)))));
     tmpMap.put(_Fields.ALTERNATES, new org.apache.thrift.meta_data.FieldMetaData("alternates", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
@@ -162,14 +172,16 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
   public TPellet(
     String id,
     List<TEdge> incomingEdges,
-    List<TEdge> outgoingEdges,
+    List<String> outputStreamNames,
+    Map<TEdge,List<String>> outgoingEdgesWithSubscribedStreams,
     Map<String,TAlternate> alternates,
     String activeAlternate)
   {
     this();
     this.id = id;
     this.incomingEdges = incomingEdges;
-    this.outgoingEdges = outgoingEdges;
+    this.outputStreamNames = outputStreamNames;
+    this.outgoingEdgesWithSubscribedStreams = outgoingEdgesWithSubscribedStreams;
     this.alternates = alternates;
     this.activeAlternate = activeAlternate;
   }
@@ -189,12 +201,24 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       }
       this.incomingEdges = __this__incomingEdges;
     }
-    if (other.is_set_outgoingEdges()) {
-      List<TEdge> __this__outgoingEdges = new ArrayList<TEdge>(other.outgoingEdges.size());
-      for (TEdge other_element : other.outgoingEdges) {
-        __this__outgoingEdges.add(new TEdge(other_element));
+    if (other.is_set_outputStreamNames()) {
+      List<String> __this__outputStreamNames = new ArrayList<String>(other.outputStreamNames);
+      this.outputStreamNames = __this__outputStreamNames;
+    }
+    if (other.is_set_outgoingEdgesWithSubscribedStreams()) {
+      Map<TEdge,List<String>> __this__outgoingEdgesWithSubscribedStreams = new HashMap<TEdge,List<String>>(other.outgoingEdgesWithSubscribedStreams.size());
+      for (Map.Entry<TEdge, List<String>> other_element : other.outgoingEdgesWithSubscribedStreams.entrySet()) {
+
+        TEdge other_element_key = other_element.getKey();
+        List<String> other_element_value = other_element.getValue();
+
+        TEdge __this__outgoingEdgesWithSubscribedStreams_copy_key = new TEdge(other_element_key);
+
+        List<String> __this__outgoingEdgesWithSubscribedStreams_copy_value = new ArrayList<String>(other_element_value);
+
+        __this__outgoingEdgesWithSubscribedStreams.put(__this__outgoingEdgesWithSubscribedStreams_copy_key, __this__outgoingEdgesWithSubscribedStreams_copy_value);
       }
-      this.outgoingEdges = __this__outgoingEdges;
+      this.outgoingEdgesWithSubscribedStreams = __this__outgoingEdgesWithSubscribedStreams;
     }
     if (other.is_set_alternates()) {
       Map<String,TAlternate> __this__alternates = new HashMap<String,TAlternate>(other.alternates.size());
@@ -225,7 +249,8 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
   public void clear() {
     this.id = null;
     this.incomingEdges = null;
-    this.outgoingEdges = null;
+    this.outputStreamNames = null;
+    this.outgoingEdgesWithSubscribedStreams = null;
     this.alternates = null;
     this.activeAlternate = null;
     set_parallelism_isSet(false);
@@ -293,41 +318,75 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     }
   }
 
-  public int get_outgoingEdges_size() {
-    return (this.outgoingEdges == null) ? 0 : this.outgoingEdges.size();
+  public int get_outputStreamNames_size() {
+    return (this.outputStreamNames == null) ? 0 : this.outputStreamNames.size();
   }
 
-  public java.util.Iterator<TEdge> get_outgoingEdges_iterator() {
-    return (this.outgoingEdges == null) ? null : this.outgoingEdges.iterator();
+  public java.util.Iterator<String> get_outputStreamNames_iterator() {
+    return (this.outputStreamNames == null) ? null : this.outputStreamNames.iterator();
   }
 
-  public void add_to_outgoingEdges(TEdge elem) {
-    if (this.outgoingEdges == null) {
-      this.outgoingEdges = new ArrayList<TEdge>();
+  public void add_to_outputStreamNames(String elem) {
+    if (this.outputStreamNames == null) {
+      this.outputStreamNames = new ArrayList<String>();
     }
-    this.outgoingEdges.add(elem);
+    this.outputStreamNames.add(elem);
   }
 
-  public List<TEdge> get_outgoingEdges() {
-    return this.outgoingEdges;
+  public List<String> get_outputStreamNames() {
+    return this.outputStreamNames;
   }
 
-  public void set_outgoingEdges(List<TEdge> outgoingEdges) {
-    this.outgoingEdges = outgoingEdges;
+  public void set_outputStreamNames(List<String> outputStreamNames) {
+    this.outputStreamNames = outputStreamNames;
   }
 
-  public void unset_outgoingEdges() {
-    this.outgoingEdges = null;
+  public void unset_outputStreamNames() {
+    this.outputStreamNames = null;
   }
 
-  /** Returns true if field outgoingEdges is set (has been assigned a value) and false otherwise */
-  public boolean is_set_outgoingEdges() {
-    return this.outgoingEdges != null;
+  /** Returns true if field outputStreamNames is set (has been assigned a value) and false otherwise */
+  public boolean is_set_outputStreamNames() {
+    return this.outputStreamNames != null;
   }
 
-  public void set_outgoingEdges_isSet(boolean value) {
+  public void set_outputStreamNames_isSet(boolean value) {
     if (!value) {
-      this.outgoingEdges = null;
+      this.outputStreamNames = null;
+    }
+  }
+
+  public int get_outgoingEdgesWithSubscribedStreams_size() {
+    return (this.outgoingEdgesWithSubscribedStreams == null) ? 0 : this.outgoingEdgesWithSubscribedStreams.size();
+  }
+
+  public void put_to_outgoingEdgesWithSubscribedStreams(TEdge key, List<String> val) {
+    if (this.outgoingEdgesWithSubscribedStreams == null) {
+      this.outgoingEdgesWithSubscribedStreams = new HashMap<TEdge,List<String>>();
+    }
+    this.outgoingEdgesWithSubscribedStreams.put(key, val);
+  }
+
+  public Map<TEdge,List<String>> get_outgoingEdgesWithSubscribedStreams() {
+    return this.outgoingEdgesWithSubscribedStreams;
+  }
+
+  public void set_outgoingEdgesWithSubscribedStreams(Map<TEdge,List<String>> outgoingEdgesWithSubscribedStreams) {
+    this.outgoingEdgesWithSubscribedStreams = outgoingEdgesWithSubscribedStreams;
+  }
+
+  public void unset_outgoingEdgesWithSubscribedStreams() {
+    this.outgoingEdgesWithSubscribedStreams = null;
+  }
+
+  /** Returns true if field outgoingEdgesWithSubscribedStreams is set (has been assigned a value) and false otherwise */
+  public boolean is_set_outgoingEdgesWithSubscribedStreams() {
+    return this.outgoingEdgesWithSubscribedStreams != null;
+  }
+
+  public void set_outgoingEdgesWithSubscribedStreams_isSet(boolean value) {
+    if (!value) {
+      this.outgoingEdgesWithSubscribedStreams = null;
     }
   }
 
@@ -428,11 +487,19 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       }
       break;
 
-    case OUTGOING_EDGES:
+    case OUTPUT_STREAM_NAMES:
       if (value == null) {
-        unset_outgoingEdges();
+        unset_outputStreamNames();
       } else {
-        set_outgoingEdges((List<TEdge>)value);
+        set_outputStreamNames((List<String>)value);
+      }
+      break;
+
+    case OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS:
+      if (value == null) {
+        unset_outgoingEdgesWithSubscribedStreams();
+      } else {
+        set_outgoingEdgesWithSubscribedStreams((Map<TEdge,List<String>>)value);
       }
       break;
 
@@ -471,8 +538,11 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     case INCOMING_EDGES:
       return get_incomingEdges();
 
-    case OUTGOING_EDGES:
-      return get_outgoingEdges();
+    case OUTPUT_STREAM_NAMES:
+      return get_outputStreamNames();
+
+    case OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS:
+      return get_outgoingEdgesWithSubscribedStreams();
 
     case ALTERNATES:
       return get_alternates();
@@ -498,8 +568,10 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       return is_set_id();
     case INCOMING_EDGES:
       return is_set_incomingEdges();
-    case OUTGOING_EDGES:
-      return is_set_outgoingEdges();
+    case OUTPUT_STREAM_NAMES:
+      return is_set_outputStreamNames();
+    case OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS:
+      return is_set_outgoingEdgesWithSubscribedStreams();
     case ALTERNATES:
       return is_set_alternates();
     case ACTIVE_ALTERNATE:
@@ -541,12 +613,21 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
         return false;
     }
 
-    boolean this_present_outgoingEdges = true && this.is_set_outgoingEdges();
-    boolean that_present_outgoingEdges = true && that.is_set_outgoingEdges();
-    if (this_present_outgoingEdges || that_present_outgoingEdges) {
-      if (!(this_present_outgoingEdges && that_present_outgoingEdges))
+    boolean this_present_outputStreamNames = true && this.is_set_outputStreamNames();
+    boolean that_present_outputStreamNames = true && that.is_set_outputStreamNames();
+    if (this_present_outputStreamNames || that_present_outputStreamNames) {
+      if (!(this_present_outputStreamNames && that_present_outputStreamNames))
         return false;
-      if (!this.outgoingEdges.equals(that.outgoingEdges))
+      if (!this.outputStreamNames.equals(that.outputStreamNames))
+        return false;
+    }
+
+    boolean this_present_outgoingEdgesWithSubscribedStreams = true && this.is_set_outgoingEdgesWithSubscribedStreams();
+    boolean that_present_outgoingEdgesWithSubscribedStreams = true && that.is_set_outgoingEdgesWithSubscribedStreams();
+    if (this_present_outgoingEdgesWithSubscribedStreams || that_present_outgoingEdgesWithSubscribedStreams) {
+      if (!(this_present_outgoingEdgesWithSubscribedStreams && that_present_outgoingEdgesWithSubscribedStreams))
+        return false;
+      if (!this.outgoingEdgesWithSubscribedStreams.equals(that.outgoingEdgesWithSubscribedStreams))
         return false;
     }
 
@@ -594,10 +675,15 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     if (present_incomingEdges)
       builder.append(incomingEdges);
 
-    boolean present_outgoingEdges = true && (is_set_outgoingEdges());
-    builder.append(present_outgoingEdges);
-    if (present_outgoingEdges)
-      builder.append(outgoingEdges);
+    boolean present_outputStreamNames = true && (is_set_outputStreamNames());
+    builder.append(present_outputStreamNames);
+    if (present_outputStreamNames)
+      builder.append(outputStreamNames);
+
+    boolean present_outgoingEdgesWithSubscribedStreams = true && (is_set_outgoingEdgesWithSubscribedStreams());
+    builder.append(present_outgoingEdgesWithSubscribedStreams);
+    if (present_outgoingEdgesWithSubscribedStreams)
+      builder.append(outgoingEdgesWithSubscribedStreams);
 
     boolean present_alternates = true && (is_set_alternates());
     builder.append(present_alternates);
@@ -645,12 +731,22 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(is_set_outgoingEdges()).compareTo(other.is_set_outgoingEdges());
+    lastComparison = Boolean.valueOf(is_set_outputStreamNames()).compareTo(other.is_set_outputStreamNames());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (is_set_outgoingEdges()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.outgoingEdges, other.outgoingEdges);
+    if (is_set_outputStreamNames()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.outputStreamNames, other.outputStreamNames);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(is_set_outgoingEdgesWithSubscribedStreams()).compareTo(other.is_set_outgoingEdgesWithSubscribedStreams());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (is_set_outgoingEdgesWithSubscribedStreams()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.outgoingEdgesWithSubscribedStreams, other.outgoingEdgesWithSubscribedStreams);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -721,11 +817,19 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("outgoingEdges:");
-    if (this.outgoingEdges == null) {
+    sb.append("outputStreamNames:");
+    if (this.outputStreamNames == null) {
       sb.append("null");
     } else {
-      sb.append(this.outgoingEdges);
+      sb.append(this.outputStreamNames);
+    }
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("outgoingEdgesWithSubscribedStreams:");
+    if (this.outgoingEdgesWithSubscribedStreams == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.outgoingEdgesWithSubscribedStreams);
     }
     first = false;
     if (!first) sb.append(", ");
@@ -764,8 +868,12 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'incomingEdges' is unset! Struct:" + toString());
     }
 
-    if (!is_set_outgoingEdges()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'outgoingEdges' is unset! Struct:" + toString());
+    if (!is_set_outputStreamNames()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'outputStreamNames' is unset! Struct:" + toString());
+    }
+
+    if (!is_set_outgoingEdgesWithSubscribedStreams()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'outgoingEdgesWithSubscribedStreams' is unset! Struct:" + toString());
     }
 
     if (!is_set_alternates()) {
@@ -842,38 +950,68 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // OUTGOING_EDGES
+          case 3: // OUTPUT_STREAM_NAMES
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
                 org.apache.thrift.protocol.TList _list3 = iprot.readListBegin();
-                struct.outgoingEdges = new ArrayList<TEdge>(_list3.size);
+                struct.outputStreamNames = new ArrayList<String>(_list3.size);
                 for (int _i4 = 0; _i4 < _list3.size; ++_i4)
                 {
-                  TEdge _elem5;
-                  _elem5 = new TEdge();
-                  _elem5.read(iprot);
-                  struct.outgoingEdges.add(_elem5);
+                  String _elem5;
+                  _elem5 = iprot.readString();
+                  struct.outputStreamNames.add(_elem5);
                 }
                 iprot.readListEnd();
               }
-              struct.set_outgoingEdges_isSet(true);
+              struct.set_outputStreamNames_isSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // ALTERNATES
+          case 4: // OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
                 org.apache.thrift.protocol.TMap _map6 = iprot.readMapBegin();
-                struct.alternates = new HashMap<String,TAlternate>(2*_map6.size);
+                struct.outgoingEdgesWithSubscribedStreams = new HashMap<TEdge,List<String>>(2*_map6.size);
                 for (int _i7 = 0; _i7 < _map6.size; ++_i7)
                 {
-                  String _key8;
-                  TAlternate _val9;
-                  _key8 = iprot.readString();
-                  _val9 = new TAlternate();
-                  _val9.read(iprot);
-                  struct.alternates.put(_key8, _val9);
+                  TEdge _key8;
+                  List<String> _val9;
+                  _key8 = new TEdge();
+                  _key8.read(iprot);
+                  {
+                    org.apache.thrift.protocol.TList _list10 = iprot.readListBegin();
+                    _val9 = new ArrayList<String>(_list10.size);
+                    for (int _i11 = 0; _i11 < _list10.size; ++_i11)
+                    {
+                      String _elem12;
+                      _elem12 = iprot.readString();
+                      _val9.add(_elem12);
+                    }
+                    iprot.readListEnd();
+                  }
+                  struct.outgoingEdgesWithSubscribedStreams.put(_key8, _val9);
+                }
+                iprot.readMapEnd();
+              }
+              struct.set_outgoingEdgesWithSubscribedStreams_isSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 5: // ALTERNATES
+            if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
+              {
+                org.apache.thrift.protocol.TMap _map13 = iprot.readMapBegin();
+                struct.alternates = new HashMap<String,TAlternate>(2*_map13.size);
+                for (int _i14 = 0; _i14 < _map13.size; ++_i14)
+                {
+                  String _key15;
+                  TAlternate _val16;
+                  _key15 = iprot.readString();
+                  _val16 = new TAlternate();
+                  _val16.read(iprot);
+                  struct.alternates.put(_key15, _val16);
                 }
                 iprot.readMapEnd();
               }
@@ -882,7 +1020,7 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 5: // ACTIVE_ALTERNATE
+          case 6: // ACTIVE_ALTERNATE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
               struct.activeAlternate = iprot.readString();
               struct.set_activeAlternate_isSet(true);
@@ -890,7 +1028,7 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 6: // PARALLELISM
+          case 7: // PARALLELISM
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.parallelism = iprot.readI32();
               struct.set_parallelism_isSet(true);
@@ -920,23 +1058,43 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
         oprot.writeFieldBegin(INCOMING_EDGES_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.incomingEdges.size()));
-          for (TEdge _iter10 : struct.incomingEdges)
+          for (TEdge _iter17 : struct.incomingEdges)
           {
-            _iter10.write(oprot);
+            _iter17.write(oprot);
           }
           oprot.writeListEnd();
         }
         oprot.writeFieldEnd();
       }
-      if (struct.outgoingEdges != null) {
-        oprot.writeFieldBegin(OUTGOING_EDGES_FIELD_DESC);
+      if (struct.outputStreamNames != null) {
+        oprot.writeFieldBegin(OUTPUT_STREAM_NAMES_FIELD_DESC);
         {
-          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.outgoingEdges.size()));
-          for (TEdge _iter11 : struct.outgoingEdges)
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.outputStreamNames.size()));
+          for (String _iter18 : struct.outputStreamNames)
           {
-            _iter11.write(oprot);
+            oprot.writeString(_iter18);
           }
           oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      if (struct.outgoingEdgesWithSubscribedStreams != null) {
+        oprot.writeFieldBegin(OUTGOING_EDGES_WITH_SUBSCRIBED_STREAMS_FIELD_DESC);
+        {
+          oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRUCT, org.apache.thrift.protocol.TType.LIST, struct.outgoingEdgesWithSubscribedStreams.size()));
+          for (Map.Entry<TEdge, List<String>> _iter19 : struct.outgoingEdgesWithSubscribedStreams.entrySet())
+          {
+            _iter19.getKey().write(oprot);
+            {
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter19.getValue().size()));
+              for (String _iter20 : _iter19.getValue())
+              {
+                oprot.writeString(_iter20);
+              }
+              oprot.writeListEnd();
+            }
+          }
+          oprot.writeMapEnd();
         }
         oprot.writeFieldEnd();
       }
@@ -944,10 +1102,10 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
         oprot.writeFieldBegin(ALTERNATES_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.alternates.size()));
-          for (Map.Entry<String, TAlternate> _iter12 : struct.alternates.entrySet())
+          for (Map.Entry<String, TAlternate> _iter21 : struct.alternates.entrySet())
           {
-            oprot.writeString(_iter12.getKey());
-            _iter12.getValue().write(oprot);
+            oprot.writeString(_iter21.getKey());
+            _iter21.getValue().write(oprot);
           }
           oprot.writeMapEnd();
         }
@@ -983,24 +1141,38 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       oprot.writeString(struct.id);
       {
         oprot.writeI32(struct.incomingEdges.size());
-        for (TEdge _iter13 : struct.incomingEdges)
+        for (TEdge _iter22 : struct.incomingEdges)
         {
-          _iter13.write(oprot);
+          _iter22.write(oprot);
         }
       }
       {
-        oprot.writeI32(struct.outgoingEdges.size());
-        for (TEdge _iter14 : struct.outgoingEdges)
+        oprot.writeI32(struct.outputStreamNames.size());
+        for (String _iter23 : struct.outputStreamNames)
         {
-          _iter14.write(oprot);
+          oprot.writeString(_iter23);
+        }
+      }
+      {
+        oprot.writeI32(struct.outgoingEdgesWithSubscribedStreams.size());
+        for (Map.Entry<TEdge, List<String>> _iter24 : struct.outgoingEdgesWithSubscribedStreams.entrySet())
+        {
+          _iter24.getKey().write(oprot);
+          {
+            oprot.writeI32(_iter24.getValue().size());
+            for (String _iter25 : _iter24.getValue())
+            {
+              oprot.writeString(_iter25);
+            }
+          }
         }
       }
       {
         oprot.writeI32(struct.alternates.size());
-        for (Map.Entry<String, TAlternate> _iter15 : struct.alternates.entrySet())
+        for (Map.Entry<String, TAlternate> _iter26 : struct.alternates.entrySet())
         {
-          oprot.writeString(_iter15.getKey());
-          _iter15.getValue().write(oprot);
+          oprot.writeString(_iter26.getKey());
+          _iter26.getValue().write(oprot);
         }
       }
       oprot.writeString(struct.activeAlternate);
@@ -1020,40 +1192,62 @@ public class TPellet implements org.apache.thrift.TBase<TPellet, TPellet._Fields
       struct.id = iprot.readString();
       struct.set_id_isSet(true);
       {
-        org.apache.thrift.protocol.TList _list16 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-        struct.incomingEdges = new ArrayList<TEdge>(_list16.size);
-        for (int _i17 = 0; _i17 < _list16.size; ++_i17)
+        org.apache.thrift.protocol.TList _list27 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+        struct.incomingEdges = new ArrayList<TEdge>(_list27.size);
+        for (int _i28 = 0; _i28 < _list27.size; ++_i28)
         {
-          TEdge _elem18;
-          _elem18 = new TEdge();
-          _elem18.read(iprot);
-          struct.incomingEdges.add(_elem18);
+          TEdge _elem29;
+          _elem29 = new TEdge();
+          _elem29.read(iprot);
+          struct.incomingEdges.add(_elem29);
         }
       }
       struct.set_incomingEdges_isSet(true);
       {
-        org.apache.thrift.protocol.TList _list19 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-        struct.outgoingEdges = new ArrayList<TEdge>(_list19.size);
-        for (int _i20 = 0; _i20 < _list19.size; ++_i20)
+        org.apache.thrift.protocol.TList _list30 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+        struct.outputStreamNames = new ArrayList<String>(_list30.size);
+        for (int _i31 = 0; _i31 < _list30.size; ++_i31)
         {
-          TEdge _elem21;
-          _elem21 = new TEdge();
-          _elem21.read(iprot);
-          struct.outgoingEdges.add(_elem21);
+          String _elem32;
+          _elem32 = iprot.readString();
+          struct.outputStreamNames.add(_elem32);
         }
       }
-      struct.set_outgoingEdges_isSet(true);
+      struct.set_outputStreamNames_isSet(true);
       {
-        org.apache.thrift.protocol.TMap _map22 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-        struct.alternates = new HashMap<String,TAlternate>(2*_map22.size);
-        for (int _i23 = 0; _i23 < _map22.size; ++_i23)
+        org.apache.thrift.protocol.TMap _map33 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRUCT, org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+        struct.outgoingEdgesWithSubscribedStreams = new HashMap<TEdge,List<String>>(2*_map33.size);
+        for (int _i34 = 0; _i34 < _map33.size; ++_i34)
         {
-          String _key24;
-          TAlternate _val25;
-          _key24 = iprot.readString();
-          _val25 = new TAlternate();
-          _val25.read(iprot);
-          struct.alternates.put(_key24, _val25);
+          TEdge _key35;
+          List<String> _val36;
+          _key35 = new TEdge();
+          _key35.read(iprot);
+          {
+            org.apache.thrift.protocol.TList _list37 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            _val36 = new ArrayList<String>(_list37.size);
+            for (int _i38 = 0; _i38 < _list37.size; ++_i38)
+            {
+              String _elem39;
+              _elem39 = iprot.readString();
+              _val36.add(_elem39);
+            }
+          }
+          struct.outgoingEdgesWithSubscribedStreams.put(_key35, _val36);
+        }
+      }
+      struct.set_outgoingEdgesWithSubscribedStreams_isSet(true);
+      {
+        org.apache.thrift.protocol.TMap _map40 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+        struct.alternates = new HashMap<String,TAlternate>(2*_map40.size);
+        for (int _i41 = 0; _i41 < _map40.size; ++_i41)
+        {
+          String _key42;
+          TAlternate _val43;
+          _key42 = iprot.readString();
+          _val43 = new TAlternate();
+          _val43.read(iprot);
+          struct.alternates.put(_key42, _val43);
         }
       }
       struct.set_alternates_isSet(true);

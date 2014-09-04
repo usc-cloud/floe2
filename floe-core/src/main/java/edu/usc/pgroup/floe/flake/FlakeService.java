@@ -28,6 +28,11 @@ import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * The flake process.
  *
@@ -59,22 +64,26 @@ public final class FlakeService {
      *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param appName application's name to which this flake belongs.
      * @param jar the application's jar file name.
-     * @param listeningPorts the list of ports on which this flake should
+     * @param pelletPortMap the list of ports on which this flake should
      *                       listen on. Note: This is fine here (and not as a
      *                       control signal) because this depends only on
      *                       static application configuration and not on
+     * @param pelletStreamsMap map from successor pellets to subscribed
+     *                         streams.
      */
     private FlakeService(final String pid,
                          final String fid,
                          final String cid,
                          final String appName,
                          final String jar,
-                         final int[] listeningPorts) {
+                         final Map<String, Integer> pelletPortMap,
+                         final Map<String, List<String>> pelletStreamsMap) {
         flake = new Flake(pid, fid,
                 cid,
                 appName,
                 jar,
-                listeningPorts);
+                pelletPortMap,
+                pelletStreamsMap);
     }
 
     /**
@@ -121,12 +130,17 @@ public final class FlakeService {
                 .create("jar");
 
 
-        Option portsOption = OptionBuilder.withArgName("portlist")
+        Option portsOption = OptionBuilder.withArgName("pellet:port list")
                 .hasArgs().isRequired()
                 .withValueSeparator(',')
                 .withDescription("App's jar file name containing the pellets")
                 .create("ports");
 
+        Option streamsOption = OptionBuilder.withArgName("pellet:<streams> "
+                + "list").hasArgs().isRequired()
+                .withValueSeparator(',')
+                .withDescription("App's jar file name containing the pellets")
+                .create("streams");
 
         options.addOption(pidOption);
         options.addOption(idOption);
@@ -134,7 +148,7 @@ public final class FlakeService {
         options.addOption(appNameOption);
         options.addOption(jarOption);
         options.addOption(portsOption);
-
+        options.addOption(streamsOption);
 
         CommandLineParser parser = new BasicParser();
         CommandLine line;
@@ -148,6 +162,7 @@ public final class FlakeService {
             return;
         }
 
+
         String pid = line.getOptionValue("pid");
         String id = line.getOptionValue("id");
         String cid = line.getOptionValue("cid");
@@ -157,28 +172,60 @@ public final class FlakeService {
             jar = line.getOptionValue("jar");
         }
         String[] sports = line.getOptionValues("ports");
+        String[] streams = line.getOptionValues("streams");
+
+        Map<String, Integer> pelletPortMap = new HashMap<>();
+        for (String pport: sports) {
+            String[] sp = pport.split(":");
+            LOGGER.info("PPP:" + pport);
+            String pellet = sp[0];
+            String port = sp[1];
+            pelletPortMap.put(pellet, Integer.parseInt(port));
+        }
+
+        Map<String, List<String>> pelletStreamsMap = new HashMap<>();
+        for (String sStreams: streams) {
+            String[] sp = sStreams.split(":");
+            String pellet = sp[0];
+            List<String> streamNames = null;
+            if (sp.length > 1) {
+                streamNames = parseCSV(sp[1]);
+            }
+
+            pelletStreamsMap.put(pellet, streamNames);
+        }
 
         LOGGER.info("pid: {}", pid);
         LOGGER.info("id: {}", id);
         LOGGER.info("cid: {}", cid);
         LOGGER.info("app: {}", appName);
         LOGGER.info("jar: {}", jar);
-        LOGGER.info("ports: {}", sports);
+        LOGGER.info("ports: {}", pelletPortMap);
+        LOGGER.info("streams: {}", pelletStreamsMap);
 
         int[] ports = new int[sports.length];
         try {
-            for (int i = 0; i < sports.length; i++) {
-                ports[i] = Integer.parseInt(sports[i]);
-            }
             new FlakeService(pid,
                     id,
                     cid,
                     appName,
                     jar,
-                    ports).start();
+                    pelletPortMap,
+                    pelletStreamsMap).start();
         } catch (Exception e) {
             LOGGER.error("Invalid port number: Exception: {}", e);
             return;
         }
+    }
+
+    /**
+     * To parse the command line argument for streams.
+     * @param s the commandeline streams parameter
+     * @return list of items
+     */
+    private static List<String> parseCSV(final String s) {
+        //THIS IS NOT A GOOD CODE. TRY A BETTER WAY
+        LOGGER.info("Parsing {}", s);
+        return Arrays.asList(s.split("\\|"));
     }
 }

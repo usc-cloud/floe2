@@ -89,4 +89,8 @@
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.MagicNumberCheck"
               files="FlakeMessageReceiver.java"/>
 
+
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.design.DesignForExtensionCheck"
+              files="BasePellet.java"/>
+
 </suppressions>

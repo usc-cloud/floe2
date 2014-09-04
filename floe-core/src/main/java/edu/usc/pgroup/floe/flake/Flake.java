@@ -30,6 +30,7 @@ import org.zeromq.ZMQ;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 
 /**
@@ -58,6 +59,22 @@ public class Flake {
     private final String appJar;
 
     /**
+     *
+     */
+    //private final int[] ports;
+
+    /**
+     * the map of pellet to ports to start the zmq sockets.
+     * one for each edge in the application graph.
+     */
+    private final Map<String, Integer> pelletPortMap;
+
+    /**
+     * the map of pellet to list of streams that pellet is subscribed to.
+     */
+    private final Map<String, List<String>> pelletStreamsMap;
+
+    /**
      * Recurring timer for sending heartbeats.
      */
     private Timer heartBeatTimer;
@@ -83,12 +100,6 @@ public class Flake {
      * succeeding pellets in the graph.
      */
     private FlakeMessageSender flakeSender;
-
-    /**
-     * the list of ports to start the zmq sockets, one for each edge in the
-     * application graph.
-     */
-    private final int[] ports;
 
     /**
      * Shared ZMQ Context.
@@ -125,20 +136,24 @@ public class Flake {
      *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param app application's name to which this flake belongs.
      * @param jar the application's jar file name.
-     * @param listeningPorts the list of ports on which this flake should
+     * @param portMap the list of ports on which this flake should
      *                       listen on. Note: This is fine here (and not as a
      *                       control signal) because this depends only on
      *                       static application configuration and not on
+     * @param streamsMap map from successor pellets to subscribed
+     *                         streams.
      */
     public Flake(final String pid,
                  final String fid,
                  final String cid,
                  final String app,
                  final String jar,
-                 final int[] listeningPorts) {
+                 final Map<String, Integer> portMap,
+                 final Map<String, List<String>> streamsMap) {
         this.flakeId = Utils.generateFlakeId(cid, fid);
         this.containerId = cid;
-        this.ports = listeningPorts;
+        this.pelletPortMap = portMap;
+        this.pelletStreamsMap = streamsMap;
         this.appName = app;
         this.appJar = jar;
         this.sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
@@ -181,7 +196,8 @@ public class Flake {
      * Start receiving data from the predecessor.
      */
     private void startFlakeSender() {
-        flakeSender = new FlakeMessageSender(sharedContext, flakeId, ports);
+        flakeSender = new FlakeMessageSender(sharedContext, flakeId,
+                pelletPortMap, pelletStreamsMap);
         flakeSender.start();
     }
 

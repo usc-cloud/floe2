@@ -387,5 +387,10 @@ public final class Utils {
          * subscribers.
          */
         public static final String PUB_ALL = "all";
+
+        /**
+         * Name of the default output stream.
+         */
+        public static final String DEFAULT_STREAM_NAME = "default_stream";
     }
 }

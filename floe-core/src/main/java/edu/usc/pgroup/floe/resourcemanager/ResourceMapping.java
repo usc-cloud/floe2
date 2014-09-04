@@ -20,6 +20,7 @@ import edu.usc.pgroup.floe.container.ContainerInfo;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
+import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -372,8 +373,14 @@ public class ResourceMapping implements Serializable {
 
             TPellet tPellet = floeApp.get_pellets().get(pid);
 
-            int numPorts = Math.max(1, tPellet.get_outgoingEdges().size());
+            int numPorts = tPellet
+                    .get_outgoingEdgesWithSubscribedStreams().size();
+
+            LOGGER.info("{} listening for {} count ports", pid, numPorts);
+
+            numPorts = Math.max(1, numPorts);
             int[] flPorts = new int[numPorts];
+
             for (int i = 0; i < numPorts; i++) {
                 flPorts[i] = getNextAvailablePort();
             }
@@ -456,8 +463,16 @@ public class ResourceMapping implements Serializable {
         /**
          * The ports on which this flake should listen for connections from
          * succeeding pellets.
+         * Map from pellet name to the port number.
          */
         private final Map<String, Integer> listeningPorts;
+
+
+        /**
+         * The map from pellet name (the immediate downstream pellets) to the
+         * list of stream names that those pellets subscribe to.
+         */
+        private final Map<String, List<String>> streamNames;
 
         /**
          * Container id to which this flake belongs.
@@ -483,17 +498,42 @@ public class ResourceMapping implements Serializable {
             this.pelletId = pid;
             this.host = hostnameOrIpAddr;
             this.listeningPorts = new HashMap<>();
+            this.streamNames = new HashMap<>();
+
             this.numPelletInstances = 0;
 
             TPellet tPellet = floeApp.get_pellets().get(pid);
-
-            if (tPellet.get_outgoingEdges().size() > 0) {
+            LOGGER.info("Adding out edeges for:{}", pid);
+            if (tPellet.get_outgoingEdgesWithSubscribedStreams().size() > 0) {
                 int i = 0;
-                for (TEdge edge : tPellet.get_outgoingEdges()) {
-                    listeningPorts.put(edge.get_destPelletId(), flPorts[i++]);
+
+                for (Map.Entry<TEdge, List<String>> oe
+                        : tPellet
+                        .get_outgoingEdgesWithSubscribedStreams().entrySet()) {
+
+                    TEdge edge = oe.getKey();
+
+                    listeningPorts.put(
+                            edge.get_destPelletId(), flPorts[i++]);
+
+                    List<String> streams = oe.getValue();
+
+
+                    /*if (!streamNames.containsKey(edge.get_destPelletId())) {
+                        streamNames.put(edge.get_destPelletId(),
+                                new ArrayList<String>());
+                    }*/
+
+                    streamNames
+                            .put(edge.get_destPelletId(), streams);
                 }
+
             } else {
-                listeningPorts.put("out", flPorts[0]);
+                LOGGER.info("No OUTPUT PELLETS for: {}", tPellet.get_id());
+                listeningPorts.put("OUT_PELLET"
+                        , flPorts[0]);
+                streamNames.put(Utils.Constants.DEFAULT_STREAM_NAME,
+                        new ArrayList<String>());
             }
 
         }
@@ -533,14 +573,6 @@ public class ResourceMapping implements Serializable {
          */
         public final String getHost() {
             return host;
-        }
-
-        /**
-         * @return the ports on which this flake should listen for connections.
-         */
-        public final Integer[] getListeningPorts() {
-            Integer[] arr = new Integer[listeningPorts.size()];
-            return listeningPorts.values().toArray(arr);
         }
 
         /**
@@ -587,6 +619,20 @@ public class ResourceMapping implements Serializable {
          */
         public final String getContainerId() {
             return containerId;
+        }
+
+        /**
+         * @return the pellet to port mapping for succeeding pellets.
+         */
+        public final Map<String, Integer> getPelletPortMapping() {
+            return listeningPorts;
+        }
+
+        /**
+         * @return the pellet to streams mapping subscribed by that pellet.
+         */
+        public final Map<String, List<String>> getPelletStreamsMapping() {
+            return streamNames;
         }
     }
 }

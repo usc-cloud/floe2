@@ -16,32 +16,29 @@
 
 package edu.usc.pgroup.floe.app;
 
+import edu.usc.pgroup.floe.app.signals.Signal;
+import edu.usc.pgroup.floe.app.signals.Signallable;
+
 import java.util.List;
 
 /**
- * The main Emitter interface for Pellets to send out message tuples.
- *
  * @author kumbhare
  */
-public interface Emitter {
-    /**
-     * To emmit a set of tuples on the output port.
-     *
-     * @param messages a list of messages.
-     */
-    void emit(List<Tuple> messages);
+public abstract class BasePellet implements Pellet, Signallable {
 
     /**
-     * To emmit a single tuples on the output port.
-     *
-     * @param message a message.
+     * @return The names of the streams to be used later during emitting
+     * messages.
      */
-    void emit(Tuple message);
+    @Override
+    public List<String> getOutputStreamNames() {
+        return null;
+    }
 
     /**
-     * To emmit a single tuple to the given output stream.
-     * @param streamName name of the stream
-     * @param message a tuple message to emit
+     * Called when a signal is received for the component.
+     * @param signal the signal received for this pellet.
      */
-    void emit(final String streamName, final Tuple message);
+    @Override
+    public void onSignal(final Signal signal) { }
 }

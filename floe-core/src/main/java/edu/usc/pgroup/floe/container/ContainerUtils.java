@@ -24,6 +24,7 @@ import edu.usc.pgroup.floe.thriftgen.TPellet;
 import edu.usc.pgroup.floe.utils.RetryLoop;
 import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +59,9 @@ public final class ContainerUtils {
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
      * @param cid container's id on which this flake resides.
-     * @param listeningPorts array of ports to listen on for connections
-     *                          from the succeeding pellets.
+     * @param pelletPortMap map of pellet name to ports to listen on for
+     *                      connections from the succeeding pellets.
+     * @param pelletStreamsMap map of pellet name to list of stream names.
      * @return the flake id of the launched flake.
      */
     public static synchronized String launchFlake(
@@ -67,7 +69,8 @@ public final class ContainerUtils {
             final String appName,
             final String applicationJarPath,
             final String cid,
-            final Integer[] listeningPorts) {
+            final Map<String, Integer> pelletPortMap,
+            final Map<String, List<String>> pelletStreamsMap) {
 
         final String fid  = String.valueOf(getUniqueFlakeId());
 
@@ -87,9 +90,16 @@ public final class ContainerUtils {
         args.add("-cid");
         args.add(cid);
         args.add("-ports");
+        for (Map.Entry<String, Integer> p: pelletPortMap.entrySet()) {
+            args.add(p.getKey() + ':' + p.getValue());
+        }
 
-        for (int i = 0; i < listeningPorts.length; i++) {
-            args.add(listeningPorts[i].toString());
+
+        args.add("-streams");
+        for (Map.Entry<String, List<String>> streams
+                : pelletStreamsMap.entrySet()) {
+            args.add(streams.getKey() + ':'
+                    + StringUtils.join(streams.getValue(), "|"));
         }
 
         final String[] argsarr = new String[args.size()];
@@ -110,17 +120,6 @@ public final class ContainerUtils {
         );
         t.start();
         return Utils.generateFlakeId(cid, fid);
-    }
-
-    /**
-     * Checks if a flake holding the instances with given appid,pelletid
-     * already exists.
-     * @param appId application id
-     * @param pelletId pellet id
-     */
-    public static void isFlakeExist(final String appId,
-                                    final String pelletId) {
-
     }
 
     /**
@@ -421,7 +420,8 @@ public final class ContainerUtils {
                     appName,
                     applicationJarPath,
                     containerId,
-                    flakeInstance.getListeningPorts());
+                    flakeInstance.getPelletPortMapping(),
+                    flakeInstance.getPelletStreamsMapping());
 
             try {
                 FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory

@@ -48,10 +48,12 @@ struct TAlternate {
 struct TPellet {
     1: required string id;
     2: required list<TEdge> incomingEdges;
-    3: required list<TEdge> outgoingEdges;
-    4: required map<string, TAlternate> alternates;
-    5: required string activeAlternate;
-    6: optional i32 parallelism;
+    3: required list<string> outputStreamNames;
+    4: required map<TEdge, list<string>> outgoingEdgesWithSubscribedStreams;
+    5: required map<string, TAlternate> alternates;
+    6: required string activeAlternate;
+    7: optional i32 parallelism;
+
         //2: required list<TTupleArgTypes> outputFieldTypes;
         //3: required list<string> orderedInputFieldNames;
         //4: required map<string, TTupleArgTypes> inputFieldTypes;

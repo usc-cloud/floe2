@@ -16,8 +16,8 @@
 
 package edu.usc.pgroup.floe.examples.pellets;
 
+import edu.usc.pgroup.floe.app.BasePellet;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.SignallablePellet;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.app.signals.Signal;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author kumbhare
  */
-public class PrintPellet implements SignallablePellet {
+public class PrintPellet extends BasePellet {
 
 
     /**

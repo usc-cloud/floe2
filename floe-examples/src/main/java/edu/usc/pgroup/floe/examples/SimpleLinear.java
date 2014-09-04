@@ -6,6 +6,7 @@ import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.examples.pellets.PrintPellet;
 import edu.usc.pgroup.floe.examples.pellets.WordPellet;
+import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -47,10 +48,17 @@ public final class SimpleLinear {
 
         builder.addPellet("word", new WordPellet(words)).setParallelism(1);
         builder.addPellet("print", new PrintPellet())
-                .subscribe("word").setParallelism(2);
+                .subscribe("word").setParallelism(1);
+
+        TFloeApp app = builder.generateApp();
+        LOGGER.info("word edges:{}", app.get_pellets().get("word")
+                .get_outgoingEdgesWithSubscribedStreams());
+
+        LOGGER.info("print edges:{}", app.get_pellets().get("print")
+                .get_outgoingEdgesWithSubscribedStreams());
 
         try {
-            AppSubmitter.submitApp("helloworld", builder.generateApp());
+            AppSubmitter.submitApp("helloworld", app);
         } catch (TException e) {
            LOGGER.error("Error while deploying app. Exception {}", e);
         }

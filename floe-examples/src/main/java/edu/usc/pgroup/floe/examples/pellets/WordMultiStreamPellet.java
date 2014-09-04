@@ -23,27 +23,55 @@ import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author kumbhare
  */
-public class WordPellet extends BasePellet {
+public class WordMultiStreamPellet extends BasePellet {
     /**
      * the global logger instance.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(WordPellet.class);
+            LoggerFactory.getLogger(WordMultiStreamPellet.class);
 
     /**
-     * List of words to emmit in a loop.
+     * First stream name.
      */
-    private final String[] words;
+    private final String stream1;
+
+    /**
+     * Second stream name.
+     */
+    private final String stream2;
+
+    /**
+     * list of words to emmit on first stream.
+     */
+    private final String[] firstWords;
+
+    /**
+     * list of words to emmit on second stream.
+     */
+    private final String[] secondWords;
+
 
     /**
      * Constructor.
-     * @param w List of words to emmit in a loop.
+     * @param stream1Name First stream name.
+     * @param stream2Name Second stream name.
+     * @param firstStreamWords list of words to emmit on first stream.
+     * @param secondStreamWords list of words to emmit on second stream.
      */
-    public WordPellet(final String[] w) {
-        this.words = w;
+    public WordMultiStreamPellet(final String stream1Name,
+                                 final String stream2Name,
+                                 final String[] firstStreamWords,
+                                 final String[] secondStreamWords) {
+        this.stream1 = stream1Name;
+        this.stream2 = stream2Name;
+        this.firstWords = firstStreamWords;
+        this.secondWords = secondStreamWords;
     }
 
     /**
@@ -76,21 +104,32 @@ public class WordPellet extends BasePellet {
      */
     @Override
     public final void execute(final Tuple t, final Emitter emitter) {
-        LOGGER.info("Executing word pellet.");
-        int i = 0;
+        LOGGER.info("Executing multi stream word pellet.");
+        int i = 0, j = 0, k = 0;
         while (true) {
-            if (i == words.length) {
+
+            Tuple ot = null;
+            if (i == 0) {
+                if (j == firstWords.length) {
+                    j = 0;
+                }
+                ot = new Tuple(firstWords[j++]);
+                emitter.emit(stream1, ot);
+                i = 1;
+            } else if (i == 1) {
+                if (k == secondWords.length) {
+                    k = 0;
+                }
+                ot = new Tuple(secondWords[k++]);
+                emitter.emit(stream2, ot);
                 i = 0;
             }
-            Tuple ot = new Tuple(words[i]);
-            emitter.emit(ot);
             try {
                 Thread.sleep(Utils.Constants.MILLI);
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;
             }
-            i++;
         }
     }
 
@@ -101,5 +140,17 @@ public class WordPellet extends BasePellet {
     @Override
     public void teardown() {
 
+    }
+
+    /**
+     * @return The names of the streams to be used later during emitting
+     * messages.
+     */
+    @Override
+    public final List<String> getOutputStreamNames() {
+        ArrayList<String> outputStreams = new ArrayList<String>();
+        outputStreams.add("boys");
+        outputStreams.add("girls");
+        return outputStreams;
     }
 }

@@ -21,6 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author kumbhare
  */
@@ -42,35 +46,46 @@ public class FlakeMessageSender extends Thread {
     private final String fid;
 
     /**
-     * List of ports to listen on.
-     * Note: This is fine since the number of ports depends only on logical
-     * application graph and NOT on pellet instances.
+     * the map of pellet to ports to start the zmq sockets.
+     * one for each edge in the application graph.
      */
-    private final int[] ports;
+    private final Map<String, Integer> pelletPortMap;
+
+    /**
+     * the map of pellet to list of streams that pellet is subscribed to.
+     */
+    private final Map<String, List<String>> pelletStreamsMap;
 
     /**
      * constructor.
      * @param zmqContext Shared ZMQ context.
      * @param flakeId flake id to which this sender belongs.
-     * @param listeningPorts list of ports to listen on for connections from the
-     *              successor flakes. One per edge in the app graph.
+     * @param portMap the list of ports on which this flake should
+     *                       listen on. Note: This is fine here (and not as a
+     *                       control signal) because this depends only on
+     *                       static application configuration and not on
+     * @param streamsMap map from successor pellets to subscribed
+     *                         streams.
      */
     public FlakeMessageSender(final ZMQ.Context zmqContext,
                               final String flakeId,
-                              final int[] listeningPorts) {
+                              final Map<String, Integer> portMap,
+                              final Map<String, List<String>> streamsMap) {
         this.ctx = zmqContext;
         this.fid = flakeId;
-        this.ports = listeningPorts;
+        this.pelletPortMap = portMap;
+        this.pelletStreamsMap = streamsMap;
     }
-
 
     /**
      * This is used to start the proxy from tcp socket to the pellets.
      */
     public final void run() {
         new MiddleEnd().start();
-        for (int port: ports) {
-            new BackEnd(port).start();
+        for (String pellet: pelletPortMap.keySet()) {
+            int port = pelletPortMap.get(pellet);
+            List<String> streams = pelletStreamsMap.get(pellet);
+            new BackEnd(port, streams).start();
         }
     }
 
@@ -88,12 +103,19 @@ public class FlakeMessageSender extends Thread {
         private final int port;
 
         /**
+         * Stream names this backend should subscribe to.
+         */
+        private final List<String> streamNames;
+
+        /**
          * constructor.
          * @param p port on which the back end should listen for
          *             connections from downstream.
+         * @param streams list of stream names to subscribe to.
          */
-        public BackEnd(final int p) {
+        public BackEnd(final int p, final List<String> streams) {
             this.port = p;
+            this.streamNames = streams;
         }
 
         /**
@@ -108,7 +130,13 @@ public class FlakeMessageSender extends Thread {
 
             //dummy topic. THIS IS A PREFIX MATCH. USE THIS LATER FOR CUSTOM
             // DISPERSION STRATEGIES.
-            middleendreceiver.subscribe("".getBytes());
+            //middleendreceiver.subscribe("".getBytes());
+            if (streamNames != null) {
+                for (String streamName : streamNames) {
+                    LOGGER.info("Subscribing: {}", streamName);
+                    middleendreceiver.subscribe(streamName.getBytes());
+                }
+            }
 
             ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
             killsock.connect(
@@ -127,9 +155,14 @@ public class FlakeMessageSender extends Thread {
 
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] message;
+                String streamName;
                 pollerItems.poll();
                 if (pollerItems.pollin(0)) {
+                    streamName = middleendreceiver
+                            .recvStr(Charset.defaultCharset());
                     message = middleendreceiver.recv();
+                    LOGGER.debug("BK: {}", streamName);
+                    LOGGER.debug("BK MS: {}", message);
                     backend.send(message, 0);
                 } else if (pollerItems.pollin(1)) {
                     break;
@@ -178,9 +211,14 @@ public class FlakeMessageSender extends Thread {
 
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] message;
+                String streamName;
                 pollerItems.poll();
                 if (pollerItems.pollin(0)) {
+                    streamName = frontend.recvStr(Charset.defaultCharset());
                     message = frontend.recv();
+                    LOGGER.debug("MD: {}", streamName);
+                    LOGGER.debug("MD MS: {}", message);
+                    middleend.sendMore(streamName);
                     middleend.send(message, 0);
                 } else if (pollerItems.pollin(1)) {
                     break;
