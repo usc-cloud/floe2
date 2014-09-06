@@ -4,6 +4,7 @@ import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.client.AppSubmitter;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.examples.pellets.HelloGreetingPellet;
 import edu.usc.pgroup.floe.examples.pellets.PrintPellet;
 import edu.usc.pgroup.floe.examples.pellets.WordPellet;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
@@ -47,8 +48,13 @@ public final class SimpleLinear {
         String[] words = {"John", "Jane", "Maverick", "Alok"};
 
         builder.addPellet("word", new WordPellet(words)).setParallelism(1);
+
         builder.addPellet("print", new PrintPellet())
                 .subscribe("word").setParallelism(1);
+
+
+        builder.addPellet("hello", new HelloGreetingPellet())
+                .subscribe("print").setParallelism(1);
 
         TFloeApp app = builder.generateApp();
         LOGGER.info("word edges:{}", app.get_pellets().get("word")
@@ -56,6 +62,9 @@ public final class SimpleLinear {
 
         LOGGER.info("print edges:{}", app.get_pellets().get("print")
                 .get_outgoingEdgesWithSubscribedStreams());
+
+
+
 
         try {
             AppSubmitter.submitApp("helloworld", app);
