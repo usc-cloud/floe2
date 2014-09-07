@@ -30,14 +30,17 @@ enum TTupleArgTypes {
 }
 
 enum TChannelType {
-    roundrobin,
-    //Todo: add other channel types here later.
+    ROUND_ROBIN,
+    REDUCE,
+    LOAD_BALANCED,
+    CUSTOM
 }
 
 struct TEdge {
     1: required string srcPelletId;
     2: required string destPelletId;
     3: required TChannelType channelType;
+    4: optional string channelTypeArgs;
 }
 
 struct TAlternate {

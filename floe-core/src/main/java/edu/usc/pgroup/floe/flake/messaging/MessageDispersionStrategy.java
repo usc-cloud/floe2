@@ -16,9 +16,27 @@
 
 package edu.usc.pgroup.floe.flake.messaging;
 
+import edu.usc.pgroup.floe.app.Tuple;
+
+import java.util.List;
+
 /**
  * @author kumbhare
  */
-public class BackChannel extends Thread {
+public interface MessageDispersionStrategy extends BackChannelReceiver {
 
+    /**
+     * Initializes the strategy.
+     * @param args the arguments sent by the user. Fix Me: make this a better
+     *             interface.
+     */
+    void initialize(String args);
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     * @param tuple tuple object.
+     * @return the list of target instances to send the given tuple.
+     */
+    List<String> getTargetPelletInstances(Tuple tuple);
 }

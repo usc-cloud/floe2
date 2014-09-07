@@ -20,7 +20,6 @@ import edu.usc.pgroup.floe.container.ContainerInfo;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
-import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -472,7 +471,12 @@ public class ResourceMapping implements Serializable {
          * connections from succeeding pellets.
          * Map from pellet name to the port number.
          */
-        private Map<String, Integer> pelletBackChannelPortMapping;
+        private final Map<String, Integer> pelletBackChannelPortMapping;
+
+        /**
+         * Map from target pellet name (i.e. per edge) to the channel type.
+         */
+        private final Map<String, String> pelletChannelTypeMapping;
 
         /**
          * The map from pellet name (the immediate downstream pellets) to the
@@ -506,6 +510,7 @@ public class ResourceMapping implements Serializable {
             this.host = hostnameOrIpAddr;
             this.listeningPorts = new HashMap<>();
             this.pelletBackChannelPortMapping = new HashMap<>();
+            this.pelletChannelTypeMapping = new HashMap<>();
             this.streamNames = new HashMap<>();
 
             this.numPelletInstances = 0;
@@ -528,14 +533,14 @@ public class ResourceMapping implements Serializable {
                     pelletBackChannelPortMapping.put(
                             edge.get_destPelletId(), flPorts[i++]);
 
+                    String channelType = edge.get_channelType().toString();
+                    if (edge.get_channelTypeArgs() != null) {
+                        channelType += "__" + edge.get_channelTypeArgs();
+                    }
+                    pelletChannelTypeMapping.put(
+                            edge.get_destPelletId(), channelType);
+
                     List<String> streams = oe.getValue();
-
-
-                    /*if (!streamNames.containsKey(edge.get_destPelletId())) {
-                        streamNames.put(edge.get_destPelletId(),
-                                new ArrayList<String>());
-                    }*/
-
                     streamNames
                             .put(edge.get_destPelletId(), streams);
                 }
@@ -546,7 +551,8 @@ public class ResourceMapping implements Serializable {
                         , flPorts[0]);
                 pelletBackChannelPortMapping.put("OUT_PELLET"
                         , flPorts[1]);
-                streamNames.put(Utils.Constants.DEFAULT_STREAM_NAME,
+                pelletChannelTypeMapping.put("OUT_PELLET", "NONE");
+                streamNames.put("OUT_PELLET",
                         new ArrayList<String>());
             }
 
@@ -663,6 +669,13 @@ public class ResourceMapping implements Serializable {
          */
         public final Map<String, List<String>> getPelletStreamsMapping() {
             return streamNames;
+        }
+
+        /**
+         * @return the pellet to channel type mapping.
+         */
+        public final Map<String, String> getPelletChannelTypeMapping() {
+            return pelletChannelTypeMapping;
         }
     }
 }

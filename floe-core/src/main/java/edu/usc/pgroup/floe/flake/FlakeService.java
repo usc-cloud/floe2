@@ -70,6 +70,7 @@ public final class FlakeService {
      *                       static application configuration and not on
      * @param backChannelPortMap map of port for the backchannel. One port
      *                           per target pellet.
+     * @param channelTypeMap Map of target pellet to channel type (one per edge)
      * @param pelletStreamsMap map from successor pellets to subscribed
      *                         streams.
      */
@@ -80,6 +81,7 @@ public final class FlakeService {
                          final String jar,
                          final Map<String, Integer> pelletPortMap,
                          final Map<String, Integer> backChannelPortMap,
+                         final Map<String, String> channelTypeMap,
                          final Map<String, List<String>> pelletStreamsMap) {
         flake = new Flake(pid, fid,
                 cid,
@@ -87,6 +89,7 @@ public final class FlakeService {
                 jar,
                 pelletPortMap,
                 backChannelPortMap,
+                channelTypeMap,
                 pelletStreamsMap);
     }
 
@@ -146,14 +149,18 @@ public final class FlakeService {
                 .withDescription("List of ports for back channel.")
                 .create("backchannelports");
 
+        Option channelTypeOption = OptionBuilder.withArgName("pellet:channel "
+                + "type")
+                .withValueSeparator(',')
+                .hasArgs().isRequired()
+                .withDescription("Type of the channel per out edge.")
+                .create("channeltype");
+
         Option streamsOption = OptionBuilder.withArgName("pellet:<streams> "
                 + "list").hasArgs().isRequired()
                 .withValueSeparator(',')
                 .withDescription("App's jar file name containing the pellets")
                 .create("streams");
-
-
-
 
         options.addOption(pidOption);
         options.addOption(idOption);
@@ -163,7 +170,7 @@ public final class FlakeService {
         options.addOption(portsOption);
         options.addOption(backPortsOption);
         options.addOption(streamsOption);
-
+        options.addOption(channelTypeOption);
 
         CommandLineParser parser = new BasicParser();
         CommandLine line;
@@ -176,7 +183,6 @@ public final class FlakeService {
             formatter.printHelp("FlakeService", options);
             return;
         }
-
 
         String pid = line.getOptionValue("pid");
         String id = line.getOptionValue("id");
@@ -196,9 +202,6 @@ public final class FlakeService {
             pelletPortMap.put(pellet, Integer.parseInt(port));
         }
 
-
-
-
         String[] bsports = line.getOptionValues("backchannelports");
         Map<String, Integer> pelletBackChannelPortMap = new HashMap<>();
         for (String pport: bsports) {
@@ -208,6 +211,14 @@ public final class FlakeService {
             pelletBackChannelPortMap.put(pellet, Integer.parseInt(port));
         }
 
+        String[] sChannelTypes = line.getOptionValues("channeltype");
+        Map<String, String> pelletChannelTypeMap = new HashMap<>();
+        for (String ctype: sChannelTypes) {
+            String[] sp = ctype.split(":");
+            String pellet = sp[0];
+            String type = sp[1];
+            pelletChannelTypeMap.put(pellet, type);
+        }
 
         String[] streams = line.getOptionValues("streams");
         Map<String, List<String>> pelletStreamsMap = new HashMap<>();
@@ -218,19 +229,14 @@ public final class FlakeService {
             if (sp.length > 1) {
                 streamNames = parseCSV(sp[1]);
             }
-
             pelletStreamsMap.put(pellet, streamNames);
         }
 
-        LOGGER.info("pid: {}", pid);
-        LOGGER.info("id: {}", id);
-        LOGGER.info("cid: {}", cid);
-        LOGGER.info("app: {}", appName);
-        LOGGER.info("jar: {}", jar);
-        LOGGER.info("ports: {}", pelletPortMap);
-        LOGGER.info("backchannel ports: {}", pelletBackChannelPortMap);
-        LOGGER.info("streams: {}", pelletStreamsMap);
-
+        LOGGER.info("pid: {}, id:{}, cid:{}, app:{}, jar:{}, ports:{}, "
+                + "backports:{}, stream:{}, channeltype:{}", pid, id, cid,
+                appName, jar, pelletPortMap, pelletBackChannelPortMap,
+                pelletStreamsMap,
+                pelletChannelTypeMap);
         try {
             new FlakeService(pid,
                     id,
@@ -239,6 +245,7 @@ public final class FlakeService {
                     jar,
                     pelletPortMap,
                     pelletBackChannelPortMap,
+                    pelletChannelTypeMap,
                     pelletStreamsMap).start();
         } catch (Exception e) {
             LOGGER.error("Invalid port number: Exception: {}", e);

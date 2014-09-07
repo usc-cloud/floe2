@@ -16,13 +16,16 @@
 
 package edu.usc.pgroup.floe.flake.messaging;
 
+import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.serialization.SerializerFactory;
+import edu.usc.pgroup.floe.serialization.TupleSerializer;
+import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -65,12 +68,10 @@ public class FlakeMessageSender extends Thread {
      */
     private final Map<String, List<String>> pelletStreamsMap;
 
-
     /**
-     * Dummy has list of successors. This should go to the grouping class
-     * implementation.
+     * Map of target pellet to channel type (one per edge).
      */
-    private final List<String> successorPelletInstances;
+    private final Map<String, String> pelletChannelTypeMap;
 
     /**
      * constructor.
@@ -81,6 +82,7 @@ public class FlakeMessageSender extends Thread {
      *                       control signal) because this depends only on
      *                       static application configuration and not on
      * @param backChannelPortMap ports for backchannel.
+     * @param channelTypeMap Map of target pellet to channel type (one per edge)
      * @param streamsMap map from successor pellets to subscribed
      *                         streams.
      */
@@ -88,13 +90,14 @@ public class FlakeMessageSender extends Thread {
                               final String flakeId,
                               final Map<String, Integer> portMap,
                               final Map<String, Integer> backChannelPortMap,
+                              final Map<String, String> channelTypeMap,
                               final Map<String, List<String>> streamsMap) {
         this.ctx = zmqContext;
         this.fid = flakeId;
         this.pelletPortMap = portMap;
         this.pelletBackChannelPortMap = backChannelPortMap;
+        this.pelletChannelTypeMap = channelTypeMap;
         this.pelletStreamsMap = streamsMap;
-        this.successorPelletInstances = new ArrayList<>();
     }
 
     /**
@@ -106,7 +109,8 @@ public class FlakeMessageSender extends Thread {
             int port = pelletPortMap.get(pellet);
             int bpPort = pelletBackChannelPortMap.get(pellet);
             List<String> streams = pelletStreamsMap.get(pellet);
-            new BackEnd(port, bpPort, streams).start();
+            String channelType = pelletChannelTypeMap.get(pellet);
+            new BackEnd(port, bpPort, channelType, streams).start();
         }
     }
 
@@ -136,17 +140,57 @@ public class FlakeMessageSender extends Thread {
          */
         private final List<String> streamNames;
 
+
+        /**
+         * Message dispersion strategy to be used for the channel.
+         */
+        private MessageDispersionStrategy dispersionStrategy;
+
+        /**
+         * Serializer to be used to serialize and deserialize the data tuples.
+         */
+        private final TupleSerializer tupleSerializer;
+
         /**
          * constructor.
          * @param p port on which the back end should listen for
          *             connections from downstream.
          * @param bp backchannel port.
+         * @param channelType channel type (e.g. round robin, reduce,
+         *                    load balanced, custom)
          * @param streams list of stream names to subscribe to.
          */
-        public BackEnd(final int p, final int bp, final List<String> streams) {
+        public BackEnd(final int p, final int bp,
+                       final String channelType, final List<String> streams) {
             this.port = p;
             this.backChannelPort = bp;
             this.streamNames = streams;
+
+            this.tupleSerializer = SerializerFactory.getSerializer();
+
+
+            String[] ctypesAndArgs = channelType.split("__");
+            String ctype = ctypesAndArgs[0];
+            String args = null;
+            if (ctypesAndArgs.length > 1) {
+                args = ctypesAndArgs[1];
+            }
+            LOGGER.info("type and args: {}, Channel type: {}", channelType,
+                    ctype);
+
+            this.dispersionStrategy = null;
+
+            if (!ctype.startsWith("NONE")) {
+                TChannelType type = Enum.valueOf(TChannelType.class, ctype);
+                try {
+                    this.dispersionStrategy = MessageDispersionStrategyFactory
+                            .getMessageDispersionStrategy(type, args);
+                } catch (Exception ex) {
+                    LOGGER.error("Invalid dispersion strategy: {}. "
+                            + "Using default RR", type);
+                }
+            }
+
         }
 
         /**
@@ -196,7 +240,6 @@ public class FlakeMessageSender extends Thread {
             int i = 0;
             byte[] message;
             String streamName;
-            String key;
 
             while (!Thread.currentThread().isInterrupted()) {
 
@@ -206,30 +249,32 @@ public class FlakeMessageSender extends Thread {
                             .recvStr(Charset.defaultCharset());
                     message = middleendreceiver.recv();
 
-                    if (successorPelletInstances.size() > 0) {
-                        key = successorPelletInstances.get(i++);
+                    Tuple tuple = tupleSerializer.deserialize(message);
 
-                        backend.sendMore(key);
-                        backend.send(message, 0);
+                    List<String> pelletInstanceIds = dispersionStrategy
+                            .getTargetPelletInstances(tuple);
+
+                    if (pelletInstanceIds.size() > 0) {
+                        for (String pelletInstanceId : pelletInstanceIds) {
+                            backend.sendMore(pelletInstanceId);
+                            backend.send(message, 0);
+                        }
                     } else { //should queue up messages.
                         LOGGER.warn("Message dropped because no connection "
                                 + "received");
                     }
-
-                    if (i == successorPelletInstances.size()) {
-                        i = 0;
-                    }
                 } else if (pollerItems.pollin(1)) { //kill signal
                     break;
                 } else if (pollerItems.pollin(2)) { //backChannel from successor
-                    String msg = backendBackChannel.recvStr(
+                    String pelletInstanceId = backendBackChannel.recvStr(
                             Charset.defaultCharset());
-                    LOGGER.info("MSG ON BACKCHANNEL: {}", msg);
+                    LOGGER.info("MSG ON BACKCHANNEL: {}", pelletInstanceId);
                     byte[] data = null;
                     if (backendBackChannel.hasReceiveMore()) {
                         data = backendBackChannel.recv();
                     }
-                    successorPelletInstances.add(msg);
+                    dispersionStrategy.backChannelMessageReceived(
+                            pelletInstanceId, data);
                 }
             }
             //ZMQ.proxy(middleendreceiver, backend, null);

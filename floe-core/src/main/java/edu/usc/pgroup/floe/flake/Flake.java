@@ -81,6 +81,11 @@ public class Flake {
     private final Map<String, List<String>> pelletStreamsMap;
 
     /**
+     * Map of target pellet to channel type (one per edge).
+     */
+    private final Map<String, String> pelletChannelTypeMap;
+
+    /**
      * Recurring timer for sending heartbeats.
      */
     private Timer heartBeatTimer;
@@ -148,6 +153,7 @@ public class Flake {
      *                       static application configuration and not on
      * @param backChannelPortMap map of port for the backchannel. One port
      *                           per target pellet.
+     * @param channelTypeMap Map of target pellet to channel type (one per edge)
      * @param streamsMap map from successor pellets to subscribed
      *                         streams.
      */
@@ -158,11 +164,13 @@ public class Flake {
                  final String jar,
                  final Map<String, Integer> portMap,
                  final Map<String, Integer> backChannelPortMap,
+                 final Map<String, String> channelTypeMap,
                  final Map<String, List<String>> streamsMap) {
         this.flakeId = Utils.generateFlakeId(cid, fid);
         this.containerId = cid;
         this.pelletPortMap = portMap;
         this.pelletBackChannelPortMap = backChannelPortMap;
+        this.pelletChannelTypeMap = channelTypeMap;
         this.pelletStreamsMap = streamsMap;
         this.appName = app;
         this.appJar = jar;
@@ -207,7 +215,9 @@ public class Flake {
      */
     private void startFlakeSender() {
         flakeSender = new FlakeMessageSender(sharedContext, flakeId,
-                pelletPortMap, pelletBackChannelPortMap, pelletStreamsMap);
+                pelletPortMap, pelletBackChannelPortMap,
+                pelletChannelTypeMap,
+                pelletStreamsMap);
         flakeSender.start();
     }
 

@@ -63,6 +63,7 @@ public final class ContainerUtils {
      *                      connections from the succeeding pellets.
      * @param backChannelPortMap map of port for the backchannel. One port
      *                           per target pellet.
+     * @param channelTypeMap Map of target pellet to channel type (one per edge)
      * @param pelletStreamsMap map of pellet name to list of stream names.
      * @return the flake id of the launched flake.
      */
@@ -73,6 +74,7 @@ public final class ContainerUtils {
             final String cid,
             final Map<String, Integer> pelletPortMap,
             final Map<String, Integer> backChannelPortMap,
+            final Map<String, String> channelTypeMap,
             final Map<String, List<String>> pelletStreamsMap) {
 
         final String fid  = String.valueOf(getUniqueFlakeId());
@@ -102,6 +104,10 @@ public final class ContainerUtils {
             args.add(p.getKey() + ':' + p.getValue());
         }
 
+        args.add("-channeltype");
+        for (Map.Entry<String, String> p: channelTypeMap.entrySet()) {
+            args.add(p.getKey() + ':' + p.getValue());
+        }
 
         args.add("-streams");
         for (Map.Entry<String, List<String>> streams
@@ -441,6 +447,7 @@ public final class ContainerUtils {
                     containerId,
                     flakeInstance.getPelletPortMapping(),
                     flakeInstance.getPelletBackChannelPortMapping(),
+                    flakeInstance.getPelletChannelTypeMapping(),
                     flakeInstance.getPelletStreamsMapping());
 
             try {

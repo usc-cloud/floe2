@@ -12,7 +12,10 @@ import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
 public enum TChannelType implements org.apache.thrift.TEnum {
-  roundrobin(0);
+  ROUND_ROBIN(0),
+  REDUCE(1),
+  LOAD_BALANCED(2),
+  CUSTOM(3);
 
   private final int value;
 
@@ -34,7 +37,13 @@ public enum TChannelType implements org.apache.thrift.TEnum {
   public static TChannelType findByValue(int value) { 
     switch (value) {
       case 0:
-        return roundrobin;
+        return ROUND_ROBIN;
+      case 1:
+        return REDUCE;
+      case 2:
+        return LOAD_BALANCED;
+      case 3:
+        return CUSTOM;
       default:
         return null;
     }

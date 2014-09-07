@@ -99,6 +99,9 @@
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
               files="FlakeService.java"/>
 
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
+              files="ContainerUtils.java"/>
+
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.AvoidInlineConditionalsCheck"
               files="FlakeMessageReceiver.java"/>
 

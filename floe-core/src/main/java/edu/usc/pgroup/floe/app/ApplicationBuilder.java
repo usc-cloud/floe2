@@ -160,7 +160,7 @@ public final class ApplicationBuilder {
 
             TEdge edge = new TEdge(inputPellet.get_id(),
                     pellet.get_id(),
-                    TChannelType.roundrobin);
+                    TChannelType.ROUND_ROBIN);
             pellet.get_incomingEdges().add(edge);
 
             List<String> subscribedStreams = new ArrayList<>();
@@ -169,7 +169,6 @@ public final class ApplicationBuilder {
                     if (osn == null) {
                         continue;
                     }
-
                     subscribedStreams.add(osn);
                 }
             } else {
