@@ -70,6 +70,12 @@ public class Flake {
     private final Map<String, Integer> pelletPortMap;
 
     /**
+     * the map of pellet to ports to start the zmq sockets for the backchannel.
+     * one for each edge in the application graph.
+     */
+    private final Map<String, Integer> pelletBackChannelPortMap;
+
+    /**
      * the map of pellet to list of streams that pellet is subscribed to.
      */
     private final Map<String, List<String>> pelletStreamsMap;
@@ -136,10 +142,12 @@ public class Flake {
      *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param app application's name to which this flake belongs.
      * @param jar the application's jar file name.
-     * @param portMap the list of ports on which this flake should
+     * @param portMap the map of ports on which this flake should
      *                       listen on. Note: This is fine here (and not as a
      *                       control signal) because this depends only on
      *                       static application configuration and not on
+     * @param backChannelPortMap map of port for the backchannel. One port
+     *                           per target pellet.
      * @param streamsMap map from successor pellets to subscribed
      *                         streams.
      */
@@ -149,10 +157,12 @@ public class Flake {
                  final String app,
                  final String jar,
                  final Map<String, Integer> portMap,
+                 final Map<String, Integer> backChannelPortMap,
                  final Map<String, List<String>> streamsMap) {
         this.flakeId = Utils.generateFlakeId(cid, fid);
         this.containerId = cid;
         this.pelletPortMap = portMap;
+        this.pelletBackChannelPortMap = backChannelPortMap;
         this.pelletStreamsMap = streamsMap;
         this.appName = app;
         this.appJar = jar;
@@ -197,7 +207,7 @@ public class Flake {
      */
     private void startFlakeSender() {
         flakeSender = new FlakeMessageSender(sharedContext, flakeId,
-                pelletPortMap, pelletStreamsMap);
+                pelletPortMap, pelletBackChannelPortMap, pelletStreamsMap);
         flakeSender.start();
     }
 

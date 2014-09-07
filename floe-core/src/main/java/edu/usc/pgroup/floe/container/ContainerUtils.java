@@ -61,6 +61,8 @@ public final class ContainerUtils {
      * @param cid container's id on which this flake resides.
      * @param pelletPortMap map of pellet name to ports to listen on for
      *                      connections from the succeeding pellets.
+     * @param backChannelPortMap map of port for the backchannel. One port
+     *                           per target pellet.
      * @param pelletStreamsMap map of pellet name to list of stream names.
      * @return the flake id of the launched flake.
      */
@@ -70,6 +72,7 @@ public final class ContainerUtils {
             final String applicationJarPath,
             final String cid,
             final Map<String, Integer> pelletPortMap,
+            final Map<String, Integer> backChannelPortMap,
             final Map<String, List<String>> pelletStreamsMap) {
 
         final String fid  = String.valueOf(getUniqueFlakeId());
@@ -91,6 +94,11 @@ public final class ContainerUtils {
         args.add(cid);
         args.add("-ports");
         for (Map.Entry<String, Integer> p: pelletPortMap.entrySet()) {
+            args.add(p.getKey() + ':' + p.getValue());
+        }
+
+        args.add("-backchannelports");
+        for (Map.Entry<String, Integer> p: backChannelPortMap.entrySet()) {
             args.add(p.getKey() + ':' + p.getValue());
         }
 
@@ -142,14 +150,24 @@ public final class ContainerUtils {
      * @param fid flake's id to which to send the command.
      * @param host the host to connect to.
      * @param assignedPort the port to connect to.
+     * @param backPort the port for the back channel to connect to.
      */
     public static void sendConnectCommand(final String fid, final String host,
-                                          final int assignedPort) {
+                                          final int assignedPort,
+                                          final int backPort) {
 
-        String connectionString
+        String dataConnectStr
                 = Utils.Constants.FLAKE_RECEIVER_FRONTEND_CONNECT_SOCK_PREFIX
                 + host + ":"
                 + assignedPort;
+
+        String backChannelConnectStr
+                = Utils.Constants.FLAKE_RECEIVER_FRONTEND_CONNECT_SOCK_PREFIX
+                + host + ":"
+                + backPort;
+
+        String connectionString = dataConnectStr + ";" + backChannelConnectStr;
+
         FlakeControlCommand command = new FlakeControlCommand(
                 FlakeControlCommand.Command.CONNECT_PRED, connectionString);
         FlakeControlSignalSender.getInstance().send(fid, command);
@@ -286,10 +304,11 @@ public final class ContainerUtils {
 
                 for (ResourceMapping.FlakeInstance pred: preds) {
                     int assignedPort = pred.getAssignedPort(pid);
+                    int backPort = pred.getAssignedBackPort(pid);
                     String host = pred.getHost();
                     ContainerUtils.sendConnectCommand(
                             pidToFidMap.get(pid),
-                            host, assignedPort);
+                            host, assignedPort, backPort);
                 }
             }
         }
@@ -421,6 +440,7 @@ public final class ContainerUtils {
                     applicationJarPath,
                     containerId,
                     flakeInstance.getPelletPortMapping(),
+                    flakeInstance.getPelletBackChannelPortMapping(),
                     flakeInstance.getPelletStreamsMapping());
 
             try {

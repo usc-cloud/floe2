@@ -258,10 +258,11 @@ public class AppsAssignmentMonitor {
                     ResourceMapping.FlakeInstance pred
                             = predDelta.getFlakeInstance();
                     int assignedPort = pred.getAssignedPort(pelletName);
+                    int backPort = pred.getAssignedBackPort(pelletName);
                     String host = pred.getHost();
                     ContainerUtils.sendConnectCommand(
                             flakeInfo.getFlakeId(),
-                            host, assignedPort);
+                            host, assignedPort, backPort);
                 }
 
             }

@@ -374,11 +374,11 @@ public class ResourceMapping implements Serializable {
             TPellet tPellet = floeApp.get_pellets().get(pid);
 
             int numPorts = tPellet
-                    .get_outgoingEdgesWithSubscribedStreams().size();
+                    .get_outgoingEdgesWithSubscribedStreams().size() * 2;
 
             LOGGER.info("{} listening for {} count ports", pid, numPorts);
 
-            numPorts = Math.max(1, numPorts);
+            numPorts = Math.max(2, numPorts);
             int[] flPorts = new int[numPorts];
 
             for (int i = 0; i < numPorts; i++) {
@@ -467,6 +467,12 @@ public class ResourceMapping implements Serializable {
          */
         private final Map<String, Integer> listeningPorts;
 
+        /**
+         * The ports on which this flake should listen for backchannel
+         * connections from succeeding pellets.
+         * Map from pellet name to the port number.
+         */
+        private Map<String, Integer> pelletBackChannelPortMapping;
 
         /**
          * The map from pellet name (the immediate downstream pellets) to the
@@ -484,6 +490,7 @@ public class ResourceMapping implements Serializable {
          */
         private int numPelletInstances;
 
+
         /**
          * Constructor.
          * @param pid Pelletid for which this flake will run the instances.
@@ -498,6 +505,7 @@ public class ResourceMapping implements Serializable {
             this.pelletId = pid;
             this.host = hostnameOrIpAddr;
             this.listeningPorts = new HashMap<>();
+            this.pelletBackChannelPortMapping = new HashMap<>();
             this.streamNames = new HashMap<>();
 
             this.numPelletInstances = 0;
@@ -516,6 +524,10 @@ public class ResourceMapping implements Serializable {
                     listeningPorts.put(
                             edge.get_destPelletId(), flPorts[i++]);
 
+
+                    pelletBackChannelPortMapping.put(
+                            edge.get_destPelletId(), flPorts[i++]);
+
                     List<String> streams = oe.getValue();
 
 
@@ -532,6 +544,8 @@ public class ResourceMapping implements Serializable {
                 LOGGER.info("No OUTPUT PELLETS for: {}", tPellet.get_id());
                 listeningPorts.put("OUT_PELLET"
                         , flPorts[0]);
+                pelletBackChannelPortMapping.put("OUT_PELLET"
+                        , flPorts[1]);
                 streamNames.put(Utils.Constants.DEFAULT_STREAM_NAME,
                         new ArrayList<String>());
             }
@@ -545,6 +559,14 @@ public class ResourceMapping implements Serializable {
          */
         public final int getAssignedPort(final String pid) {
             return listeningPorts.get(pid);
+        }
+
+        /**
+         * @param pid pid of the succeeding pellet.
+         * @return the back channel port assigned to this pellet to connect to.
+         */
+        public final int getAssignedBackPort(final String pid) {
+            return pelletBackChannelPortMapping.get(pid);
         }
 
         /**
@@ -626,6 +648,14 @@ public class ResourceMapping implements Serializable {
          */
         public final Map<String, Integer> getPelletPortMapping() {
             return listeningPorts;
+        }
+
+        /**
+         * @return the pellet to port mapping for succeeding pellets for
+         * backchannels.
+         */
+        public final Map<String, Integer> getPelletBackChannelPortMapping() {
+            return pelletBackChannelPortMapping;
         }
 
         /**

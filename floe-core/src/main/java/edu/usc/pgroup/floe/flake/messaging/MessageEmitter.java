@@ -61,8 +61,8 @@ public class MessageEmitter implements Emitter {
                           final TupleSerializer tupleSerializer) {
         this.flakeId = fid;
         this.zcontex = context;
-        this.socket = context.socket(ZMQ.PUSH);
-        this.socket.connect(Utils.Constants.FLAKE_SENDER_FRONTEND_SOCK_PREFIX
+        this.socket = context.socket(ZMQ.PUB);
+        this.socket.bind(Utils.Constants.FLAKE_SENDER_FRONTEND_SOCK_PREFIX
                 + flakeId);
         this.serializer = tupleSerializer;
     }

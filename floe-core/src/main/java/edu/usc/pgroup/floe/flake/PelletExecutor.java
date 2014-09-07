@@ -199,7 +199,8 @@ public class PelletExecutor extends Thread {
      */
     @Override
     public final void run() {
-        ZMQ.Socket dataReceiver = context.socket(ZMQ.PULL);
+        ZMQ.Socket dataReceiver = context.socket(ZMQ.SUB);
+        dataReceiver.subscribe(pelletInstanceId.getBytes());
         dataReceiver.connect(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
                 + flakeId);
 
@@ -216,6 +217,26 @@ public class PelletExecutor extends Thread {
 
 
 
+        LOGGER.info("Open back channel from pellet");
+        ZMQ.Socket backendBackChannel = context.socket(ZMQ.PUB);
+        backendBackChannel.connect(
+                Utils.Constants.FLAKE_BACKCHANNEL_PELLET_PROXY_PREFIX
+                        + flakeId);
+
+
+        int a = 1;
+        final int cnt = 5;
+        while (a++ < cnt) { //FIX ME
+            LOGGER.info("Sending ping message: {}", pelletInstanceId);
+            backendBackChannel.sendMore(pelletInstanceId);
+            backendBackChannel.send("ping".getBytes(), 0);
+            try {
+                Thread.sleep(Utils.Constants.MILLI);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         //Create the emitter.
         MessageEmitter emitter = new MessageEmitter(flakeId,
                         context, tupleSerializer);
@@ -228,11 +249,13 @@ public class PelletExecutor extends Thread {
         pollerItems.register(signalReceiver, ZMQ.Poller.POLLIN);
 
         boolean disconnected = false;
+        String key;
         while (!Thread.currentThread().isInterrupted()) {
             LOGGER.debug("POLLING: ");
 
             pollerItems.poll();
             if (pollerItems.pollin(0)) {
+                key = dataReceiver.recvStr(Charset.defaultCharset());
                 byte[] serializedTuple = dataReceiver.recv();
                 Tuple tuple = tupleSerializer.deserialize(serializedTuple);
                 //Run pellet.execute here.

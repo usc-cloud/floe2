@@ -351,6 +351,12 @@ public final class Utils {
 
 
         /**
+         * Pellet facing proxy for the backchannel.
+         */
+        public static final String FLAKE_BACKCHANNEL_PELLET_PROXY_PREFIX
+                = "inproc://flake-backchannel-pellet-";
+
+        /**
          * Flake sender middle-end prefix (this is suffixed by a listening
          * port).
          * Receives data messages from the middle end. and uses PUSH to

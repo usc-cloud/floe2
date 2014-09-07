@@ -93,4 +93,13 @@
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.design.DesignForExtensionCheck"
               files="BasePellet.java"/>
 
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
+              files="Flake.java"/>
+
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
+              files="FlakeService.java"/>
+
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.AvoidInlineConditionalsCheck"
+              files="FlakeMessageReceiver.java"/>
+
 </suppressions>

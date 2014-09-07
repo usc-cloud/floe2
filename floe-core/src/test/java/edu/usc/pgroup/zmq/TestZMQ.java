@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup;
+package edu.usc.pgroup.zmq;
 
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.utils.Utils;
