@@ -101,6 +101,7 @@ public class FlakeMessageSender extends Thread {
      * This is used to start the proxy from tcp socket to the pellets.
      */
     public final void run() {
+        new MiddleEnd().start();
         for (String pellet: pelletPortMap.keySet()) {
             int port = pelletPortMap.get(pellet);
             int bpPort = pelletBackChannelPortMap.get(pellet);
@@ -153,16 +154,16 @@ public class FlakeMessageSender extends Thread {
          */
         public void run() {
 
-            ZMQ.Socket frontendReceiver  = ctx.socket(ZMQ.SUB);
+            ZMQ.Socket middleendreceiver  = ctx.socket(ZMQ.SUB);
 
-            frontendReceiver.connect(
-                    Utils.Constants.FLAKE_SENDER_FRONTEND_SOCK_PREFIX + fid);
+            middleendreceiver.connect(
+                    Utils.Constants.FLAKE_SENDER_MIDDLEEND_SOCK_PREFIX + fid);
 
             //subscribe for all streams requested by the user.
             if (streamNames != null) {
                 for (String streamName : streamNames) {
                     LOGGER.info("Subscribing: {}", streamName);
-                    frontendReceiver.subscribe(streamName.getBytes());
+                    middleendreceiver.subscribe(streamName.getBytes());
                 }
             }
 
@@ -188,7 +189,7 @@ public class FlakeMessageSender extends Thread {
 
 
             ZMQ.Poller pollerItems = new ZMQ.Poller(2 + 1);
-            pollerItems.register(frontendReceiver, ZMQ.Poller.POLLIN);
+            pollerItems.register(middleendreceiver, ZMQ.Poller.POLLIN);
             pollerItems.register(killsock, ZMQ.Poller.POLLIN);
             pollerItems.register(backendBackChannel, ZMQ.Poller.POLLIN);
 
@@ -201,9 +202,9 @@ public class FlakeMessageSender extends Thread {
 
                 pollerItems.poll();
                 if (pollerItems.pollin(0)) { //data messages
-                    streamName = frontendReceiver
+                    streamName = middleendreceiver
                             .recvStr(Charset.defaultCharset());
-                    message = frontendReceiver.recv();
+                    message = middleendreceiver.recv();
 
                     if (successorPelletInstances.size() > 0) {
                         key = successorPelletInstances.get(i++);
@@ -233,8 +234,64 @@ public class FlakeMessageSender extends Thread {
             }
             //ZMQ.proxy(middleendreceiver, backend, null);
             LOGGER.warn("Closing flake backend sockets");
-            frontendReceiver.close();
+            middleendreceiver.close();
             backend.close();
+            killsock.close();
+        }
+    }
+
+
+    /**
+     * The middleend class. A single instance of this is created and is
+     * responsible for gathering data from the frontend and sending it to the
+     * backend given the dispersion strategy. Currently PUB-SUB with
+     * duplicate to all strategy is used.
+     */
+    private class MiddleEnd extends Thread {
+        /**
+         * Middleend thread's run method. This is responsible for the routing.
+         */
+        public void run() {
+            ZMQ.Socket frontend  = ctx.socket(ZMQ.PULL);
+            frontend.bind(
+                    Utils.Constants.FLAKE_SENDER_FRONTEND_SOCK_PREFIX
+                            + fid);
+
+
+            ZMQ.Socket middleend  = ctx.socket(ZMQ.PUB);
+            middleend.bind(
+                    Utils.Constants.FLAKE_SENDER_MIDDLEEND_SOCK_PREFIX
+                            + fid);
+
+
+            ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
+            killsock.connect(
+                    Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
+                            + fid);
+            killsock.subscribe(Utils.Constants.PUB_ALL.getBytes());
+
+            ZMQ.Poller pollerItems = new ZMQ.Poller(2);
+            pollerItems.register(frontend, ZMQ.Poller.POLLIN);
+            pollerItems.register(killsock, ZMQ.Poller.POLLIN);
+
+            while (!Thread.currentThread().isInterrupted()) {
+                byte[] message;
+                String streamName;
+                pollerItems.poll();
+                if (pollerItems.pollin(0)) {
+                    streamName = frontend.recvStr(Charset.defaultCharset());
+                    message = frontend.recv();
+                    LOGGER.debug("MD: {}", streamName);
+                    LOGGER.debug("MD MS: {}", message);
+                    middleend.sendMore(streamName);
+                    middleend.send(message, 0);
+                } else if (pollerItems.pollin(1)) {
+                    break;
+                }
+            }
+            LOGGER.warn("Closing flake middleend sockets");
+            frontend.close();
+            middleend.close();
             killsock.close();
         }
     }
