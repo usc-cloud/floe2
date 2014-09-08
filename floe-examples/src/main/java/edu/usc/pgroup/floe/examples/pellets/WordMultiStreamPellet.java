@@ -113,14 +113,16 @@ public class WordMultiStreamPellet extends BasePellet {
                 if (j == firstWords.length) {
                     j = 0;
                 }
-                ot = new Tuple(firstWords[j++]);
+                ot = new Tuple();
+                ot.put("word", firstWords[j++]);
                 emitter.emit(stream1, ot);
                 i = 1;
             } else if (i == 1) {
                 if (k == secondWords.length) {
                     k = 0;
                 }
-                ot = new Tuple(secondWords[k++]);
+                ot = new Tuple();
+                ot.put("word", secondWords[k++]);
                 emitter.emit(stream2, ot);
                 i = 0;
             }

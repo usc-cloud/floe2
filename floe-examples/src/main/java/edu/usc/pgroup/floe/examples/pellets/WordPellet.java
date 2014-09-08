@@ -82,10 +82,11 @@ public class WordPellet extends BasePellet {
             if (i == words.length) {
                 i = 0;
             }
-            Tuple ot = new Tuple(words[i]);
+            Tuple ot = new Tuple();
+            ot.put("word", words[i]);
             emitter.emit(ot);
             try {
-                Thread.sleep(Utils.Constants.MILLI);
+                Thread.sleep(Utils.Constants.MILLI / 2);
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;

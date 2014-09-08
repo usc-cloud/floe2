@@ -75,7 +75,7 @@ public class WelcomeGreetingPellet extends BasePellet {
         if (t == null) {
             LOGGER.info("Dummy execute Welcome.");
         } else {
-            LOGGER.info("Welcome " + t.getDummy());
+            LOGGER.info("Welcome " + t.get("word"));
         }
     }
 

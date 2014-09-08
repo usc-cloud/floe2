@@ -14,13 +14,31 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
-
-import java.util.HashMap;
+package edu.usc.pgroup.floe.app.signals;
 
 /**
  * @author kumbhare
  */
-public class Tuple extends HashMap {
+public class PelletState {
 
+    /**
+     * Pellet specific state object.
+     */
+    private Object pelletState;
+
+
+    /**
+     * sets the state for the pellet.
+     * @param state the new state object.
+     */
+    public final void setState(final Object state) {
+        this.pelletState = state;
+    }
+
+    /**
+     * @return the current state of the pellet.
+     */
+    public final Object getState() {
+        return pelletState;
+    }
 }

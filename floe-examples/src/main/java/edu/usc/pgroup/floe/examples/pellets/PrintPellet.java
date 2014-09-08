@@ -70,7 +70,7 @@ public class PrintPellet extends BasePellet {
         if (t == null) {
             LOGGER.info("Dummy execute PRINT.");
         } else {
-            LOGGER.info("Received: " + t.getDummy());
+            LOGGER.info("Received: " + t.get("word"));
             emitter.emit(t);
         }
     }

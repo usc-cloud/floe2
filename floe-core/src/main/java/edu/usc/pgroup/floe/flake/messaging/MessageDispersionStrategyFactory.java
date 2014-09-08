@@ -51,6 +51,8 @@ public final class MessageDispersionStrategyFactory {
                 strategy = new RRDispersionStrategy();
                 break;
             case REDUCE:
+                strategy = new ReducerDispersionStrategy();
+                break;
             case LOAD_BALANCED:
             case CUSTOM:
             default:
