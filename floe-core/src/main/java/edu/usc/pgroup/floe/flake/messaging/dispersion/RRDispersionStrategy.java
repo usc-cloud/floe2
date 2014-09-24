@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging;
+package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
 
@@ -24,19 +24,18 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class ReducerDispersionStrategy implements MessageDispersionStrategy {
+public class RRDispersionStrategy implements MessageDispersionStrategy {
 
     /**
-     * Key field name to be used for grouping.
+     * Current index in the RR strategy.
      */
-    private String keyFieldName;
+    private int currentIndex;
 
 
     /**
      * List of target pellet instances.
      */
     private List<String> targetPelletInstances;
-
 
     /**
      * Initializes the strategy.
@@ -46,8 +45,8 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
      */
     @Override
     public final void initialize(final String args) {
-        this.targetPelletInstances = new ArrayList<>();
-        this.keyFieldName = args;
+        targetPelletInstances = new ArrayList<>();
+        currentIndex = 0;
     }
 
     /**
@@ -59,11 +58,14 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
      */
     @Override
     public final List<String> getTargetPelletInstances(final Tuple tuple) {
-        Object value = tuple.get(keyFieldName);
-        int currentIndex = value.hashCode() % targetPelletInstances.size();
+        if (currentIndex >= targetPelletInstances.size()) {
+            currentIndex = 0;
+        }
+
         List<String> target = targetPelletInstances.subList(
-                currentIndex,
-                currentIndex + 1);
+                                                    currentIndex,
+                                                    currentIndex + 1);
+        currentIndex++;
         return target;
     }
 
@@ -78,8 +80,8 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
      */
     @Override
     public final void backChannelMessageReceived(
-                                            final String targetPelletInstanceId,
-                                            final byte[] message) {
+            final String targetPelletInstanceId,
+            final byte[] message) {
         if (!targetPelletInstances.contains(targetPelletInstanceId)) {
             targetPelletInstances.add(targetPelletInstanceId);
         }

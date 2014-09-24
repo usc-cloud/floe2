@@ -17,6 +17,9 @@
 package edu.usc.pgroup.floe.flake.messaging;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
+import edu.usc.pgroup.floe.flake.messaging.dispersion
+        .MessageDispersionStrategyFactory;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
@@ -58,7 +61,7 @@ public class FlakeMessageSender extends Thread {
 
 
     /**
-     * the map of pellet to ports to start the zmq sockets for the backchannel.
+     * the map of pellet to ports to start the zmq sockets for the dispersion.
      */
     private final Map<String, Integer> pelletBackChannelPortMap;
 
@@ -81,7 +84,7 @@ public class FlakeMessageSender extends Thread {
      *                       listen on. Note: This is fine here (and not as a
      *                       control signal) because this depends only on
      *                       static application configuration and not on
-     * @param backChannelPortMap ports for backchannel.
+     * @param backChannelPortMap ports for dispersion.
      * @param channelTypeMap Map of target pellet to channel type (one per edge)
      * @param streamsMap map from successor pellets to subscribed
      *                         streams.
@@ -130,7 +133,7 @@ public class FlakeMessageSender extends Thread {
 
         /**
          * port on which the back end should listen for connection on the
-         * backchannel. This backchannel will be used for send client
+         * dispersion. This dispersion will be used for send client
          * identities and other channel control information.
          */
         private final int backChannelPort;
@@ -155,7 +158,7 @@ public class FlakeMessageSender extends Thread {
          * constructor.
          * @param p port on which the back end should listen for
          *             connections from downstream.
-         * @param bp backchannel port.
+         * @param bp dispersion port.
          * @param channelType channel type (e.g. round robin, reduce,
          *                    load balanced, custom)
          * @param streams list of stream names to subscribe to.

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging;
+package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 /**
  * @author kumbhare

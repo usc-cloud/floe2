@@ -70,7 +70,7 @@ public class Flake {
     private final Map<String, Integer> pelletPortMap;
 
     /**
-     * the map of pellet to ports to start the zmq sockets for the backchannel.
+     * the map of pellet to ports to start the zmq sockets for the dispersion.
      * one for each edge in the application graph.
      */
     private final Map<String, Integer> pelletBackChannelPortMap;
@@ -151,7 +151,7 @@ public class Flake {
      *                       listen on. Note: This is fine here (and not as a
      *                       control signal) because this depends only on
      *                       static application configuration and not on
-     * @param backChannelPortMap map of port for the backchannel. One port
+     * @param backChannelPortMap map of port for the dispersion. One port
      *                           per target pellet.
      * @param channelTypeMap Map of target pellet to channel type (one per edge)
      * @param streamsMap map from successor pellets to subscribed

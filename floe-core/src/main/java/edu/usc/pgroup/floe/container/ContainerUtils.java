@@ -61,7 +61,7 @@ public final class ContainerUtils {
      * @param cid container's id on which this flake resides.
      * @param pelletPortMap map of pellet name to ports to listen on for
      *                      connections from the succeeding pellets.
-     * @param backChannelPortMap map of port for the backchannel. One port
+     * @param backChannelPortMap map of port for the dispersion. One port
      *                           per target pellet.
      * @param channelTypeMap Map of target pellet to channel type (one per edge)
      * @param pelletStreamsMap map of pellet name to list of stream names.

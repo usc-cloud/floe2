@@ -87,11 +87,11 @@ public class CoordinatorHandler implements TCoordinator.Iface {
     public final int beginFileUpload(final String filename) throws TException {
         if (!FloeConfig.getConfig().containsKey(FILE_HANDLES_PROP)) {
             FloeConfig.getConfig().setProperty(FILE_HANDLES_PROP,
-                    new ChannelMap());
+                    new HashMap<Integer, Channel>());
         }
 
-        ChannelMap fidMap =
-                (ChannelMap) FloeConfig
+        HashMap<Integer, Channel> fidMap =
+                (HashMap<Integer, Channel>) FloeConfig
                         .getConfig().getProperty(
                                 FILE_HANDLES_PROP
                         );
@@ -146,8 +146,8 @@ public class CoordinatorHandler implements TCoordinator.Iface {
             throw new TException("File Handler Not found.");
         }
 
-        ChannelMap fidMap =
-                (ChannelMap) FloeConfig
+        HashMap<Integer, Channel> fidMap =
+                (HashMap<Integer, Channel>) FloeConfig
                         .getConfig().getProperty(
                                 FILE_HANDLES_PROP
                         );
@@ -181,8 +181,8 @@ public class CoordinatorHandler implements TCoordinator.Iface {
             throw new TException("File Handler Not found.");
         }
 
-        ChannelMap fidMap =
-                (ChannelMap) FloeConfig
+        HashMap<Integer, Channel> fidMap =
+                (HashMap<Integer, Channel>) FloeConfig
                         .getConfig().getProperty(
                                 FILE_HANDLES_PROP
                         );
@@ -216,11 +216,11 @@ public class CoordinatorHandler implements TCoordinator.Iface {
             throws TException {
         if (!FloeConfig.getConfig().containsKey(FILE_HANDLES_PROP)) {
             FloeConfig.getConfig().setProperty(FILE_HANDLES_PROP,
-                    new ChannelMap());
+                    new HashMap<Integer, Channel>());
         }
 
-        ChannelMap fidMap =
-                (ChannelMap) FloeConfig
+        HashMap<Integer, Channel> fidMap =
+                (HashMap<Integer, Channel>) FloeConfig
                         .getConfig().getProperty(
                                 FILE_HANDLES_PROP
                         );
@@ -275,8 +275,8 @@ public class CoordinatorHandler implements TCoordinator.Iface {
             throw new TException("File Handler Not found.");
         }
 
-        ChannelMap fidMap =
-                (ChannelMap) FloeConfig
+        HashMap<Integer, Channel> fidMap =
+                (HashMap<Integer, Channel>) FloeConfig
                         .getConfig().getProperty(
                                 FILE_HANDLES_PROP
                         );
@@ -405,11 +405,11 @@ public class CoordinatorHandler implements TCoordinator.Iface {
 
         if (!FloeConfig.getConfig().containsKey(FILE_HANDLES_PROP)) {
             FloeConfig.getConfig().setProperty(FILE_HANDLES_PROP,
-                    new ChannelMap());
+                    new HashMap<Integer, Channel>());
         }
 
-        ChannelMap fidMap =
-                (ChannelMap) FloeConfig
+        HashMap<Integer, Channel> fidMap =
+                (HashMap<Integer, Channel>) FloeConfig
                         .getConfig().getProperty(
                                 FILE_HANDLES_PROP
                         );
@@ -426,12 +426,5 @@ public class CoordinatorHandler implements TCoordinator.Iface {
 
         fid++;
         return fid;
-    }
-
-
-    /**
-     * Typedef for the fid to channel map.
-     */
-    class ChannelMap extends HashMap<Integer, Channel> {
     }
 }

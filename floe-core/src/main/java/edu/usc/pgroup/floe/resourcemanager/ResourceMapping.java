@@ -467,7 +467,7 @@ public class ResourceMapping implements Serializable {
         private final Map<String, Integer> listeningPorts;
 
         /**
-         * The ports on which this flake should listen for backchannel
+         * The ports on which this flake should listen for dispersion
          * connections from succeeding pellets.
          * Map from pellet name to the port number.
          */

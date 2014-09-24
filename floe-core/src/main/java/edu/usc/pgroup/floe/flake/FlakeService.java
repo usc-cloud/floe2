@@ -68,7 +68,7 @@ public final class FlakeService {
      *                       listen on. Note: This is fine here (and not as a
      *                       control signal) because this depends only on
      *                       static application configuration and not on
-     * @param backChannelPortMap map of port for the backchannel. One port
+     * @param backChannelPortMap map of port for the dispersion. One port
      *                           per target pellet.
      * @param channelTypeMap Map of target pellet to channel type (one per edge)
      * @param pelletStreamsMap map from successor pellets to subscribed
