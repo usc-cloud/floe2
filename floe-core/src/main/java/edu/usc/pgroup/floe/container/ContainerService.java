@@ -37,7 +37,7 @@ public final class ContainerService {
      */
     public static void main(final String[] args) {
 
-        Container container = new Container();
+        Container container = Container.getInstance();
         container.start();
 
         /*Iterator<String> keys = FloeConfig.getConfig().getKeys();

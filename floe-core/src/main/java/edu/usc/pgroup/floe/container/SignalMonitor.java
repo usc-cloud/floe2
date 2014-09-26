@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app.signals;
+package edu.usc.pgroup.floe.container;
 
-import edu.usc.pgroup.floe.container.FlakeControlCommand;
-import edu.usc.pgroup.floe.container.FlakeControlSignalSender;
-import edu.usc.pgroup.floe.container.FlakeMonitor;
 import edu.usc.pgroup.floe.flake.FlakeInfo;
+import edu.usc.pgroup.floe.signals.ContainerSignal;
+import edu.usc.pgroup.floe.signals.PelletSignal;
+import edu.usc.pgroup.floe.signals.Signal;
+import edu.usc.pgroup.floe.signals.ZKSignalsCache;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -124,10 +125,28 @@ public class SignalMonitor {
          * @param ser serialized signal received from ZK.
          */
         private void processSignal(final byte[] ser) {
+            Signal signal = (Signal) Utils.deserialize(ser);
+            if (signal instanceof PelletSignal) {
+                sendPelletSignal((PelletSignal) signal, ser);
+            } else if (signal instanceof ContainerSignal) {
+                processContainerSignal((ContainerSignal) signal);
+            } else {
+                LOGGER.warn("Invalid signal type received. "
+                        + "Ignoring the signal");
+            }
+        }
+
+        /**
+         * Sends the PelletSignal to the appropriate flake which inturn sends
+         * it to all pellet instnaces.
+         * @param signal the deserialized signal.
+         * @param serialized the serialized signal.
+         */
+        private void sendPelletSignal(final PelletSignal signal,
+                                      final byte[] serialized) {
             Map<String, FlakeInfo> runningFlakes
                     = FlakeMonitor.getInstance().getFlakes();
 
-            Signal signal = (Signal) Utils.deserialize(ser);
 
             for (FlakeInfo info: runningFlakes.values()) {
                 if (info.getAppName().equalsIgnoreCase(
@@ -136,7 +155,8 @@ public class SignalMonitor {
                         signal.getDestPellet())) {
 
                     FlakeControlCommand command = new FlakeControlCommand(
-                            FlakeControlCommand.Command.PELLET_SIGNAL, ser);
+                            FlakeControlCommand.Command.PELLET_SIGNAL,
+                            serialized);
 
                     FlakeControlSignalSender.getInstance().send(
                             info.getFlakeId(),
@@ -144,6 +164,16 @@ public class SignalMonitor {
                     );
                 }
             }
+        }
+
+        /**
+         * Processes the container signal received. This is typically used to
+         * issue commands to the container to perform certain actions.
+         * @param signal deserialized container signal object.
+         */
+        private void processContainerSignal(final ContainerSignal signal) {
+            LOGGER.info("Container signal received: {}", signal);
+            Container.getInstance().processSignal(signal);
         }
     }
 }

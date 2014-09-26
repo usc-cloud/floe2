@@ -19,7 +19,7 @@ package edu.usc.pgroup.floe.examples.pellets;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.ReducerPellet;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.app.signals.PelletState;
+import edu.usc.pgroup.floe.app.PelletState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

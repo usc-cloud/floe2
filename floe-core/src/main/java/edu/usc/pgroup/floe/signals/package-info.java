@@ -15,7 +15,9 @@
  */
 
 /**
- * Contains custom command executor to send them to the coordinator.
+ * This package contains classes responsible for signalling individual
+ * pellets for a given application. Signals may be sent by a client or
+ * coordinator or other pellets.
  * @author kumbhare
  */
-package edu.usc.pgroup.floe.commands;
+package edu.usc.pgroup.floe.signals;

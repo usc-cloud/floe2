@@ -16,8 +16,6 @@
 
 package edu.usc.pgroup.floe.app;
 
-import edu.usc.pgroup.floe.app.signals.PelletState;
-
 import java.util.HashMap;
 import java.util.Map;
 

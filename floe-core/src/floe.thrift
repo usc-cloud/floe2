@@ -96,6 +96,67 @@ enum ScaleDirection {
     down
 }
 
+/**
+ * Enum for App Status.
+ */
+enum AppStatus {
+    /**
+     * Application status indicating that this is a new application
+     * request and the request has been received.
+     */
+    NEW_DEPLOYMENT_REQ_RECEIVED,
+    /**
+     * Application status indicating that currently the application is
+     * being scheduled.
+     */
+    SCHEDULING,
+    /**
+     * Status to indicate that the scheduling has been completed.
+     */
+    SCHEDULING_COMPLETED,
+    /**
+     * Application status indicating that the application has been
+     * scheduled and the corresponding flakes are being deployed. Same
+     * status is used when the flakes are being updated.
+     * This involves launching flakes, establishing socket connections.
+     */
+    UPDATING_FLAKES,
+    /**
+     * Status indicating that all flake updates have been completed.
+     */
+    UPDATING_FLAKES_COMPLETED,
+    /**
+     * Application status indicating that the flakes has been deployed
+     * and the corresponding pellets are being created.
+     * THIS SHOULD NOT START THE PELLETS. JUST CREATE THEM.
+     * when creating, removing pellets. or changing alternates.
+     */
+    UPDATING_PELLETS,
+    /**
+     * Status indicating that the all pellet creation/deletion/updates have
+     * been completed.
+     */
+    UPDATING_PELLETS_COMPLETED,
+    /**
+     * Status indicating that the application is ready to be started.
+     */
+    READY,          //READY to start.
+    /**
+     * Status indicating that the application is running. And no update
+     * requests are pending.
+     * New requests will be accepted only when in this state.
+     */
+    RUNNING,
+    /**
+     * Status to indicate that a new update request has been received.
+     */
+    REDEPLOYMENT_REQ_RECEIVED,
+    /**
+     * Status to indicate that the system is Starting pellets.
+     */
+    STARTING_PELLETS,
+}
+
 struct TSignal {
     1: required string destApp;
     2: required string destPellet;
@@ -132,4 +193,7 @@ service TCoordinator
     void switchAlternate(1: string appName, 2: string pelletName,
           3: string alternateName) throws (1: AppNotFoundException anfe,
           2: PelletNotFoundException pnfe, 3: AlternateNotFoundException alnfe);
+
+    AppStatus getAppStatus(1: string appName)
+      throws (1: AppNotFoundException anfe);
 }

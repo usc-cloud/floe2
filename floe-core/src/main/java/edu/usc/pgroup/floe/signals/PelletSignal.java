@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app.signals;
+package edu.usc.pgroup.floe.signals;
 
 import java.io.Serializable;
 
 /**
  * @author kumbhare
  */
-public class Signal implements Serializable {
+public class PelletSignal extends Signal implements Serializable {
 
     /**
      * The destination application name.
@@ -35,30 +35,17 @@ public class Signal implements Serializable {
 
 
     /**
-     * Signal signalData.
-     */
-    private final byte[] signalData;
-
-
-    /**
      * Constructor.
      * @param app destination application name.
      * @param pellet destination pellet name.
      * @param data serialized signal data.
      */
-    public Signal(final String app,
-                  final String pellet,
-                  final byte[] data) {
+    public PelletSignal(final String app,
+                        final String pellet,
+                        final byte[] data) {
+        super(data);
         this.destApp = app;
         this.destPellet = pellet;
-        this.signalData = data;
-    }
-
-    /**
-     * @return the signal signalData.
-     */
-    public final byte[] getSignalData() {
-        return signalData;
     }
 
     /**
@@ -73,21 +60,5 @@ public class Signal implements Serializable {
      */
     public final String getDestPellet() {
         return destPellet;
-    }
-
-    /**
-     * Signal type enum.
-     */
-    public enum SignalType {
-        /**
-         * System type signal. Used by flake to send a command to ALL the
-         * pellet instances running on that flake.
-         */
-        SystemSignal,
-        /**
-         * User type signal. Signals that are sent by the user. By default
-         * the signal is considered as user type.
-         */
-        UserSignal
     }
 }

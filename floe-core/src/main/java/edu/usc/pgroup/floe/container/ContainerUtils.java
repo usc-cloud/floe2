@@ -208,6 +208,18 @@ public final class ContainerUtils {
     }
 
     /**
+     * Send the start pellets command to the given flake.
+     * @param fid flake id to terminate a pellet instance.
+     */
+    public static void sendStartPelletsCommand(final String fid) {
+        FlakeControlCommand command = new FlakeControlCommand(
+                FlakeControlCommand.Command.START_PELLETS,
+                null
+        );
+        FlakeControlSignalSender.getInstance().send(fid, command);
+    }
+
+    /**
      * sends a switch alternate command to the given flake with the new
      * alternate's implementation sent as data. NOTE: Not send the jar since
      * for current version we assume all implementations are available in the
@@ -426,7 +438,7 @@ public final class ContainerUtils {
      * @param flakes list of flake instances from the resource mapping.
      * @return the pid to fid map.
      */
-    private static Map<String, String> createFlakes(
+    public static Map<String, String> createFlakes(
             final String appName, final String applicationJarPath,
             final String containerId,
             final Map<String, ResourceMapping.FlakeInstance> flakes) {

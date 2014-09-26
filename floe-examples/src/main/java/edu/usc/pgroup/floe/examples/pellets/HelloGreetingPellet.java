@@ -19,7 +19,7 @@ package edu.usc.pgroup.floe.examples.pellets;
 import edu.usc.pgroup.floe.app.BasePellet;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.app.signals.Signal;
+import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +90,7 @@ public class HelloGreetingPellet extends BasePellet {
      * @param signal the signal received for this pellet.
      */
     @Override
-    public final void onSignal(final Signal signal) {
+    public final void onSignal(final PelletSignal signal) {
         LOGGER.info("RECEIVED SIGNAL: {}",
                 Utils.deserialize(signal.getSignalData()));
     }

@@ -16,8 +16,7 @@
 
 package edu.usc.pgroup.floe.app;
 
-import edu.usc.pgroup.floe.app.signals.Signal;
-import edu.usc.pgroup.floe.app.signals.Signallable;
+import edu.usc.pgroup.floe.signals.PelletSignal;
 
 import java.util.List;
 
@@ -40,5 +39,5 @@ public abstract class BasePellet implements Pellet, Signallable {
      * @param signal the signal received for this pellet.
      */
     @Override
-    public void onSignal(final Signal signal) { }
+    public void onSignal(final PelletSignal signal) { }
 }

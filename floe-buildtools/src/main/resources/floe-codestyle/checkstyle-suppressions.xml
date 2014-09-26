@@ -69,6 +69,10 @@
               files="ResourceMapping.java"/>
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.TodoCommentCheck"
               files="ClusterResourceManager.java"/>
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.TodoCommentCheck"
+              files="Transitions.java"/>
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.TodoCommentCheck"
+              files="ResourceMappingDelta.java"/>
 
     <!-- for the PosixJNAAffinity file. cant fix -->
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.AvoidInlineConditionalsCheck"

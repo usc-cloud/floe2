@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.utils;
-
-import edu.usc.pgroup.floe.app.signals.Signal;
+package edu.usc.pgroup.floe.signals;
 
 /**
  * @author kumbhare
  */
-public class SystemSignal extends Signal {
+public class SystemSignal extends PelletSignal {
 
     /**
      * System signal type.
@@ -59,7 +57,10 @@ public class SystemSignal extends Signal {
          * System signal sent to a pellet instance to kill itself.
          */
         KillInstance,
-
+        /**
+         * System signal to start the pellet.
+         */
+        StartInstance,
         /**
          * System signal for switching alternates.
          */

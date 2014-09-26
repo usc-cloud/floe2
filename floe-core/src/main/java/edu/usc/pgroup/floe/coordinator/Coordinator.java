@@ -16,16 +16,14 @@
 
 package edu.usc.pgroup.floe.coordinator;
 
+import edu.usc.pgroup.floe.coordinator.transitions.Transitions;
+import edu.usc.pgroup.floe.coordinator
+        .transitions.coordinatortransitions.StartAppTransition;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManager;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManagerFactory;
-import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
-import edu.usc.pgroup.floe.thriftgen.AppNotFoundException;
-import edu.usc.pgroup.floe.thriftgen.DuplicateException;
-import edu.usc.pgroup.floe.thriftgen.InsufficientResourcesException;
+import edu.usc.pgroup.floe.thriftgen.AppStatus;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
-import edu.usc.pgroup.floe.utils.RetryLoop;
-import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
@@ -34,13 +32,12 @@ import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The main class for all coordination (start, stop, floes,
  * assign resources etc.) and monitoring activities.
- * TODO: Refactor class name.
  *
  * @author kumbhare
  */
@@ -97,6 +94,17 @@ public final class Coordinator {
                         .creatingParentsIfNeeded()
                         .forPath(ZKUtils.getApplicationRootPath());
             }
+
+
+            if (ZKClient.getInstance().getCuratorClient().checkExists()
+                    .forPath(ZKUtils.getClusterStatusPath()) == null) {
+                ZKClient.getInstance().getCuratorClient().create()
+                        .creatingParentsIfNeeded()
+                        .forPath(ZKUtils.getClusterStatusPath(),
+                                Utils.serialize(
+                                        Coordinator.ClusterStatus.AVAILABLE));
+            }
+
             LOGGER.info("Coordinator root and apps folder created: {}.",
                     ZKUtils.getApplicationRootPath());
         } catch (KeeperException.NodeExistsException e) {
@@ -108,6 +116,64 @@ public final class Coordinator {
     }
 
     /**
+     * @param appName application name.
+     * @return the current status of the application.
+     * @throws Exception if the given application is not running.
+     */
+    public AppStatus getApplicationStatus(final String appName)
+            throws Exception {
+        return ZKUtils.getAppStatus(appName);
+    }
+
+    /**
+     * Enum for cluster transactions.
+     */
+    public enum ClusterTransitions {
+        /**
+         * Cluster transition to start a new application.
+         */
+        START_APP,
+        /**
+         * Cluster transition to stop an application.
+         */
+        STOP_APP
+    }
+
+    /**
+     * Enum for App transitions.
+     */
+    public enum AppTransitions {
+        /**
+         * Application transition to start scale up a given application.
+         */
+        SCALE_UP,
+        /**
+         * Application transition to start scale down a given application.
+         */
+        SCALE_DOWN,
+        /**
+         * Application transition to switch alternates for a given application.
+         */
+        SWITCH_ALTERNATE
+    }
+
+
+    /**
+     * Enum for cluster status.
+     */
+    public enum ClusterStatus {
+        /**
+         * Status to indicate that coordinator is currently busy.
+         */
+        BUSY,
+        /**
+         * Status to indicate that the coordinator is available and can take
+         * more requests.
+         */
+        AVAILABLE
+    }
+
+    /**
      * Acquire required resources and submit a floe app.
      * @param appName name of the app
      * @param app The app topology.
@@ -115,87 +181,16 @@ public final class Coordinator {
      */
     public void submitApp(final String appName, final TFloeApp app) throws
             TException {
-
-        LOGGER.info("Received submit app request for: {}", appName);
-
-        //verify name does not exist.
+        Map<String, Object> args = new HashMap<>();
+        args.put("appName", appName);
+        args.put("app", app);
         try {
-            if (appExists(appName)) {
-                LOGGER.error("Application name already exists.");
-                throw new DuplicateException();
-            }
+            Transitions.execute(new StartAppTransition(),
+                                args);
         } catch (Exception e) {
-            LOGGER.error("Error occurred while checking existing "
-                    + "applications: {}", e);
+            LOGGER.error("Could not start app: {}", e);
             throw new TException(e);
         }
-
-        //verify topology (TODO).
-
-        //get the resource manager and request for resource mapping from
-        // scheduler.
-        ResourceMapping mapping = ResourceManagerFactory.getResourceManager()
-                .getInitialMapping(appName, app);
-        LOGGER.info("Planned initial resource mapping:" + mapping);
-
-        if (mapping == null) {
-            LOGGER.warn("Insufficient resources to deploy the application.");
-            throw new InsufficientResourcesException("Unable to acquire "
-                    + "required resources.");
-        }
-
-
-        //Put the mapping into ZK for each container to start pulling data.
-        String appPath = ZKUtils.getApplicationPath(appName);
-        LOGGER.info("App Path to store the configuration:" + appPath);
-
-        try {
-            ZKClient.getInstance().getCuratorClient()
-                    .create().creatingParentsIfNeeded()
-                    .forPath(appPath,
-                    Utils.serialize(mapping));
-        } catch (Exception e) {
-            LOGGER.error("Could not access ZK to store the application "
-                    + "mapping");
-            throw new TException(e);
-        }
-
-        //wait for topology to start.
-    }
-
-    /**
-     * @param appName the name of the app to check.
-     * @return true if the appName already exists, false otherwise.
-     * @throws Exception if there is an exception while accessing ZK.
-     */
-    private boolean appExists(final String appName) throws Exception {
-        final String appRootPath = ZKUtils.getApplicationRootPath();
-        List<String> applications;
-        try {
-            applications = RetryLoop.callWithRetry(
-                    RetryPolicyFactory.getDefaultPolicy(),
-                    new Callable<List<String>>() {
-                        @Override
-                        public List<String> call() throws Exception {
-                            return ZKClient.getInstance()
-                                    .getCuratorClient().getChildren()
-                                    .forPath(appRootPath);
-                        }
-                    }
-            );
-
-            LOGGER.info("Running applications:{}", applications);
-        } catch (Exception e) {
-            LOGGER.error("Exception occurred while getting running "
-                    + "applications. {}", e);
-            throw new Exception(e);
-        }
-
-        if (applications.contains(appName)) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -216,62 +211,6 @@ public final class Coordinator {
                       final String pelletName,
                       final int count) throws TException {
         LOGGER.info("Received scale app request for: {}", appName);
-
-        //verify name does not exist.
-        try {
-            if (!appExists(appName)) {
-                LOGGER.error("Application does not exist.");
-                throw new AppNotFoundException();
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error occurred while checking existing "
-                    + "applications: {}", e);
-            throw new TException(e);
-        }
-
-        //get current resource mapping from zk.
-        String appPath = ZKUtils.getApplicationPath(appName);
-        ResourceMapping currentMapping;
-        LOGGER.info("App Path to get the configuration:" + appPath);
-        try {
-            byte[] childData = ZKClient.getInstance().getCuratorClient()
-                    .getData().forPath(appPath);
-
-            currentMapping  = (ResourceMapping) Utils.deserialize(childData);
-        } catch (Exception e) {
-            LOGGER.error("Could not access ZK to store the application "
-                    + "mapping");
-            throw new TException(e);
-        }
-
-        //get the resource manager and request for resource mapping from
-        // scheduler.
-        ResourceMapping mapping = ResourceManagerFactory.getResourceManager()
-                .scale(currentMapping, direction, pelletName, count);
-
-        LOGGER.info("New resource mapping: {}", mapping);
-        LOGGER.info("Resource Mapping Delta: {}", mapping.getDelta());
-
-        if (mapping == null) {
-            LOGGER.warn("Insufficient resources to deploy the application.");
-            throw new InsufficientResourcesException("Unable to acquire "
-                    + "required resources.");
-        }
-
-
-        //Put the updated mapping back into ZK for each container to start
-        // pulling data.
-        LOGGER.info("App Path to store the configuration:" + appPath);
-
-        try {
-            ZKClient.getInstance().getCuratorClient()
-                    .setData().forPath(appPath,
-                            Utils.serialize(mapping));
-        } catch (Exception e) {
-            LOGGER.error("Could not access ZK to store the application "
-                    + "mapping");
-            throw new TException(e);
-        }
     }
 
     /**
@@ -282,69 +221,9 @@ public final class Coordinator {
      * @throws TException TException Thrift exception wrapper.
      */
     public void switchAlternate(final String appName,
-                                      final String pelletName,
-                                      final String alternateName)
+                                final String pelletName,
+                                final String alternateName)
             throws TException {
-
         LOGGER.info("Received switch alternate request for: {}", appName);
-
-        //verify name does not exist.
-        try {
-            if (!appExists(appName)) {
-                LOGGER.error("Application does not exist.");
-                throw new AppNotFoundException();
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error occurred while checking existing "
-                    + "applications: {}", e);
-            throw new TException(e);
-        }
-
-        //get current resource mapping from zk.
-        String appPath = ZKUtils.getApplicationPath(appName);
-        ResourceMapping currentMapping;
-        LOGGER.info("App Path to get the configuration:" + appPath);
-        try {
-            byte[] childData = ZKClient.getInstance().getCuratorClient()
-                    .getData().forPath(appPath);
-
-            currentMapping  = (ResourceMapping) Utils.deserialize(childData);
-        } catch (Exception e) {
-            LOGGER.error("Could not access ZK to store the application "
-                    + "mapping");
-            throw new TException(e);
-        }
-
-        //get the resource manager and request for resource mapping from
-        // scheduler.
-        /*ResourceMapping mapping = ResourceManagerFactory.getResourceManager()
-                .scale(currentMapping, direction, pelletName, count);*/
-
-        ResourceMapping mapping = ResourceManagerFactory.getResourceManager()
-                .switchAlternate(currentMapping, pelletName, alternateName);
-
-        LOGGER.info("New resource mapping: {}", mapping);
-        LOGGER.info("Resource Mapping Delta: {}", mapping.getDelta());
-
-        if (mapping == null) {
-            LOGGER.warn("Insufficient resources to deploy the application.");
-            throw new InsufficientResourcesException("Unable to acquire "
-                    + "required resources.");
-        }
-
-
-        //Put the updated mapping back into ZK for each container to start
-        // pulling data.
-        LOGGER.info("App Path to store the configuration:" + appPath);
-
-        try {
-            ZKClient.getInstance().getCuratorClient()
-                    .setData().forPath(appPath,
-                    Utils.serialize(mapping));
-        } catch (Exception e) {
-            LOGGER.error("Could not access ZK to store the application "
-                    + "mapping");
-            throw new TException(e);
-        }
     }
 }

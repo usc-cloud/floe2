@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.commands;
+package edu.usc.pgroup.floe.client.commands;
 
 import edu.usc.pgroup.floe.client.FloeClient;
+import edu.usc.pgroup.floe.thriftgen.TSignal;
+import edu.usc.pgroup.floe.utils.Utils;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -28,14 +30,16 @@ import org.apache.commons.cli.ParseException;
 import org.apache.thrift.TException;
 import org.slf4j.LoggerFactory;
 
+
 /**
  * @author kumbhare
  */
-public final class SwitchAlternate {
+public final class Signal {
+
     /**
      * Hiding the default constructor.
      */
-    private SwitchAlternate() {
+    private Signal() {
 
     }
 
@@ -63,14 +67,14 @@ public final class SwitchAlternate {
                 .withDescription("Pellet Name")
                 .create("pellet");
 
-        Option alternateOption = OptionBuilder.withArgName("alternate")
+        Option signalOption = OptionBuilder.withArgName("data")
                 .hasArg().withType(new String())
-                .withDescription("The new alternate to switch to.")
-                .create("alternate");
+                .withDescription("signal data to send to the pellet")
+                .create("data");
 
         options.addOption(appOption);
         options.addOption(pelletNameOption);
-        options.addOption(alternateOption);
+        options.addOption(signalOption);
 
         CommandLineParser parser = new BasicParser();
         CommandLine line;
@@ -87,19 +91,19 @@ public final class SwitchAlternate {
 
         String app = line.getOptionValue("app");
         String pellet = line.getOptionValue("pellet");
-        String alternate = line.getOptionValue("alternate");
+        String data = line.getOptionValue("data");
 
         LOGGER.info("Application: {}", app);
         LOGGER.info("Pellet: {}", pellet);
-        LOGGER.info("alternate: {}", alternate);
+        LOGGER.info("data: {}", data);
 
+        byte[] datab = Utils.serialize(data);
         try {
-
-            FloeClient.getInstance().getClient().switchAlternate(
-                    app,
-                    pellet,
-                    alternate
-            );
+            TSignal signal = new TSignal();
+            signal.set_destApp(app);
+            signal.set_destPellet(pellet);
+            signal.set_data(datab);
+            FloeClient.getInstance().getClient().signal(signal);
         } catch (TException e) {
             LOGGER.error("Error while connecting to the coordinator: {}", e);
         }

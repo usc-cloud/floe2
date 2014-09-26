@@ -18,12 +18,12 @@ package edu.usc.pgroup.floe.flake;
 
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.app.signals.Signal;
-import edu.usc.pgroup.floe.app.signals.Signallable;
+import edu.usc.pgroup.floe.signals.PelletSignal;
+import edu.usc.pgroup.floe.app.Signallable;
 import edu.usc.pgroup.floe.flake.messaging.MessageEmitter;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
-import edu.usc.pgroup.floe.utils.SystemSignal;
+import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +82,11 @@ public class PelletExecutor extends Thread {
     private Pellet pellet;
 
     /**
+     * The emmitter object associated with this pellet.
+     */
+    private MessageEmitter emitter;
+
+    /**
      * Serializer to be used to serialize and deserialize the data tuples.
      */
     private final TupleSerializer tupleSerializer;
@@ -96,6 +101,7 @@ public class PelletExecutor extends Thread {
      * Class loader for loading pellet classes from a jar file.
      */
     private URLClassLoader loader;
+
 
     /**
      * hiding default constructor.
@@ -225,9 +231,10 @@ public class PelletExecutor extends Thread {
 
 
         int a = 1;
-        final int cnt = 5;
-        while (a++ < cnt) { //FIX ME
-            LOGGER.info("Sending ping message: {}", pelletInstanceId);
+        final int cnt = 1;
+        while (a++ <= cnt) { //FIX ME
+            LOGGER.info("Sending ping message on backchannel: {}",
+                    pelletInstanceId);
             backendBackChannel.sendMore(pelletInstanceId);
             backendBackChannel.send("ping".getBytes(), 0);
             try {
@@ -238,11 +245,12 @@ public class PelletExecutor extends Thread {
         }
 
         //Create the emitter.
-        MessageEmitter emitter = new MessageEmitter(flakeId,
+        emitter = new MessageEmitter(flakeId,
                         context, tupleSerializer);
 
-        //Dummy execute with null values.
-        pellet.execute(null, emitter);
+        //Dummy execute with null values. NO NEED TO DO THIS HERE.
+        //Fix for ISSUE #17. Changing this to start on a container signal.
+        //pellet.execute(null, emitter);
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(2);
         pollerItems.register(dataReceiver, ZMQ.Poller.POLLIN);
@@ -264,9 +272,10 @@ public class PelletExecutor extends Thread {
                 String envelope = signalReceiver
                         .recvStr(Charset.defaultCharset());
                 byte[] serializedSignal = signalReceiver.recv();
-                Signal signal = (Signal) Utils.deserialize(serializedSignal);
+                PelletSignal signal = (PelletSignal) Utils.deserialize(
+                        serializedSignal);
 
-                if (signal instanceof  SystemSignal) {
+                if (signal instanceof SystemSignal) {
                     processSystemSignal((SystemSignal) signal);
                 } else {
                     if (pellet instanceof Signallable) {
@@ -314,6 +323,11 @@ public class PelletExecutor extends Thread {
                 LOGGER.warn("Switching pellet alternate.");
                 this.pellet = (Pellet) Utils.deserialize(signal.getSignalData(),
                         loader);
+                break;
+            case StartInstance:
+                LOGGER.info("Starting pellets.");
+                this.pellet.onStart(emitter);
+                this.pellet.execute(null, emitter);
                 break;
             case KillInstance:
                 LOGGER.warn("Kill Instance signal received. Terminating "

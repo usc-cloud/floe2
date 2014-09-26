@@ -313,6 +313,13 @@ public class ResourceMappingDelta implements Serializable {
     }
 
     /**
+     * @return the number of containers that have been updated.
+     */
+    public final int getContainersToUpdate() {
+        return 0; //TODO: LOOK AT THIS LATER
+    }
+
+    /**
      * class to represent the flake instance delta since the last reset.
      */
     public class FlakeInstanceDelta implements Serializable {

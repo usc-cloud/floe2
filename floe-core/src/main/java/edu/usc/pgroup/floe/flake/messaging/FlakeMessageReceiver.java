@@ -18,7 +18,7 @@ package edu.usc.pgroup.floe.flake.messaging;
 
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.Flake;
-import edu.usc.pgroup.floe.utils.SystemSignal;
+import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

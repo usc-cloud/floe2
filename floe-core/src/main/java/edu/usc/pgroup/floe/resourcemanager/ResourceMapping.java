@@ -319,6 +319,17 @@ public class ResourceMapping implements Serializable {
     }
 
     /**
+     * @return the number of containers that have been updated.
+     */
+    public final int getContainersToUpdate() {
+        if (mappingDelta == null) {
+            return containerMap.size();
+        } else {
+            return mappingDelta.getContainersToUpdate();
+        }
+    }
+
+    /**
      * Internal container instance class.
      */
     public class ContainerInstance implements Serializable {

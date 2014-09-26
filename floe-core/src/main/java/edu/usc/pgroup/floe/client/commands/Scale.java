@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.commands;
+package edu.usc.pgroup.floe.client.commands;
 
 import edu.usc.pgroup.floe.client.FloeClient;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;

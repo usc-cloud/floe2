@@ -14,10 +14,31 @@
  * limitations under the License.
  */
 
+package edu.usc.pgroup.floe.app;
+
 /**
- * This package contains classes responsible for signalling individual
- * pellets for a given application. Signals may be sent by a client or
- * coordinator or other pellets.
  * @author kumbhare
  */
-package edu.usc.pgroup.floe.app.signals;
+public class PelletState {
+
+    /**
+     * Pellet specific state object.
+     */
+    private Object pelletState;
+
+
+    /**
+     * sets the state for the pellet.
+     * @param state the new state object.
+     */
+    public final void setState(final Object state) {
+        this.pelletState = state;
+    }
+
+    /**
+     * @return the current state of the pellet.
+     */
+    public final Object getState() {
+        return pelletState;
+    }
+}

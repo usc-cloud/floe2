@@ -74,6 +74,30 @@ public final class ZKConstants {
          * The signals root node, relative to the coordinator.
          */
         public static final String SIGNAL_NODE = "signals";
+
+        /**
+         * The location, relative to the coordinator,
+         * where the cluster's status is stored.
+         */
+        public static final String CLUSTER_STATUS = "status";
+
+        /**
+         * The location, relative to the application's node where the app's
+         * status is stored.
+         */
+        public static final String APP_STATUS  = CLUSTER_STATUS;
+
+        /**
+         * the location, relative to the specific application's node,
+         * where the corresponding resource mapping is stored.
+         */
+        public static final String RESOURCE_MAP = "resourcemap";
+
+        /**
+         * the location, relative to the specific application's node,
+         * which will be used for barrier synchronization.
+         */
+        public static final String APP_BARRIER = "barrier";
     }
 
     /**

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app.signals;
+package edu.usc.pgroup.floe.signals;
 
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
@@ -68,7 +68,43 @@ public final class SignalHandler {
         try {
             String signalPath = ZKUtils.getSingalPath(appName, pelletName);
 
-            Signal signal = new Signal(appName, pelletName, data);
+            PelletSignal signal = new PelletSignal(appName, pelletName, data);
+
+            byte[] ser = Utils.serialize(signal);
+
+            if (ZKClient.getInstance().getCuratorClient().checkExists()
+                    .forPath(signalPath) == null) {
+                ZKClient.getInstance().getCuratorClient().create()
+                        .creatingParentsIfNeeded().forPath(signalPath, ser);
+            } else {
+                ZKClient.getInstance().getCuratorClient().setData()
+                        .forPath(signalPath, ser);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while connecting to Zookeeper: {}", e);
+            return false;
+        }
+        return true;
+    }
+
+
+    /**
+     * Sends the signal to the coordinator to be forwarded to the pellets.
+     * @param appName application name.
+     * @param containerName pellet name to send the signal to.
+     * @param type Container signal type.
+     * @param data signal data.
+     * @return  true if the signal was successfully sent to ZK. (This does
+     * not mean signal delivery to pellets though.)
+     */
+    public boolean signal(final String appName, final String containerName,
+                          final ContainerSignal.ContainerSignalType type,
+                          final byte[] data) {
+        try {
+            String signalPath = ZKUtils.getSingalPath(appName, containerName);
+
+            ContainerSignal signal = new ContainerSignal(appName,
+                    type, containerName, data);
 
             byte[] ser = Utils.serialize(signal);
 

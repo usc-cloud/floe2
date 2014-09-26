@@ -21,7 +21,7 @@ import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.messaging.FlakeMessageReceiver;
 import edu.usc.pgroup.floe.flake.messaging.FlakeMessageSender;
-import edu.usc.pgroup.floe.utils.SystemSignal;
+import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -363,6 +363,21 @@ public class Flake {
                 }
                 //decrementPellet();
                 break;
+            case START_PELLETS:
+                LOGGER.info("STARTING PELLETS: on " + getFlakeId());
+                if (runningPelletInstances.size() > 0) {
+                    for (PelletExecutor peInstance: runningPelletInstances) {
+                        signal.sendMore(peInstance.getPelletInstanceId());
+                        SystemSignal systemSignal = new SystemSignal(appName,
+                                pelletId,
+                                SystemSignal.SystemSignalType.StartInstance,
+                                null);
+                        signal.send(Utils.serialize(systemSignal), 0);
+                    }
+                } else {
+                    LOGGER.error("Flake {} does not have any running pellet "
+                            + "instances.", getFlakeId());
+                }
             case TERMINATE:
                 //No pellet should be running
                 terminateFlake();

@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.client;
 
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.thriftgen.AppStatus;
 import edu.usc.pgroup.floe.thriftgen.TCoordinator;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -243,8 +244,54 @@ public class FloeClient extends ThriftClient {
      * @param app the FloeApp topology.
      * @throws TException thrift exception.
      */
-    public final void submitApp(final String appName, final TFloeApp app) throws
-            TException {
+    public final void submitApp(final String appName, final TFloeApp app)
+            throws TException {
+
+
+
+        LOGGER.info("Submitting app to the coordinator.");
         getClient().submitApp(appName, app);
+        LOGGER.info("Request submitted.");
+
+        //Now wait for app's status to be Running.
+        boolean again = true;
+        AppStatus prevStatus = null;
+        LOGGER.info("Waiting for application to start.");
+
+        int failedAttempts = 0;
+        final int maxFailedAttempts = 5;
+        final int sleepTime = 50;
+        String dots = ".";
+        while (again && failedAttempts < maxFailedAttempts) {
+            AppStatus status = null;
+            try {
+                status = getClient().getAppStatus(appName);
+            } catch (TException ex) {
+                LOGGER.warn("Application not found. Yet to be deployed. "
+                        + "Trying again.");
+                failedAttempts++;
+                continue;
+            }
+            if (status == AppStatus.RUNNING) {
+                again = false;
+            }
+
+            if (prevStatus == status) {
+                dots += ".";
+            } else {
+                dots = ".";
+            }
+
+            LOGGER.info(status.toString() + " " + dots);
+
+            prevStatus = status;
+
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                LOGGER.warn("Thread interrupted while waiting for app status");
+            }
+        }
     }
 }

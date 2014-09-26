@@ -16,9 +16,10 @@
 
 package edu.usc.pgroup.floe.coordinator;
 
-import edu.usc.pgroup.floe.app.signals.SignalHandler;
+import edu.usc.pgroup.floe.signals.SignalHandler;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.thriftgen.AppStatus;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TCoordinator;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
@@ -391,6 +392,28 @@ public class CoordinatorHandler implements TCoordinator.Iface {
             pelletName,
             alternateName
         );
+    }
+
+    /**
+     * Service call to get the status of an application.
+     * @param appName application name to check the status.
+     * @return the current status.
+     * //throws AppNotFoundException if the application is not found
+     * @throws TException TException Thrift exception wrapper.
+     */
+    @Override
+    public final AppStatus getAppStatus(final String appName)
+            throws
+            //AppNotFoundException,
+            TException {
+
+        try {
+            return Coordinator.getInstance().getApplicationStatus(appName);
+        } catch (Exception e) {
+            LOGGER.error("Could not retrieve app status.");
+            throw new TException(e);
+        }
+
     }
 
     /**

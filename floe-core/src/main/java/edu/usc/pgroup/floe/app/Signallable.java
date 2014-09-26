@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app.signals;
+package edu.usc.pgroup.floe.app;
+
+import edu.usc.pgroup.floe.signals.PelletSignal;
 
 /**
  * @author kumbhare
@@ -24,5 +26,5 @@ public interface Signallable {
      * Called when a signal is received for the component.
      * @param signal the signal received for this pellet.
      */
-    void onSignal(Signal signal);
+    void onSignal(PelletSignal signal);
 }

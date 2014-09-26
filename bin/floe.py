@@ -150,7 +150,7 @@ def scale(*args):
     Syntax: [floe scale -dir up/down -app <appname> -pellet <pelletname> -cnt <cnt>
     Sends the scale up/down command to the coordinator.
     """
-    klass="edu.usc.pgroup.floe.commands.Scale"
+    klass="edu.usc.pgroup.floe.client.commands.Scale"
     jvmopts = [
         "-Dlogfile.name=coordinator.log",
         "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",
@@ -166,7 +166,7 @@ def signal(*args):
     Syntax: [floe signal -app <appname> -pellet <pelletname> -data <data>
     Sends the given signal command to the coordinator to be sent to the given app/pellet.
     """
-    klass="edu.usc.pgroup.floe.commands.Signal"
+    klass="edu.usc.pgroup.floe.client.commands.Signal"
     jvmopts = [
         "-Dlogfile.name=coordinator.log",
         "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",
@@ -183,7 +183,7 @@ def switch_alternate(*args):
     Syntax: [floe signal -app <appname> -pellet <pelletname> -data <data>
     Sends the given signal command to the coordinator to be sent to the given app/pellet.
     """
-    klass="edu.usc.pgroup.floe.commands.SwitchAlternate"
+    klass="edu.usc.pgroup.floe.client.commands.SwitchAlternate"
     jvmopts = [
         "-Dlogfile.name=coordinator.log",
         "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",
