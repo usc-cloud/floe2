@@ -109,8 +109,18 @@ public final class FlakeControlSignalSender {
             LOGGER.info("Connecting to control channel at: "
                     + Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
                     + flakeId);
-            sender.connect(Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
+            sender.bind(Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
                     + flakeId);
+
+            Thread shutdownHook = new Thread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        LOGGER.info("Closing flake contorl sock.");
+                        sender.close();
+                    }
+                });
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
         }
 
         /**

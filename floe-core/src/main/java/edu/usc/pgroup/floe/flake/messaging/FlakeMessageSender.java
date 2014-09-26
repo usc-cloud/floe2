@@ -201,7 +201,7 @@ public class FlakeMessageSender extends Thread {
          */
         public void run() {
 
-            ZMQ.Socket middleendreceiver  = ctx.socket(ZMQ.SUB);
+            final ZMQ.Socket middleendreceiver  = ctx.socket(ZMQ.SUB);
 
             middleendreceiver.connect(
                     Utils.Constants.FLAKE_SENDER_MIDDLEEND_SOCK_PREFIX + fid);
@@ -214,7 +214,7 @@ public class FlakeMessageSender extends Thread {
                 }
             }
 
-            ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
+            final ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
             killsock.connect(
                     Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
                             + fid);
@@ -222,13 +222,13 @@ public class FlakeMessageSender extends Thread {
 
 
             LOGGER.info("Open data channel on: {}", port);
-            ZMQ.Socket backend  = ctx.socket(ZMQ.PUB);
+            final ZMQ.Socket backend  = ctx.socket(ZMQ.PUB);
             backend.bind(
                   Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
                     + port);
 
             LOGGER.info("Open back channel on: {}", backChannelPort);
-            ZMQ.Socket backendBackChannel = ctx.socket(ZMQ.SUB);
+            final ZMQ.Socket backendBackChannel = ctx.socket(ZMQ.SUB);
             backendBackChannel.bind(
                     Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
                             + backChannelPort);
@@ -239,6 +239,19 @@ public class FlakeMessageSender extends Thread {
             pollerItems.register(middleendreceiver, ZMQ.Poller.POLLIN);
             pollerItems.register(killsock, ZMQ.Poller.POLLIN);
             pollerItems.register(backendBackChannel, ZMQ.Poller.POLLIN);
+
+//            Thread shutdownHook = new Thread(
+//                    new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            LOGGER.info("Closing flake killsock.");
+//                            middleendreceiver.close();
+//                            killsock.close();
+//                            backend.close();
+//                            backendBackChannel.close();
+//                        }
+//                    });
+//            Runtime.getRuntime().addShutdownHook(shutdownHook);
 
             int i = 0;
             byte[] message;
@@ -287,6 +300,8 @@ public class FlakeMessageSender extends Thread {
             killsock.close();
             backend.close();
             backendBackChannel.close();
+
+            //Runtime.getRuntime().removeShutdownHook(shutdownHook);
         }
     }
 
@@ -302,19 +317,19 @@ public class FlakeMessageSender extends Thread {
          * Middleend thread's run method. This is responsible for the routing.
          */
         public void run() {
-            ZMQ.Socket frontend  = ctx.socket(ZMQ.PULL);
+            final ZMQ.Socket frontend  = ctx.socket(ZMQ.PULL);
             frontend.bind(
                     Utils.Constants.FLAKE_SENDER_FRONTEND_SOCK_PREFIX
                             + fid);
 
 
-            ZMQ.Socket middleend  = ctx.socket(ZMQ.PUB);
+            final ZMQ.Socket middleend  = ctx.socket(ZMQ.PUB);
             middleend.bind(
                     Utils.Constants.FLAKE_SENDER_MIDDLEEND_SOCK_PREFIX
                             + fid);
 
 
-            ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
+            final ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
             killsock.connect(
                     Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
                             + fid);
@@ -323,6 +338,18 @@ public class FlakeMessageSender extends Thread {
             ZMQ.Poller pollerItems = new ZMQ.Poller(2);
             pollerItems.register(frontend, ZMQ.Poller.POLLIN);
             pollerItems.register(killsock, ZMQ.Poller.POLLIN);
+
+//            Thread shutdownHook = new Thread(
+//                    new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            LOGGER.info("Closing flake killsock.");
+//                            frontend.close();
+//                            middleend.close();
+//                            killsock.close();
+//                        }
+//                    });
+//            Runtime.getRuntime().addShutdownHook(shutdownHook);
 
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] message;
@@ -343,6 +370,7 @@ public class FlakeMessageSender extends Thread {
             frontend.close();
             middleend.close();
             killsock.close();
+            //Runtime.getRuntime().removeShutdownHook(shutdownHook);
         }
     }
 }

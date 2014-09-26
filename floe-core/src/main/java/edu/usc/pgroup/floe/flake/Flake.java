@@ -133,9 +133,15 @@ public class Flake {
     private ZMQ.Socket killsock;
 
     /**
+     * Shutdown hook to close sockets etc on Cntl-C or unexpected shutdown.
+     */
+    private Thread shutdownHook;
+
+    /**
      * List of pellet instances running on the flake.
      */
     private final List<PelletExecutor> runningPelletInstances;
+
 
     /**
      * Constructor.
@@ -245,6 +251,16 @@ public class Flake {
                 Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
                         + flakeId);
 
+//        shutdownHook = new Thread(
+//                new Runnable() {
+//                    @Override
+//                    public void run() {
+//                       LOGGER.info("Closing flake killsock.");
+//                       killsock.close();
+//                    }
+//                });
+//        Runtime.getRuntime().addShutdownHook(shutdownHook);
+
         LOGGER.info("flake Started: {}.", getFlakeId());
     }
 
@@ -269,6 +285,10 @@ public class Flake {
 
         //close kill sock.
         killsock.close();
+
+//        if (shutdownHook != null) {
+//            Runtime.getRuntime().removeShutdownHook(shutdownHook);
+//        }
 
         //FIX ME: should terminate the context. but after all sockets are
         // cleanly closed..

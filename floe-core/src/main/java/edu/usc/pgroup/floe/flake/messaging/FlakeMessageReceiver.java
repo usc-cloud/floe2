@@ -89,7 +89,7 @@ public class FlakeMessageReceiver extends Thread {
         //Frontend socket to talk to other flakes. dont connect here. Connect
         // only when the signal for connect is received.
         LOGGER.info("Starting front end receiver socket");
-        ZMQ.Socket frontend = ctx.socket(ZMQ.XSUB);
+        final ZMQ.Socket frontend = ctx.socket(ZMQ.XSUB);
 
         //Backend socket to talk to the Pellets contained in the flake. The
         // pellets may be added or removed dynamically.
@@ -97,38 +97,38 @@ public class FlakeMessageReceiver extends Thread {
                 + "pellets at: "
                 + Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
                 + flake.getFlakeId());
-        ZMQ.Socket backend = ctx.socket(ZMQ.XPUB);
+        final ZMQ.Socket backend = ctx.socket(ZMQ.XPUB);
         backend.bind(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
                 + flake.getFlakeId());
 
         LOGGER.info("Starting inproc socket to send signals to pellets: "
                 + Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
                 + flake.getFlakeId());
-        ZMQ.Socket signal = ctx.socket(ZMQ.PUB);
+        final ZMQ.Socket signal = ctx.socket(ZMQ.PUB);
         signal.bind(Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
                 + flake.getFlakeId());
 
         LOGGER.info("Starting backend ipc socket for control channel at: "
                 + Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
                 + flake.getFlakeId());
-        ZMQ.Socket controlSocket = ctx.socket(ZMQ.REP);
-        controlSocket.bind(Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
+        final ZMQ.Socket controlSocket = ctx.socket(ZMQ.REP);
+        controlSocket.connect(Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
                 + flake.getFlakeId());
 
-        ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
+        final ZMQ.Socket killsock  = ctx.socket(ZMQ.SUB);
         killsock.connect(Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
                         + flake.getFlakeId());
         killsock.subscribe(Utils.Constants.PUB_ALL.getBytes());
 
         //XPUB XSUB sockets for the backchannels.
-        ZMQ.Socket xsubFromPelletsSock = ctx.socket(ZMQ.XSUB);
+        final ZMQ.Socket xsubFromPelletsSock = ctx.socket(ZMQ.XSUB);
         LOGGER.info("WAITING FOR BACKCHANNEL CONNECTINON "
                 + "FROM PELLET EXECUTOR. {}", flake.getFlakeId());
         xsubFromPelletsSock.bind(
                 Utils.Constants.FLAKE_BACKCHANNEL_PELLET_PROXY_PREFIX
                         + flake.getFlakeId());
         //connect to the back channel on connect signal.
-        ZMQ.Socket xpubToPredSock = ctx.socket(ZMQ.XPUB);
+        final ZMQ.Socket xpubToPredSock = ctx.socket(ZMQ.XPUB);
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(6);
         pollerItems.register(frontend, ZMQ.Poller.POLLIN);
@@ -137,6 +137,21 @@ public class FlakeMessageReceiver extends Thread {
         pollerItems.register(xsubFromPelletsSock, ZMQ.Poller.POLLIN);
         pollerItems.register(xpubToPredSock, ZMQ.Poller.POLLIN);
         pollerItems.register(backend, ZMQ.Poller.POLLIN);
+
+//        Thread shutdownHook = new Thread(
+//                new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        LOGGER.info("Closing flake killsock.");
+//                        frontend.close();
+//                        controlSocket.close();
+//                        killsock.close();
+//                        xsubFromPelletsSock.close();
+//                        xpubToPredSock.close();
+//                        backend.close();
+//                    }
+//                });
+//        Runtime.getRuntime().addShutdownHook(shutdownHook);
 
         byte[] message;
         boolean more = false;
@@ -211,5 +226,7 @@ public class FlakeMessageReceiver extends Thread {
         xsubFromPelletsSock.close();
         xpubToPredSock.close();
         backend.close();
+
+        //Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
 }

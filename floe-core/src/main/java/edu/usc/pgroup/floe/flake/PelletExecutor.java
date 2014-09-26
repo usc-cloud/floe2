@@ -205,12 +205,12 @@ public class PelletExecutor extends Thread {
      */
     @Override
     public final void run() {
-        ZMQ.Socket dataReceiver = context.socket(ZMQ.SUB);
+        final ZMQ.Socket dataReceiver = context.socket(ZMQ.SUB);
         dataReceiver.subscribe(pelletInstanceId.getBytes());
         dataReceiver.connect(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
                 + flakeId);
 
-        ZMQ.Socket signalReceiver = context.socket(ZMQ.SUB);
+        final ZMQ.Socket signalReceiver = context.socket(ZMQ.SUB);
         signalReceiver.connect(
                 Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
                 + flakeId);
@@ -224,7 +224,7 @@ public class PelletExecutor extends Thread {
 
 
         LOGGER.info("Open back channel from pellet");
-        ZMQ.Socket backendBackChannel = context.socket(ZMQ.PUB);
+        final ZMQ.Socket backendBackChannel = context.socket(ZMQ.PUB);
         backendBackChannel.connect(
                 Utils.Constants.FLAKE_BACKCHANNEL_PELLET_PROXY_PREFIX
                         + flakeId);
@@ -243,6 +243,18 @@ public class PelletExecutor extends Thread {
                 e.printStackTrace();
             }
         }
+
+//        Thread shutdownHook = new Thread(
+//                new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        LOGGER.info("Closing flake pellet executor.");
+//                        dataReceiver.close();
+//                        signalReceiver.close();
+//                        backendBackChannel.close();
+//                    }
+//                });
+//        Runtime.getRuntime().addShutdownHook(shutdownHook);
 
         //Create the emitter.
         emitter = new MessageEmitter(flakeId,
@@ -312,6 +324,7 @@ public class PelletExecutor extends Thread {
         dataReceiver.close();
         signalReceiver.close();
         backendBackChannel.close();
+        //Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
 
     /**

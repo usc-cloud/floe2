@@ -142,11 +142,22 @@ public final class FlakeMonitor {
          */
         public void run() {
             ZMQ.Context ctx = ZMQ.context(1);
-            ZMQ.Socket heartBeatSoc = ctx.socket(ZMQ.PULL);
+            final ZMQ.Socket heartBeatSoc = ctx.socket(ZMQ.PULL);
             String hbBindStr = Utils.Constants.FLAKE_HEARBEAT_SOCK_PREFIX
                     + containerId;
             LOGGER.info("Waiting for hb at: {}", hbBindStr);
             heartBeatSoc.bind(hbBindStr);
+
+            Runtime.getRuntime().addShutdownHook(new Thread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        LOGGER.info("Closing hb socket and shutting down");
+                        heartBeatSoc.close();
+                    }
+                }
+            ));
+
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] hb = heartBeatSoc.recv();
                 FlakeInfo finfo = (FlakeInfo) Utils.deserialize(hb);
@@ -156,6 +167,9 @@ public final class FlakeMonitor {
                 }
                 updateFlakeHB(finfo);
             }
+
+            //heartBeatSoc.close();
+            LOGGER.info("Closing heartBeatSoc.");
         }
     }
 }
