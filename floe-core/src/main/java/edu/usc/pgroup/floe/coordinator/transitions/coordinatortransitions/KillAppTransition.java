@@ -26,7 +26,6 @@ import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.apache.curator.framework.recipes.barriers.DistributedDoubleBarrier;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,13 +65,14 @@ public class KillAppTransition extends ClusterTransition {
 
         byte[] serializedRM = null;
 
-        try {
-            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
-                    .forPath(resourceMappingPath);
-        } catch (Exception e) {
-            LOGGER.error("Could not receive resource mapping. Aborting.");
-            return;
+        //Step 1. Verify that the app exists.
+        if (!ZKUtils.appExists(appName)) {
+            LOGGER.error("Application does not exist.");
+            throw new AppNotFoundException();
         }
+
+        serializedRM = ZKClient.getInstance().getCuratorClient().getData()
+                .forPath(resourceMappingPath);
 
         ResourceMapping resourceMapping =
                 (ResourceMapping) Utils.deserialize(serializedRM);
@@ -84,18 +84,6 @@ public class KillAppTransition extends ClusterTransition {
                 appUpdateBarrierPath,
                 numContainersToUpdate + 1
         );
-
-        //Step 1. Verify that the app exists.
-        try {
-            if (!ZKUtils.appExists(appName)) {
-                LOGGER.error("Application name already exists.");
-                throw new AppNotFoundException();
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error occurred while checking existing "
-                    + "applications: {}", e);
-            throw new TException(e);
-        }
 
         //Step 2. Kill Pellets.
         SignalHandler.getInstance().signal(appName, "ALL-CONTAINERS",
@@ -135,31 +123,20 @@ public class KillAppTransition extends ClusterTransition {
                         + UUID.randomUUID());
         //Copy data to terminated section. Currently it is just the RM but
         // later we will have much more.
-        try {
-            ZKClient.getInstance().getCuratorClient().create()
-                    .creatingParentsIfNeeded()
-                    .forPath(terminatedAppPath, serializedRM);
-        } catch (Exception e) {
-            LOGGER.error("Could not copy to archive {}.", e);
-            return;
-        }
 
-        ZKUtils.setAppStatus(appName,
-                AppStatus.TERMINATED);
+        ZKClient.getInstance().getCuratorClient().create()
+                .creatingParentsIfNeeded()
+                .forPath(terminatedAppPath, serializedRM);
+
+        ZKUtils.setAppStatus(appName, AppStatus.TERMINATED);
         LOGGER.info("App terminated. Moving to archive.");
 
         //Now delete from the aaps path.
         String appPath = ZKUtils.getApplicationPath(appName);
-        try {
-            ZKClient.getInstance().getCuratorClient().delete()
+        ZKClient.getInstance().getCuratorClient().delete()
                 .deletingChildrenIfNeeded().forPath(appPath);
-        } catch (Exception e) {
-            LOGGER.error("Could not remove resource mapping. Aborting. {}", e);
-            return;
-        }
 
         LOGGER.info("Moved to archive.");
-        notifyCompleted();
     }
 
     /**

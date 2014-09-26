@@ -23,6 +23,8 @@ import edu.usc.pgroup.floe.flake.FlakeInfo;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.signals.ContainerSignal;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
+import edu.usc.pgroup.floe.utils.RetryLoop;
+import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
@@ -34,6 +36,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
+import java.util.concurrent.Callable;
 
 /**
  * @author kumbhare
@@ -298,10 +301,39 @@ public final class Container {
 
         for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
                 : flakes.entrySet()) {
-            String pid = flakeEntry.getKey();
+            final String pid = flakeEntry.getKey();
 
-            ContainerUtils.sendKillFlakeCommand(
-                    pidToFidMap.get(pid).getFlakeId());
+            final String flakeId = pidToFidMap.get(pid).getFlakeId();
+            ContainerUtils.sendKillFlakeCommand(flakeId);
+
+            //while(FlakeMonitor.getInstance().getFlakes().containsKey(pid))
+            try {
+                Boolean killed = RetryLoop.callWithRetry(RetryPolicyFactory
+                                .getDefaultPolicy(),
+                        new Callable<Boolean>() {
+                            @Override
+                            public Boolean call() throws Exception {
+                                FlakeInfo info = null;
+                                try {
+                                    info = FlakeMonitor.getInstance()
+                                        .getFlakeInfo(pid);
+
+                                } catch (Exception ex) {
+                                    LOGGER.warn("Flake not found or already "
+                                            + "terminated.");
+                                }
+
+                                if (info == null) {
+                                    return true;
+                                }
+                                throw new Exception("Flake still alive. "
+                                        + "Trying again. ");
+                            }
+                        });
+                LOGGER.info("Flake terminated (at container):{}", flakeId);
+            } catch (Exception e) {
+                LOGGER.error("Could not kill flake in given time.");
+            }
         }
         barrier.leave(); //finish launching pellets.
     }

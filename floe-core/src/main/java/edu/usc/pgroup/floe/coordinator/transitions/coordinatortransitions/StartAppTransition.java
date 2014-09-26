@@ -187,9 +187,6 @@ public class StartAppTransition extends ClusterTransition {
 
         LOGGER.info("All pellets Started. The application is now "
                 + "running");
-
-        //finally notify completed to release the lock.
-        notifyCompleted();
     }
 
     /**

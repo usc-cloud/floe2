@@ -69,8 +69,9 @@ public class RetryNPolicy implements RetryPolicy {
     @Override
     public final void init(final String... args) {
         if (args.length < 2) {
-            LOGGER.warn("Arguments not specified, using defaults."
-                            + "MaxRetries = 3, SleepTimeBetweenRetries=2000"
+            LOGGER.warn("Not enough arguments, using defaults."
+                            + "MaxRetries = {}, SleepTimeBetweenRetries={}",
+                    DEFAULT_RETRY_TRIES, DEFAULT_TIMEOUT
             );
             maxRetries = DEFAULT_RETRY_TRIES;
             timeOut = DEFAULT_TIMEOUT;
@@ -81,7 +82,8 @@ public class RetryNPolicy implements RetryPolicy {
             timeOut = Long.parseLong(args[1]);
         } catch (Exception e) {
             LOGGER.warn("Could not get parameters from, using defaults."
-                            + "MaxRetries = 3, SleepTimeBetweenRetries=2000"
+                            + "MaxRetries = {}, SleepTimeBetweenRetries={}. {}",
+                    DEFAULT_RETRY_TRIES, DEFAULT_TIMEOUT, e
             );
             maxRetries = DEFAULT_RETRY_TRIES;
             timeOut = DEFAULT_TIMEOUT;

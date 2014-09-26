@@ -44,7 +44,7 @@ public abstract class Transition {
                             LOGGER.error("Error occurred while executing "
                                     + "transition: {}. Abandoning transition",
                                     getName());
-
+                        } finally {
                             notifyCompleted();
                         }
                     }
@@ -79,7 +79,7 @@ public abstract class Transition {
     /**
      * Notify all the listeners that the transition has completed.
      */
-    public final synchronized void notifyCompleted() {
+    private synchronized void notifyCompleted() {
         for (TransitionListener listener: transitionListenerList) {
             listener.transitionCompleted(this);
         }

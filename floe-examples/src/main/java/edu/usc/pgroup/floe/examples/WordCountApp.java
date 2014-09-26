@@ -58,7 +58,7 @@ public final class WordCountApp {
         System.out.println("Hello World!");
         ApplicationBuilder builder = new ApplicationBuilder();
 
-        String[] words = {"John", "Jane", "Maverick", "Alok"};
+        String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
         builder.addPellet("words", new WordPellet(words)).setParallelism(1);
 
