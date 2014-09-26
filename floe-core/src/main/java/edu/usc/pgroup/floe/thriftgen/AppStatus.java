@@ -69,7 +69,8 @@ public enum AppStatus implements org.apache.thrift.TEnum {
   /**
    * Status to indicate that the system is Starting pellets.
    */
-  STARTING_PELLETS(10);
+  STARTING_PELLETS(10),
+  TERMINATED(11);
 
   private final int value;
 
@@ -112,6 +113,8 @@ public enum AppStatus implements org.apache.thrift.TEnum {
         return REDEPLOYMENT_REQ_RECEIVED;
       case 10:
         return STARTING_PELLETS;
+      case 11:
+        return TERMINATED;
       default:
         return null;
     }

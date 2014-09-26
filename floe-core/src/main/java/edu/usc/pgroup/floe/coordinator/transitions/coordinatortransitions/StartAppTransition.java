@@ -185,7 +185,7 @@ public class StartAppTransition extends ClusterTransition {
         ZKUtils.setAppStatus(appName,
                 AppStatus.RUNNING);
 
-        LOGGER.info("All pellets Started created. The application is now "
+        LOGGER.info("All pellets Started. The application is now "
                 + "running");
 
         //finally notify completed to release the lock.

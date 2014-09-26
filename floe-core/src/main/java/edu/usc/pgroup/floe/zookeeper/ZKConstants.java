@@ -71,6 +71,11 @@ public final class ZKConstants {
         public static final String APP_NODE = "apps";
 
         /**
+         * The root node to keep terminated apps.
+         */
+        public static final String TERMINATED_APP_NODE = "terminated";
+
+        /**
          * The signals root node, relative to the coordinator.
          */
         public static final String SIGNAL_NODE = "signals";

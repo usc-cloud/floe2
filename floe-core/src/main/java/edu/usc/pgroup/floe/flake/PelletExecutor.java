@@ -308,8 +308,10 @@ public class PelletExecutor extends Thread {
             }
         }
 
+        LOGGER.warn("Pellet executor stopped.");
         dataReceiver.close();
         signalReceiver.close();
+        backendBackChannel.close();
     }
 
     /**

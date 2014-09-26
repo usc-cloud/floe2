@@ -95,21 +95,7 @@ def jar(jarfile, klass, *args):
         jvmopts=[' '.join(filter(None, [JAR_JVM_OPTS, "-Dfloe.execution.jar=" +
         jarfile]))])
 
-def kill(*args):
-    """Syntax: [floe kill topology-name [-w wait-time-secs]]
 
-    Kills the topology with the name topology-name. floe will
-    first deactivate the topology's spouts for the duration of
-    the topology's message timeout to allow all messages currently
-    being processed to finish processing. floe will then shutdown
-    the workers and clean up their state. You can override the length
-    of time floe waits between deactivation and shutdown with the -w flag.
-    """
-    exec_floe_class(
-        "backtype.floe.command.kill_topology",
-        args=args,
-        jvmtype="-client",
-        extrajars=[USER_CONF_DIR, floe_DIR + "/bin"])
 
 
 def coordinator(klass="edu.usc.pgroup.floe.coordinator.CoordinatorService"):
@@ -184,6 +170,27 @@ def switch_alternate(*args):
     Sends the given signal command to the coordinator to be sent to the given app/pellet.
     """
     klass="edu.usc.pgroup.floe.client.commands.SwitchAlternate"
+    jvmopts = [
+        "-Dlogfile.name=coordinator.log",
+        "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",
+        ]
+    exec_floe_class(klass,
+                    jvmtype="-client",
+                    jvmopts=jvmopts,
+                    fork=False,
+                    args=args)
+
+def kill(*args):
+    """Syntax: [floe kill topology-name [-w wait-time-secs]]
+
+    Kills the topology with the name topology-name. floe will
+    first deactivate the topology's spouts for the duration of
+    the topology's message timeout to allow all messages currently
+    being processed to finish processing. floe will then shutdown
+    the workers and clean up their state. You can override the length
+    of time floe waits between deactivation and shutdown with the -w flag.
+    """
+    klass="edu.usc.pgroup.floe.client.commands.KillApp"
     jvmopts = [
         "-Dlogfile.name=coordinator.log",
         "-Dlogback.configurationFile=" + FLOE_HOME + "/conf/logback.xml",

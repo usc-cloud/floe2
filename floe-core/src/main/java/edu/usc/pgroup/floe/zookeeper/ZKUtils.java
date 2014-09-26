@@ -70,6 +70,14 @@ public final class ZKUtils {
     }
 
     /**
+     * @return the root folder path for application related data.
+     */
+    public static String getTerminatedApplicationRootPath() {
+        return ZKPaths.makePath(ZKConstants.Coordinator.ROOT_NODE,
+                ZKConstants.Coordinator.TERMINATED_APP_NODE);
+    }
+
+    /**
      * @param appName the application name.
      * @return the full path for the application's root node.
      */
@@ -77,6 +85,17 @@ public final class ZKUtils {
         return ZKPaths.makePath(
             getApplicationRootPath(),
             appName
+        );
+    }
+
+    /**
+     * @param appName the application name.
+     * @return the full path for the application's root node.
+     */
+    public static String getTerminatedApplicationPath(final String appName) {
+        return ZKPaths.makePath(
+                getTerminatedApplicationRootPath(),
+                appName
         );
     }
 
@@ -98,6 +117,18 @@ public final class ZKUtils {
     public static String getApplicationResourceMapPath(final String appName) {
         return ZKPaths.makePath(
                 getApplicationPath(appName),
+                ZKConstants.Coordinator.RESOURCE_MAP
+        );
+    }
+
+    /**
+     * @param appName the application name.
+     * @return the full path where all the terminated apps are stored.
+     */
+    public static String getApplicationTerminatedInfoPath(
+            final String appName) {
+        return ZKPaths.makePath(
+                getTerminatedApplicationPath(appName),
                 ZKConstants.Coordinator.RESOURCE_MAP
         );
     }
@@ -245,4 +276,6 @@ public final class ZKUtils {
                             Utils.serialize(mapping));
         }
     }
+
+
 }

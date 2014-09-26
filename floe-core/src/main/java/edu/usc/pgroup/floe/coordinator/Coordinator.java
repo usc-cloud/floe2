@@ -18,6 +18,8 @@ package edu.usc.pgroup.floe.coordinator;
 
 import edu.usc.pgroup.floe.coordinator.transitions.Transitions;
 import edu.usc.pgroup.floe.coordinator
+        .transitions.coordinatortransitions.KillAppTransition;
+import edu.usc.pgroup.floe.coordinator
         .transitions.coordinatortransitions.StartAppTransition;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManager;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManagerFactory;
@@ -189,6 +191,23 @@ public final class Coordinator {
                                 args);
         } catch (Exception e) {
             LOGGER.error("Could not start app: {}", e);
+            throw new TException(e);
+        }
+    }
+
+    /**
+     * Kills the application.
+     * @param appName application name.
+     * @throws org.apache.thrift.TException thrift exception wrapper.
+     */
+    public void killApp(final String appName) throws TException {
+        Map<String, Object> args = new HashMap<>();
+        args.put("appName", appName);
+        try {
+        Transitions.execute(new KillAppTransition(),
+                            args);
+        } catch (Exception e) {
+            LOGGER.error("Could not kill app: {}", e);
             throw new TException(e);
         }
     }

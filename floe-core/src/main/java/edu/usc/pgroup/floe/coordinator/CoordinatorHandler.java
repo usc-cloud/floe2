@@ -321,6 +321,16 @@ public class CoordinatorHandler implements TCoordinator.Iface {
     }
 
     /**
+     * Service call to submit a floe app.
+     * @param appName name of the app
+     * @throws TException thrift exception wrapper.
+     */
+    @Override
+    public final void killApp(final String appName) throws TException {
+        Coordinator.getInstance().killApp(appName);
+    }
+
+    /**
      * Service call to handle the scale event at runtime.
      * @param direction direction of scaling
      * @param appName name of the app

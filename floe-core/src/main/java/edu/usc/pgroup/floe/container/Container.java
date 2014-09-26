@@ -212,9 +212,168 @@ public final class Container {
                             + "abort");
                 }
                 break;
+            case STOP_PELLETS:
+                try {
+                    stopPellets(signal);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    LOGGER.error("Error occurred while launching pellets. Will "
+                            + "abort");
+                }
+                break;
+            case TERMINATE_FLAKES:
+                try {
+                    terminateFlakes(signal);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    LOGGER.error("Error occurred while launching pellets. Will "
+                            + "abort");
+                }
+                break;
             default:
                 LOGGER.info("Unknown Signal type. Ignoring it.");
         }
+    }
+
+    /**
+     * Sends signal to flakes to self terminate.
+     * @param signal The signal (with associated data) received.
+     * @exception Exception if an error occurs while terminating flakes.
+     */
+    private void terminateFlakes(final ContainerSignal signal)
+            throws Exception {
+        String appName = signal.getDestApp();
+        String containerName = signal.getDestContainer(); //ignore.
+        byte[] data = signal.getSignalData();
+
+        LOGGER.info("Container Id: " + containerName);
+
+        String resourceMappingPath = ZKUtils
+                .getApplicationResourceMapPath(appName);
+
+        byte[] serializedRM = null;
+
+        try {
+            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
+                    .forPath(resourceMappingPath);
+        } catch (Exception e) {
+            LOGGER.error("Could not receive resource mapping. Aborting.");
+            return;
+        }
+
+        ResourceMapping resourceMapping =
+                (ResourceMapping) Utils.deserialize(serializedRM);
+
+        String containerId = ContainerInfo.getInstance().getContainerId();
+
+        ResourceMapping.ContainerInstance container
+                = resourceMapping.getContainer(containerId);
+
+        if (container == null) {
+            LOGGER.info("No resource mapping for this container.");
+            return;
+        }
+
+        String appUpdateBarrierPath = ZKUtils
+                .getApplicationBarrierPath(appName);
+
+
+        int numContainersToUpdate = resourceMapping.getContainersToUpdate();
+
+        DistributedDoubleBarrier barrier = new DistributedDoubleBarrier(
+                ZKClient.getInstance().getCuratorClient(),
+                appUpdateBarrierPath,
+                numContainersToUpdate + 1
+        );
+
+        LOGGER.info("Entering barrier: " + appUpdateBarrierPath);
+        barrier.enter(); //start processing.
+
+        LOGGER.info("terminating pellets.");
+        Map<String, ResourceMapping.FlakeInstance> flakes
+                = container.getFlakes();
+
+        Map<String, FlakeInfo> pidToFidMap
+                = FlakeMonitor.getInstance().getFlakes();
+
+        for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
+                : flakes.entrySet()) {
+            String pid = flakeEntry.getKey();
+
+            ContainerUtils.sendKillFlakeCommand(
+                    pidToFidMap.get(pid).getFlakeId());
+        }
+        barrier.leave(); //finish launching pellets.
+    }
+
+    /**
+     * Sends signal to flakes to start all pellets.
+     * @param signal The signal (with associated data) received.
+     * @exception Exception if an error occurs while stopping pellets.
+     */
+    private void stopPellets(final ContainerSignal signal) throws Exception {
+        String appName = signal.getDestApp();
+        String containerName = signal.getDestContainer(); //ignore.
+        byte[] data = signal.getSignalData();
+
+        LOGGER.info("Container Id: " + containerName);
+
+        String resourceMappingPath = ZKUtils
+                .getApplicationResourceMapPath(appName);
+
+        byte[] serializedRM = null;
+
+        try {
+            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
+                    .forPath(resourceMappingPath);
+        } catch (Exception e) {
+            LOGGER.error("Could not receive resource mapping. Aborting.");
+            return;
+        }
+
+        ResourceMapping resourceMapping =
+                (ResourceMapping) Utils.deserialize(serializedRM);
+
+        String containerId = ContainerInfo.getInstance().getContainerId();
+
+        ResourceMapping.ContainerInstance container
+                = resourceMapping.getContainer(containerId);
+
+        if (container == null) {
+            LOGGER.info("No resource mapping for this container.");
+            return;
+        }
+
+        String appUpdateBarrierPath = ZKUtils
+                .getApplicationBarrierPath(appName);
+
+
+        int numContainersToUpdate = resourceMapping.getContainersToUpdate();
+
+        DistributedDoubleBarrier barrier = new DistributedDoubleBarrier(
+                ZKClient.getInstance().getCuratorClient(),
+                appUpdateBarrierPath,
+                numContainersToUpdate + 1
+        );
+
+        LOGGER.info("Entering barrier: " + appUpdateBarrierPath);
+        barrier.enter(); //start processing.
+
+        LOGGER.info("Stopping pellets.");
+        Map<String, ResourceMapping.FlakeInstance> flakes
+                = container.getFlakes();
+
+        Map<String, FlakeInfo> pidToFidMap
+                = FlakeMonitor.getInstance().getFlakes();
+
+        for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
+                : flakes.entrySet()) {
+            String pid = flakeEntry.getKey();
+
+            ContainerUtils.sendStopAppPelletsCommand(
+                    pidToFidMap.get(pid).getFlakeId());
+        }
+        barrier.leave(); //finish launching pellets.
     }
 
     /**

@@ -241,6 +241,59 @@ public class FloeClient extends ThriftClient {
     /**
      * Submit the floe app to the coordinator.
      * @param appName name of the app.
+     * @throws TException thrift exception.
+     */
+    public final void killApp(final String appName)
+            throws TException {
+        LOGGER.info("Submitting kill request.");
+        getClient().killApp(appName);
+        LOGGER.info("Request submitted.");
+
+        //Now wait for app's status to be Running.
+        boolean again = true;
+        AppStatus prevStatus = null;
+        LOGGER.info("Waiting for application to terminate.");
+
+        int failedAttempts = 0;
+        final int maxFailedAttempts = 5;
+        final int sleepTime = 50;
+        String dots = ".";
+        while (again && failedAttempts < maxFailedAttempts) {
+            AppStatus status = null;
+            try {
+                status = getClient().getAppStatus(appName);
+            } catch (TException ex) {
+                LOGGER.warn("Application not found. Application terminated or"
+                        + " does not exist.");
+                again = false;
+                break;
+            }
+            if (status == AppStatus.TERMINATED) {
+                again = false;
+            }
+
+            if (prevStatus == status) {
+                dots += ".";
+            } else {
+                dots = ".";
+            }
+
+            LOGGER.info(status.toString() + " " + dots);
+
+            prevStatus = status;
+
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                LOGGER.warn("Thread interrupted while waiting for app status");
+            }
+        }
+    }
+
+    /**
+     * Submit the floe app to the coordinator.
+     * @param appName name of the app.
      * @param app the FloeApp topology.
      * @throws TException thrift exception.
      */
@@ -294,4 +347,5 @@ public class FloeClient extends ThriftClient {
             }
         }
     }
+
 }

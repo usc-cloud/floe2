@@ -58,6 +58,10 @@ public class FlakeControlCommand implements Serializable {
          */
         PELLET_SIGNAL,
         /**
+         * FLAKE command to decrement all pellets.
+         */
+        DECREMENT_ALL_PELLETS,
+        /**
          * Command to terminate self.
          */
         TERMINATE

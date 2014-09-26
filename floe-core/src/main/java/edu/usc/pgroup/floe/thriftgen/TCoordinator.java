@@ -57,6 +57,8 @@ public class TCoordinator {
 
     public void switchAlternate(String appName, String pelletName, String alternateName) throws AppNotFoundException, PelletNotFoundException, AlternateNotFoundException, org.apache.thrift.TException;
 
+    public void killApp(String appName) throws org.apache.thrift.TException;
+
     public AppStatus getAppStatus(String appName) throws AppNotFoundException, org.apache.thrift.TException;
 
   }
@@ -82,6 +84,8 @@ public class TCoordinator {
     public void signal(TSignal signal, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
     public void switchAlternate(String appName, String pelletName, String alternateName, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
+
+    public void killApp(String appName, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
     public void getAppStatus(String appName, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
@@ -356,6 +360,26 @@ public class TCoordinator {
       if (result.alnfe != null) {
         throw result.alnfe;
       }
+      return;
+    }
+
+    public void killApp(String appName) throws org.apache.thrift.TException
+    {
+      send_killApp(appName);
+      recv_killApp();
+    }
+
+    public void send_killApp(String appName) throws org.apache.thrift.TException
+    {
+      killApp_args args = new killApp_args();
+      args.set_appName(appName);
+      sendBase("killApp", args);
+    }
+
+    public void recv_killApp() throws org.apache.thrift.TException
+    {
+      killApp_result result = new killApp_result();
+      receiveBase(result, "killApp");
       return;
     }
 
@@ -744,6 +768,38 @@ public class TCoordinator {
       }
     }
 
+    public void killApp(String appName, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      killApp_call method_call = new killApp_call(appName, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class killApp_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private String appName;
+      public killApp_call(String appName, org.apache.thrift.async.AsyncMethodCallback resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.appName = appName;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("killApp", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        killApp_args args = new killApp_args();
+        args.set_appName(appName);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_killApp();
+      }
+    }
+
     public void getAppStatus(String appName, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getAppStatus_call method_call = new getAppStatus_call(appName, resultHandler, this, ___protocolFactory, ___transport);
@@ -799,6 +855,7 @@ public class TCoordinator {
       processMap.put("scale", new scale());
       processMap.put("signal", new signal());
       processMap.put("switchAlternate", new switchAlternate());
+      processMap.put("killApp", new killApp());
       processMap.put("getAppStatus", new getAppStatus());
       return processMap;
     }
@@ -1035,6 +1092,26 @@ public class TCoordinator {
       }
     }
 
+    public static class killApp<I extends Iface> extends org.apache.thrift.ProcessFunction<I, killApp_args> {
+      public killApp() {
+        super("killApp");
+      }
+
+      public killApp_args getEmptyArgsInstance() {
+        return new killApp_args();
+      }
+
+      protected boolean isOneway() {
+        return false;
+      }
+
+      public killApp_result getResult(I iface, killApp_args args) throws org.apache.thrift.TException {
+        killApp_result result = new killApp_result();
+        iface.killApp(args.appName);
+        return result;
+      }
+    }
+
     public static class getAppStatus<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getAppStatus_args> {
       public getAppStatus() {
         super("getAppStatus");
@@ -1082,6 +1159,7 @@ public class TCoordinator {
       processMap.put("scale", new scale());
       processMap.put("signal", new signal());
       processMap.put("switchAlternate", new switchAlternate());
+      processMap.put("killApp", new killApp());
       processMap.put("getAppStatus", new getAppStatus());
       return processMap;
     }
@@ -1648,6 +1726,56 @@ public class TCoordinator {
 
       public void start(I iface, switchAlternate_args args, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws TException {
         iface.switchAlternate(args.appName, args.pelletName, args.alternateName,resultHandler);
+      }
+    }
+
+    public static class killApp<I extends AsyncIface> extends org.apache.thrift.AsyncProcessFunction<I, killApp_args, Void> {
+      public killApp() {
+        super("killApp");
+      }
+
+      public killApp_args getEmptyArgsInstance() {
+        return new killApp_args();
+      }
+
+      public AsyncMethodCallback<Void> getResultHandler(final AsyncFrameBuffer fb, final int seqid) {
+        final org.apache.thrift.AsyncProcessFunction fcall = this;
+        return new AsyncMethodCallback<Void>() { 
+          public void onComplete(Void o) {
+            killApp_result result = new killApp_result();
+            try {
+              fcall.sendResponse(fb,result, org.apache.thrift.protocol.TMessageType.REPLY,seqid);
+              return;
+            } catch (Exception e) {
+              LOGGER.error("Exception writing to internal frame buffer", e);
+            }
+            fb.close();
+          }
+          public void onError(Exception e) {
+            byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;
+            org.apache.thrift.TBase msg;
+            killApp_result result = new killApp_result();
+            {
+              msgType = org.apache.thrift.protocol.TMessageType.EXCEPTION;
+              msg = (org.apache.thrift.TBase)new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, e.getMessage());
+            }
+            try {
+              fcall.sendResponse(fb,msg,msgType,seqid);
+              return;
+            } catch (Exception ex) {
+              LOGGER.error("Exception writing to internal frame buffer", ex);
+            }
+            fb.close();
+          }
+        };
+      }
+
+      protected boolean isOneway() {
+        return false;
+      }
+
+      public void start(I iface, killApp_args args, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws TException {
+        iface.killApp(args.appName,resultHandler);
       }
     }
 
@@ -10153,6 +10281,610 @@ public class TCoordinator {
           struct.alnfe.read(iprot);
           struct.set_alnfe_isSet(true);
         }
+      }
+    }
+
+  }
+
+  public static class killApp_args implements org.apache.thrift.TBase<killApp_args, killApp_args._Fields>, java.io.Serializable, Cloneable, Comparable<killApp_args>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("killApp_args");
+
+    private static final org.apache.thrift.protocol.TField APP_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("appName", org.apache.thrift.protocol.TType.STRING, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new killApp_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new killApp_argsTupleSchemeFactory());
+    }
+
+    private String appName; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      APP_NAME((short)1, "appName");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // APP_NAME
+            return APP_NAME;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.APP_NAME, new org.apache.thrift.meta_data.FieldMetaData("appName", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(killApp_args.class, metaDataMap);
+    }
+
+    public killApp_args() {
+    }
+
+    public killApp_args(
+      String appName)
+    {
+      this();
+      this.appName = appName;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public killApp_args(killApp_args other) {
+      if (other.is_set_appName()) {
+        this.appName = other.appName;
+      }
+    }
+
+    public killApp_args deepCopy() {
+      return new killApp_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.appName = null;
+    }
+
+    public String get_appName() {
+      return this.appName;
+    }
+
+    public void set_appName(String appName) {
+      this.appName = appName;
+    }
+
+    public void unset_appName() {
+      this.appName = null;
+    }
+
+    /** Returns true if field appName is set (has been assigned a value) and false otherwise */
+    public boolean is_set_appName() {
+      return this.appName != null;
+    }
+
+    public void set_appName_isSet(boolean value) {
+      if (!value) {
+        this.appName = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case APP_NAME:
+        if (value == null) {
+          unset_appName();
+        } else {
+          set_appName((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case APP_NAME:
+        return get_appName();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case APP_NAME:
+        return is_set_appName();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof killApp_args)
+        return this.equals((killApp_args)that);
+      return false;
+    }
+
+    public boolean equals(killApp_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_appName = true && this.is_set_appName();
+      boolean that_present_appName = true && that.is_set_appName();
+      if (this_present_appName || that_present_appName) {
+        if (!(this_present_appName && that_present_appName))
+          return false;
+        if (!this.appName.equals(that.appName))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_appName = true && (is_set_appName());
+      builder.append(present_appName);
+      if (present_appName)
+        builder.append(appName);
+
+      return builder.toHashCode();
+    }
+
+    @Override
+    public int compareTo(killApp_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+
+      lastComparison = Boolean.valueOf(is_set_appName()).compareTo(other.is_set_appName());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (is_set_appName()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.appName, other.appName);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("killApp_args(");
+      boolean first = true;
+
+      sb.append("appName:");
+      if (this.appName == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.appName);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+      // check for sub-struct validity
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class killApp_argsStandardSchemeFactory implements SchemeFactory {
+      public killApp_argsStandardScheme getScheme() {
+        return new killApp_argsStandardScheme();
+      }
+    }
+
+    private static class killApp_argsStandardScheme extends StandardScheme<killApp_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, killApp_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // APP_NAME
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.appName = iprot.readString();
+                struct.set_appName_isSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, killApp_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.appName != null) {
+          oprot.writeFieldBegin(APP_NAME_FIELD_DESC);
+          oprot.writeString(struct.appName);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class killApp_argsTupleSchemeFactory implements SchemeFactory {
+      public killApp_argsTupleScheme getScheme() {
+        return new killApp_argsTupleScheme();
+      }
+    }
+
+    private static class killApp_argsTupleScheme extends TupleScheme<killApp_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, killApp_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.is_set_appName()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.is_set_appName()) {
+          oprot.writeString(struct.appName);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, killApp_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.appName = iprot.readString();
+          struct.set_appName_isSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class killApp_result implements org.apache.thrift.TBase<killApp_result, killApp_result._Fields>, java.io.Serializable, Cloneable, Comparable<killApp_result>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("killApp_result");
+
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new killApp_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new killApp_resultTupleSchemeFactory());
+    }
+
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+;
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(killApp_result.class, metaDataMap);
+    }
+
+    public killApp_result() {
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public killApp_result(killApp_result other) {
+    }
+
+    public killApp_result deepCopy() {
+      return new killApp_result(this);
+    }
+
+    @Override
+    public void clear() {
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof killApp_result)
+        return this.equals((killApp_result)that);
+      return false;
+    }
+
+    public boolean equals(killApp_result that) {
+      if (that == null)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      return builder.toHashCode();
+    }
+
+    @Override
+    public int compareTo(killApp_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("killApp_result(");
+      boolean first = true;
+
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+      // check for sub-struct validity
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class killApp_resultStandardSchemeFactory implements SchemeFactory {
+      public killApp_resultStandardScheme getScheme() {
+        return new killApp_resultStandardScheme();
+      }
+    }
+
+    private static class killApp_resultStandardScheme extends StandardScheme<killApp_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, killApp_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, killApp_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class killApp_resultTupleSchemeFactory implements SchemeFactory {
+      public killApp_resultTupleScheme getScheme() {
+        return new killApp_resultTupleScheme();
+      }
+    }
+
+    private static class killApp_resultTupleScheme extends TupleScheme<killApp_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, killApp_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, killApp_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
       }
     }
 

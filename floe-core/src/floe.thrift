@@ -155,6 +155,8 @@ enum AppStatus {
      * Status to indicate that the system is Starting pellets.
      */
     STARTING_PELLETS,
+
+    TERMINATED
 }
 
 struct TSignal {
@@ -193,6 +195,8 @@ service TCoordinator
     void switchAlternate(1: string appName, 2: string pelletName,
           3: string alternateName) throws (1: AppNotFoundException anfe,
           2: PelletNotFoundException pnfe, 3: AlternateNotFoundException alnfe);
+
+    void killApp(1: string appName);
 
     AppStatus getAppStatus(1: string appName)
       throws (1: AppNotFoundException anfe);

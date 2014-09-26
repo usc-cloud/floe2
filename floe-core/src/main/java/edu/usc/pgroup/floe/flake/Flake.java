@@ -269,6 +269,11 @@ public class Flake {
 
         //close kill sock.
         killsock.close();
+
+        //FIX ME: should terminate the context. but after all sockets are
+        // cleanly closed..
+        //sharedContext.close();
+        //sharedContext.term();
     }
 
     /**
@@ -363,6 +368,24 @@ public class Flake {
                 }
                 //decrementPellet();
                 break;
+            case DECREMENT_ALL_PELLETS:
+
+                LOGGER.info("REMOVING ALL PELLETS: on " + getFlakeId());
+                while (runningPelletInstances.size() > 0) {
+                    //NEED TO DO ERROR HANDLING HERE.
+                    PelletExecutor insToRemove
+                            = runningPelletInstances.remove(0);
+                    signal.sendMore(insToRemove.getPelletInstanceId());
+                    SystemSignal systemSignal = new SystemSignal(appName,
+                            pelletId,
+                            SystemSignal.SystemSignalType.KillInstance,
+                            null);
+                    signal.send(Utils.serialize(systemSignal), 0);
+                }
+
+                LOGGER.error("Flake {} does not have any running pellet "
+                            + "instances.", getFlakeId());
+                break;
             case START_PELLETS:
                 LOGGER.info("STARTING PELLETS: on " + getFlakeId());
                 if (runningPelletInstances.size() > 0) {
@@ -378,6 +401,7 @@ public class Flake {
                     LOGGER.error("Flake {} does not have any running pellet "
                             + "instances.", getFlakeId());
                 }
+                break;
             case TERMINATE:
                 //No pellet should be running
                 terminateFlake();

@@ -282,9 +282,11 @@ public class FlakeMessageSender extends Thread {
             }
             //ZMQ.proxy(middleendreceiver, backend, null);
             LOGGER.warn("Closing flake backend sockets");
+
             middleendreceiver.close();
-            backend.close();
             killsock.close();
+            backend.close();
+            backendBackChannel.close();
         }
     }
 

@@ -204,9 +204,12 @@ public class FlakeMessageReceiver extends Thread {
             }
         }
         LOGGER.warn("Closing flake receiver sockets");
+
         frontend.close();
         controlSocket.close();
-        signal.close();
+        killsock.close();
+        xsubFromPelletsSock.close();
+        xpubToPredSock.close();
         backend.close();
     }
 }

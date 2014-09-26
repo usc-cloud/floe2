@@ -208,6 +208,18 @@ public final class ContainerUtils {
     }
 
     /**
+     * sends the decrement pellet command to the given flake. (using ipc)
+     * @param fid flake id to terminate a pellet instance.
+     */
+    public static void sendStopAppPelletsCommand(final String fid) {
+        FlakeControlCommand command = new FlakeControlCommand(
+                FlakeControlCommand.Command.DECREMENT_ALL_PELLETS,
+                null
+        );
+        FlakeControlSignalSender.getInstance().send(fid, command);
+    }
+
+    /**
      * Send the start pellets command to the given flake.
      * @param fid flake id to terminate a pellet instance.
      */
@@ -241,7 +253,7 @@ public final class ContainerUtils {
      * sends a kill self command to the flake.
      * @param fid flake id which has to be killed.
      */
-    private static void sendKillFlakeCommand(final String fid) {
+    public static void sendKillFlakeCommand(final String fid) {
         FlakeControlCommand command = new FlakeControlCommand(
                 FlakeControlCommand.Command.TERMINATE,
                 null
