@@ -296,7 +296,7 @@ public class FlakeMessageSender extends Thread {
                 } else if (pollerItems.pollin(2)) { //backChannel from successor
                     String flakeId = backendBackChannel.recvStr(
                             Charset.defaultCharset());
-                    LOGGER.info("MSG ON BACKCHANNEL: {}", flakeId);
+                    LOGGER.debug("MSG ON BACKCHANNEL: {}", flakeId);
                     byte[] data = null;
                     if (backendBackChannel.hasReceiveMore()) {
                         data = backendBackChannel.recv();

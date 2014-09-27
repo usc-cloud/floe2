@@ -126,6 +126,12 @@ public final class ConfigProperties {
     public static final String FLAKE_RECEIVER_PORT = "floe.flake.port";
 
     /**
+     * The period of sending backchannel signals.
+     */
+    public static final String FLAKE_BACKCHANNEL_PERIOD
+            = "floe.flake.backchannel.period";
+
+    /**
      * The tuple serializer plugin.
      */
     public static final java.lang.String TUPLE_SERIALIZER = "floe.tuple"

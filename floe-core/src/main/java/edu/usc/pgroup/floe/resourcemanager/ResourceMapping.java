@@ -322,11 +322,12 @@ public class ResourceMapping implements Serializable {
      * @return the number of containers that have been updated.
      */
     public final int getContainersToUpdate() {
-        if (mappingDelta == null) {
+        /*if (mappingDelta == null) {
             return containerMap.size();
         } else {
             return mappingDelta.getContainersToUpdate();
-        }
+        }*/
+        return containerMap.size();
     }
 
     /**

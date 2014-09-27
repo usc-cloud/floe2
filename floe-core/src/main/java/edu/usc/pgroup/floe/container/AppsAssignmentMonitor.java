@@ -192,8 +192,9 @@ public class AppsAssignmentMonitor {
             LOGGER.info("Application Resource Mapping updated. {}",
                     resourceMapping.getDelta());
 
-            boolean containerUpdated =
-                    resourceMapping.getDelta().isContainerUpdated(containerId);
+            boolean containerUpdated = true;
+                    //resourceMapping.getDelta().isContainerUpdated
+                    // (containerId);
 
             if (!containerUpdated) {
                 //No changes found for this container.

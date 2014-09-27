@@ -86,7 +86,7 @@ public class WordPellet extends BasePellet {
             ot.put("word", words[i]);
             emitter.emit(ot);
             try {
-                Thread.sleep(Utils.Constants.MILLI * 2 * 2);
+                Thread.sleep(Utils.Constants.MILLI / 2);
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;

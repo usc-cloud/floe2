@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,11 +68,16 @@ public class BackChannelSender extends Thread {
                         + flakeId);
 
         while (!Thread.currentThread().interrupted()) {
+
+            LOGGER.info("Sending backchannel msg.");
             backendBackChannel.sendMore(flakeId);
             backendBackChannel.send("ping".getBytes(), 0);
 
             try {
-                Thread.currentThread().sleep(Utils.Constants.MILLI * 2);
+                Thread.currentThread().sleep(
+                        FloeConfig.getConfig().getInt(ConfigProperties
+                                .FLAKE_BACKCHANNEL_PERIOD)
+                );
             } catch (InterruptedException e) {
                 LOGGER.info("back channel interrupted");
             }

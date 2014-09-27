@@ -396,22 +396,13 @@ public final class ContainerActions {
     public static boolean isContainerUpdated(final ResourceMapping mapping) {
         String containerId = ContainerInfo.getInstance().getContainerId();
 
-        if (mapping.getDelta() != null) {
-            if (mapping.getDelta().isContainerUpdated(containerId)) {
-                return true;
-            } else {
-                LOGGER.warn("No updates for this container.");
-                return false;
-            }
+        ResourceMapping.ContainerInstance container
+                = mapping.getContainer(containerId);
+        if (container == null) {
+            LOGGER.warn("No flakes for this container.");
+            return false;
         } else {
-            ResourceMapping.ContainerInstance container
-                    = mapping.getContainer(containerId);
-            if (container == null) {
-                LOGGER.warn("No flakes for this container.");
-                return false;
-            } else {
-                return true;
-            }
+            return true;
         }
     }
 }

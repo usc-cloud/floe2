@@ -44,8 +44,8 @@ public class ResourceMappingDelta implements Serializable {
     private final List<String> modifiedContainers;
 
     /**
-     * Map from container id to newly added flakes (and the pellet instances
-     * within that).
+     * Map from container id to flakes for which the predecessors flakes have
+     * been added or removed.
      */
     private final Map<String,
             Map<String, FlakeInstanceDelta>> addedFlakes;
@@ -54,7 +54,7 @@ public class ResourceMappingDelta implements Serializable {
      * A redundant map to store a mapping from pid to a list of all flakes
      * added across containers. DO THE SAME FOR REMOVED FLAKES TOO.
      */
-    private final Map<String, List<FlakeInstanceDelta>> pidToNewlyFlakeMap;
+    private final Map<String, List<FlakeInstanceDelta>> pidToNewFlakeMap;
 
     /**
      * Map from container id to updated flakes
@@ -78,8 +78,9 @@ public class ResourceMappingDelta implements Serializable {
         this.addedFlakes = new HashMap<>();
         this.updatedFlakes = new HashMap<>();
         this.removedFlakes = new HashMap<>();
-        this.pidToNewlyFlakeMap = new HashMap<>();
+        this.pidToNewFlakeMap = new HashMap<>();
         this.modifiedContainers = new ArrayList<>();
+
         this.floeApp = app;
     }
 
@@ -91,7 +92,7 @@ public class ResourceMappingDelta implements Serializable {
         this.addedFlakes.clear();
         this.updatedFlakes.clear();
         this.removedFlakes.clear();
-        this.pidToNewlyFlakeMap.clear();
+        this.pidToNewFlakeMap.clear();
         this.modifiedContainers.clear();
     }
 
@@ -119,13 +120,13 @@ public class ResourceMappingDelta implements Serializable {
             flMap.put(fl.getCorrespondingPelletId(), fldelta);
 
             List<FlakeInstanceDelta> flList = null;
-            if (pidToNewlyFlakeMap.containsKey(fl.getCorrespondingPelletId())) {
-                flList = pidToNewlyFlakeMap.get(
+            if (pidToNewFlakeMap.containsKey(fl.getCorrespondingPelletId())) {
+                flList = pidToNewFlakeMap.get(
                         fl.getCorrespondingPelletId()
                 );
             } else {
                 flList = new ArrayList<>();
-                pidToNewlyFlakeMap.put(
+                pidToNewFlakeMap.put(
                         fl.getCorrespondingPelletId(),
                         flList
                 );
@@ -258,10 +259,11 @@ public class ResourceMappingDelta implements Serializable {
     }
 
     /**
+     * //Changing to private, since use of this function is discouraged.
      * @param containerId container id.
      * @return true if the container has been updated.
      */
-    public final boolean isContainerUpdated(final String containerId) {
+    private boolean isContainerUpdated(final String containerId) {
         if (addedFlakes.containsKey(containerId)) {
             return true;
         } else if (updatedFlakes.containsKey(containerId)) {
@@ -325,18 +327,19 @@ public class ResourceMappingDelta implements Serializable {
 
         for (TEdge edge: tPellet.get_incomingEdges()) {
             String srcPid = edge.get_srcPelletId();
-            if (pidToNewlyFlakeMap != null
-                    && pidToNewlyFlakeMap.containsKey(srcPid)) {
-                precedingFlakes.addAll(pidToNewlyFlakeMap.get(srcPid));
+            if (pidToNewFlakeMap != null
+                    && pidToNewFlakeMap.containsKey(srcPid)) {
+                precedingFlakes.addAll(pidToNewFlakeMap.get(srcPid));
             }
         }
         return precedingFlakes;
     }
 
     /**
+     * again changing to private because its use is discouraged.
      * @return the number of containers that have been updated.
      */
-    public final int getContainersToUpdate() {
+    private int getContainersToUpdate() {
         return modifiedContainers.size();
     }
 

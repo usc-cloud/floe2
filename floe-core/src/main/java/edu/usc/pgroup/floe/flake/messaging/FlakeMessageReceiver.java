@@ -184,7 +184,7 @@ public class FlakeMessageReceiver extends Thread {
             //TODO: FIX THIS..
         }
 
-        LOGGER.info("Received msg from:" + src);
+        LOGGER.debug("Received msg from:" + src);
     }
     /**
      * This is used to start the proxy from tcp socket to the pellets.
@@ -339,7 +339,7 @@ public class FlakeMessageReceiver extends Thread {
      */
     private FlakeLocalDispersionStrategy getFlakeLocalStrategy(
             final String src) {
-        LOGGER.info("Looking for:{}, in LOCAL STRATEGY:{}", src,
+        LOGGER.debug("Looking for:{}, in LOCAL STRATEGY:{}", src,
                 localDispersionStratMap);
         return localDispersionStratMap.get(src);
     }
