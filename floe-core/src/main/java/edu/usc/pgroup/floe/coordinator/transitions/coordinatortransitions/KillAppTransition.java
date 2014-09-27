@@ -86,9 +86,9 @@ public class KillAppTransition extends ClusterTransition {
         );
 
         //Step 2. Kill Pellets.
-        SignalHandler.getInstance().signal(appName, "ALL-CONTAINERS",
-                ContainerSignal.ContainerSignalType.STOP_PELLETS,
-                Utils.serialize("dummy"));
+        //SignalHandler.getInstance().signal(appName, "ALL-CONTAINERS",
+        //        ContainerSignal.ContainerSignalType.STOP_ALL_PELLETS,
+        //        Utils.serialize("dummy"));
 
         ZKUtils.setAppStatus(appName,
                 AppStatus.UPDATING_PELLETS);

@@ -73,6 +73,8 @@
               files="Transitions.java"/>
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.TodoCommentCheck"
               files="ResourceMappingDelta.java"/>
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.TodoCommentCheck"
+              files="FlakeMessageSender.java"/>
 
     <!-- for the PosixJNAAffinity file. cant fix -->
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.AvoidInlineConditionalsCheck"

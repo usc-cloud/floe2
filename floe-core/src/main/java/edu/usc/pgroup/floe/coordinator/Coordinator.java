@@ -19,6 +19,8 @@ package edu.usc.pgroup.floe.coordinator;
 import edu.usc.pgroup.floe.coordinator.transitions.Transitions;
 import edu.usc.pgroup.floe.coordinator
         .transitions.coordinatortransitions.KillAppTransition;
+import edu.usc.pgroup.floe.coordinator.transitions
+        .coordinatortransitions.ScaleTransition;
 import edu.usc.pgroup.floe.coordinator
         .transitions.coordinatortransitions.StartAppTransition;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManager;
@@ -230,6 +232,19 @@ public final class Coordinator {
                       final String pelletName,
                       final int count) throws TException {
         LOGGER.info("Received scale app request for: {}", appName);
+
+        Map<String, Object> args = new HashMap<>();
+        args.put("direction", direction);
+        args.put("appName", appName);
+        args.put("pelletName", pelletName);
+        args.put("count", count);
+        try {
+            Transitions.execute(new ScaleTransition(),
+                    args);
+        } catch (Exception e) {
+            LOGGER.error("Could not kill app: {}", e);
+            throw new TException(e);
+        }
     }
 
     /**

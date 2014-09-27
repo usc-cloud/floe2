@@ -37,15 +37,16 @@ public final class ContainerSignal extends Signal implements Serializable {
         /**
          * Signal to initiate the data and control channels.
          */
-        CONNECT_FLAKES,
+        CONNECT_OR_DISCONNECT_FLAKES,
         /**
-         * Signal to start launching pellets in the flake.
+         * Signal to start or remove pellets in the flake.
          */
-        LAUNCH_PELLETS,
+        INCREASE_OR_DECREASE_PELLETS,
         /**
-         * STOP ALL PELLETS.
+         * STOP ALL PELLETS. NOTE: THIS IS NOT USED DURING SCALE UP/DOWN.
+         * ONLY DURING KILL.
          */
-        STOP_PELLETS,
+        //STOP_ALL_PELLETS,
         /**
          * Signal to terminate all flakes. (for the given app)
          */

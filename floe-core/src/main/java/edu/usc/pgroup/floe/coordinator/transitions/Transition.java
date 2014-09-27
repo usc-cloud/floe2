@@ -42,8 +42,9 @@ public abstract class Transition {
                             execute(args);
                         } catch (Exception e) {
                             LOGGER.error("Error occurred while executing "
-                                    + "transition: {}. Abandoning transition",
-                                    getName());
+                                    + "transition: {}. Abandoning transition."
+                                    + " Exception: ",
+                                    getName(), e);
                         } finally {
                             notifyCompleted();
                         }

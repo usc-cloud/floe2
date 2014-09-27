@@ -231,7 +231,7 @@ public class PelletExecutor extends Thread {
 
 
         int a = 1;
-        final int cnt = 1;
+        final int cnt = 5;
         while (a++ <= cnt) { //FIX ME
             LOGGER.info("Sending ping message on backchannel: {}",
                     pelletInstanceId);

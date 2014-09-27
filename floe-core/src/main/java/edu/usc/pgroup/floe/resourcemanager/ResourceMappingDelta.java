@@ -37,31 +37,37 @@ public class ResourceMappingDelta implements Serializable {
      */
     private final TFloeApp floeApp;
 
+
+    /**
+     * Redundant list of all modified containers. (since the last reset).
+     */
+    private final List<String> modifiedContainers;
+
     /**
      * Map from container id to newly added flakes (and the pellet instances
      * within that).
      */
-    private Map<String,
+    private final Map<String,
             Map<String, FlakeInstanceDelta>> addedFlakes;
 
     /**
      * A redundant map to store a mapping from pid to a list of all flakes
-     * added across containers. DO THA SAME FOR REMOVED FLAKES TOO.
+     * added across containers. DO THE SAME FOR REMOVED FLAKES TOO.
      */
-    private Map<String, List<FlakeInstanceDelta>> pidToNewlyFlakeMap;
+    private final Map<String, List<FlakeInstanceDelta>> pidToNewlyFlakeMap;
 
     /**
      * Map from container id to updated flakes
      * (added or removed pellet instance).
      */
-    private Map<String,
+    private final Map<String,
             Map<String, FlakeInstanceDelta>> updatedFlakes;
 
     /**
      * Map from container id to removed flakes
      * (and all pellets within that flake).
      */
-    private Map<String,
+    private final Map<String,
             Map<String, FlakeInstanceDelta>> removedFlakes;
 
     /**
@@ -73,6 +79,7 @@ public class ResourceMappingDelta implements Serializable {
         this.updatedFlakes = new HashMap<>();
         this.removedFlakes = new HashMap<>();
         this.pidToNewlyFlakeMap = new HashMap<>();
+        this.modifiedContainers = new ArrayList<>();
         this.floeApp = app;
     }
 
@@ -85,6 +92,7 @@ public class ResourceMappingDelta implements Serializable {
         this.updatedFlakes.clear();
         this.removedFlakes.clear();
         this.pidToNewlyFlakeMap.clear();
+        this.modifiedContainers.clear();
     }
 
     /**
@@ -94,6 +102,10 @@ public class ResourceMappingDelta implements Serializable {
     public final void flakeAdded(final ResourceMapping.FlakeInstance fl) {
         Map<String, FlakeInstanceDelta> flMap = null;
         String containerId = fl.getContainerId();
+
+        if (!modifiedContainers.contains(containerId)) {
+            modifiedContainers.add(containerId);
+        }
 
         if (addedFlakes.containsKey(containerId)) {
             flMap = addedFlakes.get(containerId);
@@ -133,6 +145,10 @@ public class ResourceMappingDelta implements Serializable {
         Map<String, FlakeInstanceDelta> flMap = null;
         String containerId = fl.getContainerId();
 
+        if (!modifiedContainers.contains(containerId)) {
+            modifiedContainers.add(containerId);
+        }
+
         //check if the flake was newly added/or already removed or udpdated?
         if (addedFlakes.containsKey(containerId)) {
             flMap = addedFlakes.get(containerId);
@@ -171,6 +187,11 @@ public class ResourceMappingDelta implements Serializable {
     public final void flakeRemoved(final ResourceMapping.FlakeInstance fl) {
         Map<String, FlakeInstanceDelta> flMap = null;
         String containerId = fl.getContainerId();
+
+        if (!modifiedContainers.contains(containerId)) {
+            modifiedContainers.add(containerId);
+        }
+
         if (removedFlakes.containsKey(containerId)) {
             flMap = removedFlakes.get(containerId);
         } else {
@@ -316,7 +337,7 @@ public class ResourceMappingDelta implements Serializable {
      * @return the number of containers that have been updated.
      */
     public final int getContainersToUpdate() {
-        return 0; //TODO: LOOK AT THIS LATER
+        return modifiedContainers.size();
     }
 
     /**

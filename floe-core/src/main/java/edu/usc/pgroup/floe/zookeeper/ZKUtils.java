@@ -278,4 +278,28 @@ public final class ZKUtils {
     }
 
 
+    /**
+     * @param appName the application name.
+     * @return Gets the resource mapping for the given app.
+     */
+    public static ResourceMapping getResourceMapping(final String appName) {
+        String resourceMappingPath = ZKUtils
+                .getApplicationResourceMapPath(appName);
+
+        byte[] serializedRM = null;
+
+        try {
+            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
+                    .forPath(resourceMappingPath);
+        } catch (Exception e) {
+            LOGGER.error("Could not receive resource mapping. Aborting.");
+            return null;
+        }
+
+        ResourceMapping resourceMapping =
+                (ResourceMapping) Utils.deserialize(serializedRM);
+
+        return resourceMapping;
+    }
+
 }

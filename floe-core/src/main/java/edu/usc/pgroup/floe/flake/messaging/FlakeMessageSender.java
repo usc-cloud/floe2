@@ -270,14 +270,17 @@ public class FlakeMessageSender extends Thread {
                     List<String> pelletInstanceIds = dispersionStrategy
                             .getTargetPelletInstances(tuple);
 
-                    if (pelletInstanceIds.size() > 0) {
+                    if (pelletInstanceIds != null
+                            && pelletInstanceIds.size() > 0) {
                         for (String pelletInstanceId : pelletInstanceIds) {
+                            LOGGER.debug("Sending to:" + pelletInstanceId);
                             backend.sendMore(pelletInstanceId);
                             backend.send(message, 0);
                         }
                     } else { //should queue up messages.
                         LOGGER.warn("Message dropped because no connection "
                                 + "received");
+                        //TODO: FIX THIS..
                     }
                 } else if (pollerItems.pollin(1)) { //kill signal
                     break;

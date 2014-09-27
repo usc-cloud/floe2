@@ -16,15 +16,11 @@
 
 package edu.usc.pgroup.floe.container;
 
-import edu.usc.pgroup.floe.client.FloeClient;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeInfo;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.signals.ContainerSignal;
-import edu.usc.pgroup.floe.thriftgen.TPellet;
-import edu.usc.pgroup.floe.utils.RetryLoop;
-import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
@@ -33,10 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.Timer;
-import java.util.concurrent.Callable;
 
 /**
  * @author kumbhare
@@ -181,14 +175,23 @@ public final class Container {
         switch (signal.getSignalType()) {
             case CREATE_FLAKES:
                 try {
-                    createOrUpdateFlakes(signal);
+                    createFlakes(signal);
                 } catch (Exception e) {
                     e.printStackTrace();
                     LOGGER.error("Error occurred while creating flakes. Will "
                             + "abort");
                 }
                 break;
-            case CONNECT_FLAKES:
+            case TERMINATE_FLAKES:
+                try {
+                    terminateFlakes(signal);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    LOGGER.error("Error occurred while launching pellets. Will "
+                            + "abort");
+                }
+                break;
+            case CONNECT_OR_DISCONNECT_FLAKES:
                 try {
                     connectFlakes(signal);
                 } catch (Exception e) {
@@ -197,9 +200,9 @@ public final class Container {
                             + "abort");
                 }
                 break;
-            case LAUNCH_PELLETS:
+            case INCREASE_OR_DECREASE_PELLETS:
                 try {
-                    launchPellets(signal);
+                    increaseOrDecreasePellets(signal);
                 } catch (Exception e) {
                     e.printStackTrace();
                     LOGGER.error("Error occurred while launching pellets. Will "
@@ -215,71 +218,26 @@ public final class Container {
                             + "abort");
                 }
                 break;
-            case STOP_PELLETS:
-                try {
-                    stopPellets(signal);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    LOGGER.error("Error occurred while launching pellets. Will "
-                            + "abort");
-                }
-                break;
-            case TERMINATE_FLAKES:
-                try {
-                    terminateFlakes(signal);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    LOGGER.error("Error occurred while launching pellets. Will "
-                            + "abort");
-                }
-                break;
             default:
                 LOGGER.info("Unknown Signal type. Ignoring it.");
         }
     }
 
     /**
-     * Sends signal to flakes to self terminate.
+     * creates or terminates pellet instances within a flake.
      * @param signal The signal (with associated data) received.
-     * @exception Exception if an error occurs while terminating flakes.
+     * @throws Exception If an error occurs while performing the action.
      */
-    private void terminateFlakes(final ContainerSignal signal)
+    private void increaseOrDecreasePellets(final ContainerSignal signal)
             throws Exception {
+
         String appName = signal.getDestApp();
-        String containerName = signal.getDestContainer(); //ignore.
-        byte[] data = signal.getSignalData();
 
-        LOGGER.info("Container Id: " + containerName);
-
-        String resourceMappingPath = ZKUtils
-                .getApplicationResourceMapPath(appName);
-
-        byte[] serializedRM = null;
-
-        try {
-            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
-                    .forPath(resourceMappingPath);
-        } catch (Exception e) {
-            LOGGER.error("Could not receive resource mapping. Aborting.");
-            return;
-        }
-
-        ResourceMapping resourceMapping =
-                (ResourceMapping) Utils.deserialize(serializedRM);
-
-        String containerId = ContainerInfo.getInstance().getContainerId();
-
-        ResourceMapping.ContainerInstance container
-                = resourceMapping.getContainer(containerId);
-
-        if (container == null) {
-            LOGGER.info("No resource mapping for this container.");
-            return;
-        }
+        ResourceMapping resourceMapping
+                = ZKUtils.getResourceMapping(appName);
 
         String appUpdateBarrierPath = ZKUtils
                 .getApplicationBarrierPath(appName);
-
 
         int numContainersToUpdate = resourceMapping.getContainersToUpdate();
 
@@ -289,96 +247,32 @@ public final class Container {
                 numContainersToUpdate + 1
         );
 
-        LOGGER.info("Entering barrier: " + appUpdateBarrierPath);
-        barrier.enter(); //start processing.
-
-        LOGGER.info("terminating pellets.");
-        Map<String, ResourceMapping.FlakeInstance> flakes
-                = container.getFlakes();
-
-        Map<String, FlakeInfo> pidToFidMap
-                = FlakeMonitor.getInstance().getFlakes();
-
-        for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
-                : flakes.entrySet()) {
-            final String pid = flakeEntry.getKey();
-
-            final String flakeId = pidToFidMap.get(pid).getFlakeId();
-            ContainerUtils.sendKillFlakeCommand(flakeId);
-
-            //while(FlakeMonitor.getInstance().getFlakes().containsKey(pid))
+        if (ContainerActions.isContainerUpdated(resourceMapping)) {
+            barrier.enter();
             try {
-                Boolean killed = RetryLoop.callWithRetry(RetryPolicyFactory
-                                .getDefaultPolicy(),
-                        new Callable<Boolean>() {
-                            @Override
-                            public Boolean call() throws Exception {
-                                FlakeInfo info = null;
-                                try {
-                                    info = FlakeMonitor.getInstance()
-                                        .getFlakeInfo(pid);
-
-                                } catch (Exception ex) {
-                                    LOGGER.warn("Flake not found or already "
-                                            + "terminated.");
-                                }
-
-                                if (info == null) {
-                                    return true;
-                                }
-                                throw new Exception("Flake still alive. "
-                                        + "Trying again. ");
-                            }
-                        });
-                LOGGER.info("Flake terminated (at container):{}", flakeId);
+                ContainerActions.increaseOrDecreasePellets(resourceMapping);
             } catch (Exception e) {
-                LOGGER.error("Could not kill flake in given time.");
+                LOGGER.error("Could not launch pellets. Exception {}", e);
+            } finally {
+                barrier.leave();
             }
         }
-        barrier.leave(); //finish launching pellets.
     }
 
     /**
-     * Sends signal to flakes to start all pellets.
+     * creates flakes on the container.
      * @param signal The signal (with associated data) received.
-     * @exception Exception if an error occurs while stopping pellets.
+     * @throws Exception If an error occurs while performing the action.
      */
-    private void stopPellets(final ContainerSignal signal) throws Exception {
+    private void connectFlakes(final ContainerSignal signal) throws Exception {
+
         String appName = signal.getDestApp();
-        String containerName = signal.getDestContainer(); //ignore.
-        byte[] data = signal.getSignalData();
 
-        LOGGER.info("Container Id: " + containerName);
-
-        String resourceMappingPath = ZKUtils
-                .getApplicationResourceMapPath(appName);
-
-        byte[] serializedRM = null;
-
-        try {
-            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
-                    .forPath(resourceMappingPath);
-        } catch (Exception e) {
-            LOGGER.error("Could not receive resource mapping. Aborting.");
-            return;
-        }
-
-        ResourceMapping resourceMapping =
-                (ResourceMapping) Utils.deserialize(serializedRM);
-
-        String containerId = ContainerInfo.getInstance().getContainerId();
-
-        ResourceMapping.ContainerInstance container
-                = resourceMapping.getContainer(containerId);
-
-        if (container == null) {
-            LOGGER.info("No resource mapping for this container.");
-            return;
-        }
+        ResourceMapping resourceMapping
+                = ZKUtils.getResourceMapping(appName);
 
         String appUpdateBarrierPath = ZKUtils
                 .getApplicationBarrierPath(appName);
-
 
         int numContainersToUpdate = resourceMapping.getContainersToUpdate();
 
@@ -388,25 +282,90 @@ public final class Container {
                 numContainersToUpdate + 1
         );
 
-        LOGGER.info("Entering barrier: " + appUpdateBarrierPath);
-        barrier.enter(); //start processing.
-
-        LOGGER.info("Stopping pellets.");
-        Map<String, ResourceMapping.FlakeInstance> flakes
-                = container.getFlakes();
-
-        Map<String, FlakeInfo> pidToFidMap
-                = FlakeMonitor.getInstance().getFlakes();
-
-        for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
-                : flakes.entrySet()) {
-            String pid = flakeEntry.getKey();
-
-            ContainerUtils.sendStopAppPelletsCommand(
-                    pidToFidMap.get(pid).getFlakeId());
+        if (ContainerActions.isContainerUpdated(resourceMapping)) {
+            barrier.enter();
+            try {
+                ContainerActions.updateFlakeConnections(resourceMapping);
+            } catch (Exception e) {
+                LOGGER.error("Could not create flakes. Exception {}", e);
+            } finally {
+                barrier.leave();
+            }
         }
-        barrier.leave(); //finish launching pellets.
     }
+
+    /**
+     * terminates required flakes from the container. (assuming all the pellets
+     * are already terminated).
+     * @param signal The signal (with associated data) received.
+     * @throws Exception If an error occurs while performing the action.
+     */
+    private void terminateFlakes(final ContainerSignal signal)
+            throws Exception {
+
+        String appName = signal.getDestApp();
+
+        ResourceMapping resourceMapping
+                = ZKUtils.getResourceMapping(appName);
+
+        String appUpdateBarrierPath = ZKUtils
+                .getApplicationBarrierPath(appName);
+
+        int numContainersToUpdate = resourceMapping.getContainersToUpdate();
+
+        DistributedDoubleBarrier barrier = new DistributedDoubleBarrier(
+                ZKClient.getInstance().getCuratorClient(),
+                appUpdateBarrierPath,
+                numContainersToUpdate + 1
+        );
+
+        if (ContainerActions.isContainerUpdated(resourceMapping)) {
+            barrier.enter();
+            try {
+                ContainerActions.terminateFlakes(resourceMapping);
+            } catch (Exception e) {
+                LOGGER.error("Could not terminate flakes. Exception {}", e);
+            } finally {
+                barrier.leave();
+            }
+        }
+    }
+
+    /**
+     * creates new flakes on the container.
+     * @param signal The signal (with associated data) received.
+     * @throws Exception If an error occurs while performing the action.
+     */
+    private void createFlakes(final ContainerSignal signal) throws Exception {
+
+        String appName = signal.getDestApp();
+
+        ResourceMapping resourceMapping
+                = ZKUtils.getResourceMapping(appName);
+
+        String appUpdateBarrierPath = ZKUtils
+                .getApplicationBarrierPath(appName);
+
+        int numContainersToUpdate = resourceMapping.getContainersToUpdate();
+
+        DistributedDoubleBarrier barrier = new DistributedDoubleBarrier(
+                ZKClient.getInstance().getCuratorClient(),
+                appUpdateBarrierPath,
+                numContainersToUpdate + 1
+        );
+
+        if (ContainerActions.isContainerUpdated(resourceMapping)) {
+            barrier.enter();
+            try {
+                ContainerActions.createFlakes(resourceMapping);
+            } catch (Exception e) {
+                LOGGER.error("Could not create flakes. Exception {}", e);
+            } finally {
+                barrier.leave();
+            }
+        }
+    }
+
 
     /**
      * Sends signal to flakes to start all pellets.
@@ -477,268 +436,5 @@ public final class Container {
                     pidToFidMap.get(pid).getFlakeId());
         }
         barrier.leave(); //finish launching pellets.
-    }
-
-    /**
-     * Connects flakes with predecessor flakes based on the current resource
-     * mapping.
-     * @param signal The signal (with associated data) received.
-     * @exception Exception if an error occurs while launching flakes.
-     */
-    private void connectFlakes(final ContainerSignal signal) throws Exception {
-        String appName = signal.getDestApp();
-        String containerName = signal.getDestContainer(); //ignore.
-        byte[] data = signal.getSignalData();
-
-        LOGGER.info("Container Id: " + containerName);
-
-        String resourceMappingPath = ZKUtils
-                .getApplicationResourceMapPath(appName);
-
-        byte[] serializedRM = null;
-
-        try {
-            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
-                    .forPath(resourceMappingPath);
-        } catch (Exception e) {
-            LOGGER.error("Could not receive resource mapping. Aborting.");
-            return;
-        }
-
-        ResourceMapping resourceMapping =
-                (ResourceMapping) Utils.deserialize(serializedRM);
-
-        String containerId = ContainerInfo.getInstance().getContainerId();
-
-        ResourceMapping.ContainerInstance container
-                = resourceMapping.getContainer(containerId);
-
-        if (container == null) {
-            LOGGER.info("No resource mapping for this container.");
-            return;
-        }
-
-        String appUpdateBarrierPath = ZKUtils
-                .getApplicationBarrierPath(appName);
-
-
-        int numContainersToUpdate = resourceMapping.getContainersToUpdate();
-
-        DistributedDoubleBarrier barrier = new DistributedDoubleBarrier(
-                ZKClient.getInstance().getCuratorClient(),
-                appUpdateBarrierPath,
-                numContainersToUpdate + 1
-        );
-
-        LOGGER.info("Sending connect signals.");
-        barrier.enter(); //start processing.
-
-        Map<String, ResourceMapping.FlakeInstance> flakes
-                = container.getFlakes();
-
-        Map<String, FlakeInfo> pidToFidMap
-                = FlakeMonitor.getInstance().getFlakes();
-
-        for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
-                : flakes.entrySet()) {
-
-            String pid = flakeEntry.getKey();
-            List<ResourceMapping.FlakeInstance> preds
-                    = resourceMapping
-                    .getPrecedingFlakes(pid);
-
-            for (ResourceMapping.FlakeInstance pred: preds) {
-                int assignedPort = pred.getAssignedPort(pid);
-                int backPort = pred.getAssignedBackPort(pid);
-                String host = pred.getHost();
-                ContainerUtils.sendConnectCommand(
-                        pidToFidMap.get(pid).getFlakeId(),
-                        host, assignedPort, backPort);
-            }
-        }
-
-        barrier.leave();
-    }
-
-    /**
-     * Launches pellets in the flakes based on the current resource mapping.
-     * @param signal The signal (with associated data) received.
-     * @exception Exception if an error occurs while launching flakes.
-     */
-    private void launchPellets(final ContainerSignal signal) throws Exception {
-        String appName = signal.getDestApp();
-        String containerName = signal.getDestContainer(); //ignore.
-        byte[] data = signal.getSignalData();
-
-        LOGGER.info("Container Id: " + containerName);
-
-        String resourceMappingPath = ZKUtils
-                .getApplicationResourceMapPath(appName);
-
-        byte[] serializedRM = null;
-
-        try {
-            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
-                    .forPath(resourceMappingPath);
-        } catch (Exception e) {
-            LOGGER.error("Could not receive resource mapping. Aborting.");
-            return;
-        }
-
-        ResourceMapping resourceMapping =
-                (ResourceMapping) Utils.deserialize(serializedRM);
-
-        String containerId = ContainerInfo.getInstance().getContainerId();
-
-        ResourceMapping.ContainerInstance container
-                = resourceMapping.getContainer(containerId);
-
-        if (container == null) {
-            LOGGER.info("No resource mapping for this container.");
-            return;
-        }
-
-        String appUpdateBarrierPath = ZKUtils
-                .getApplicationBarrierPath(appName);
-
-
-        int numContainersToUpdate = resourceMapping.getContainersToUpdate();
-
-        DistributedDoubleBarrier barrier = new DistributedDoubleBarrier(
-                ZKClient.getInstance().getCuratorClient(),
-                appUpdateBarrierPath,
-                numContainersToUpdate + 1
-        );
-
-        LOGGER.info("Entering barrier: " + appUpdateBarrierPath);
-        barrier.enter(); //start processing.
-
-        LOGGER.info("Launching pellets.");
-        Map<String, ResourceMapping.FlakeInstance> flakes
-                = container.getFlakes();
-
-        Map<String, FlakeInfo> pidToFidMap
-                = FlakeMonitor.getInstance().getFlakes();
-
-        for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
-                : flakes.entrySet()) {
-            String pid = flakeEntry.getKey();
-
-            ResourceMapping.FlakeInstance flakeInstance
-                    = flakeEntry.getValue();
-
-            TPellet pellet = resourceMapping.getFloeApp().get_pellets()
-                    .get(flakeInstance.getCorrespondingPelletId());
-
-            byte[] activeAlternate = pellet.get_alternates().get(
-                    pellet.get_activeAlternate()
-            ).get_serializedPellet();
-
-            LOGGER.info("Creating {} instances.",
-                    flakeInstance.getNumPelletInstances());
-            for (int i = 0;
-                 i < flakeInstance.getNumPelletInstances();
-                 i++) {
-                ContainerUtils.sendIncrementPelletCommand(
-                        pidToFidMap.get(pid).getFlakeId(),
-                        activeAlternate
-                );
-            }
-        }
-        barrier.leave(); //finish launching pellets.
-    }
-
-    /**
-     * Creates, udpates or removes flakes from the container as required.
-     * @param signal The signal (with associated data) received.
-     * @exception Exception if an error occurs while launching flakes.
-     */
-    private void createOrUpdateFlakes(final ContainerSignal signal)
-            throws Exception {
-
-        String appName = signal.getDestApp();
-        String containerName = signal.getDestContainer(); //ignore.
-        byte[] data = signal.getSignalData();
-
-        LOGGER.info("Container Id: " + containerName);
-
-        String resourceMappingPath = ZKUtils
-                .getApplicationResourceMapPath(appName);
-
-        byte[] serializedRM = null;
-
-        try {
-            serializedRM = ZKClient.getInstance().getCuratorClient().getData()
-                    .forPath(resourceMappingPath);
-        } catch (Exception e) {
-            LOGGER.error("Could not receive resource mapping. Aborting.");
-            return;
-        }
-
-        ResourceMapping resourceMapping =
-                (ResourceMapping) Utils.deserialize(serializedRM);
-
-        String containerId = ContainerInfo.getInstance().getContainerId();
-
-        ResourceMapping.ContainerInstance container
-                = resourceMapping.getContainer(containerId);
-
-        if (container == null) {
-            LOGGER.info("No resource mapping for this container.");
-            return;
-        }
-
-
-        String appUpdateBarrierPath = ZKUtils
-                .getApplicationBarrierPath(appName);
-
-
-        int numContainersToUpdate = resourceMapping.getContainersToUpdate();
-
-        DistributedDoubleBarrier barrier = new DistributedDoubleBarrier(
-                ZKClient.getInstance().getCuratorClient(),
-                appUpdateBarrierPath,
-                numContainersToUpdate + 1
-        );
-
-        LOGGER.info("Entering barrier: " + appUpdateBarrierPath);
-        barrier.enter(); //start processing.
-
-        String applicationJar = resourceMapping.getApplicationJarPath();
-
-        if (applicationJar != null) {
-            try {
-
-                String downloadLocation = Utils.getContainerJarDownloadPath(
-                        resourceMapping.getAppName(), applicationJar);
-
-                LOGGER.info("Downloading: " + applicationJar);
-                FloeClient.getInstance().downloadFileSync(applicationJar,
-                        downloadLocation);
-                LOGGER.info("Finished Downloading: " + applicationJar);
-            } catch (Exception e) {
-                LOGGER.warn("No application jar specified. It should work"
-                            + " still work for inproc testing. Exception: {}",
-                            e);
-            }
-        }
-
-        LOGGER.info("Resource Mapping {}: ", resourceMapping);
-
-        Map<String, ResourceMapping.FlakeInstance> flakes
-                = container.getFlakes();
-
-
-        //Create and wait for flakes to respond.
-        Map<String, String> pidToFidMap = ContainerUtils.createFlakes(
-                resourceMapping.getAppName(),
-                resourceMapping.getApplicationJarPath(),
-                containerId,
-                flakes);
-
-
-        //NOTIFY THE COORDINATOR THAT THE CONTAINER IS DONE.
-        //WE HAVE TO SETUP A MULTI-BARRIER (OR CHILDREN-BARRIER)
-        barrier.leave(); //finish processing.
     }
 }

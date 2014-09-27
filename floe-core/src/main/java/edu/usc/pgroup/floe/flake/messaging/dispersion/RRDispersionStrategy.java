@@ -17,7 +17,6 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,9 +56,14 @@ public class RRDispersionStrategy implements MessageDispersionStrategy {
      * @return the list of target instances to send the given tuple.
      */
     @Override
-    public final List<String> getTargetPelletInstances(final Tuple tuple) {
+    public final List<String> getTargetPelletInstances(
+            final Tuple tuple) {
         if (currentIndex >= targetPelletInstances.size()) {
             currentIndex = 0;
+        }
+
+        if (targetPelletInstances.size() == 0) {
+            return null;
         }
 
         List<String> target = targetPelletInstances.subList(

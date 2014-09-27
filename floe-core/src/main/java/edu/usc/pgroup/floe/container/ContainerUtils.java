@@ -199,7 +199,7 @@ public final class ContainerUtils {
      * sends the decrement pellet command to the given flake. (using ipc)
      * @param fid flake id to terminate a pellet instance.
      */
-    private static void sendDecrementPelletCommand(final String fid) {
+    public static void sendDecrementPelletCommand(final String fid) {
         FlakeControlCommand command = new FlakeControlCommand(
                 FlakeControlCommand.Command.DECREMENT_PELLET,
                 null
@@ -511,9 +511,8 @@ public final class ContainerUtils {
             for (Map.Entry<String,
                     ResourceMappingDelta.FlakeInstanceDelta> entry
                     : flakeDeltas.entrySet()) {
+
                 final String pelletId = entry.getKey();
-                ResourceMappingDelta.FlakeInstanceDelta delta
-                        = entry.getValue();
 
                 try {
                     FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory
@@ -525,9 +524,38 @@ public final class ContainerUtils {
                                             .getFlakeInfo(pelletId);
                                 }
                             });
+
                     LOGGER.info("Found Flake:{}. Sending terminate signal",
                             info.getFlakeId());
+
+                    //Send Kill Signal.
                     ContainerUtils.sendKillFlakeCommand(info.getFlakeId());
+
+                    //Wait for flake to be killed.
+                    Boolean killed = RetryLoop.callWithRetry(RetryPolicyFactory
+                                    .getDefaultPolicy(),
+                            new Callable<Boolean>() {
+                                @Override
+                                public Boolean call() throws Exception {
+                                    FlakeInfo info = null;
+                                    try {
+                                        info = FlakeMonitor.getInstance()
+                                                .getFlakeInfo(pelletId);
+
+                                    } catch (Exception ex) {
+                                        LOGGER.warn("Flake not found or already"
+                                                + " terminated.");
+                                    }
+
+                                    if (info == null) {
+                                        return true;
+                                    }
+                                    throw new Exception("Flake still alive. "
+                                            + "Trying again. ");
+                                }
+                            });
+                    LOGGER.info("Flake terminated (at container):{}", flakeId);
+
                 } catch (Exception e) {
                     LOGGER.error("Could not kill flake.");
                     return;

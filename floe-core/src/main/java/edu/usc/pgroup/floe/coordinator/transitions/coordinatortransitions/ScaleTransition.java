@@ -1,15 +1,26 @@
-package edu.usc.pgroup.floe.coordinator.transitions.coordinatortransitions;
-
-/**
- * @author kumbhare
+/*
+ * Copyright 2014 University of Southern California
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+package edu.usc.pgroup.floe.coordinator.transitions.coordinatortransitions;
 
 import edu.usc.pgroup.floe.resourcemanager.ResourceManagerFactory;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.thriftgen.AppStatus;
+import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
-import edu.usc.pgroup.floe.utils.Utils;
-import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,19 +28,19 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
- * Transition to start a new application.
+ * @author kumbhare
  */
-public class StartAppTransition extends BaseAppTransition {
-
+public class ScaleTransition extends BaseAppTransition {
     /**
      * Logger.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(StartAppTransition.class);
+            LoggerFactory.getLogger(ScaleTransition.class);
 
     /**
      * Pre-transition activities (like verification of topology,
      * app exists etc.).
+     *
      * @param appName the applicaiton name.
      * @param mapping Current Resource Mapping. (null for a new deployment)
      * @return True if preTransition was successful and the transition itself
@@ -40,41 +51,29 @@ public class StartAppTransition extends BaseAppTransition {
     public final boolean preTransition(
             final String appName,
             final ResourceMapping mapping) {
-
-        //STEP 1. Verify application.
-
-        //STEP 1a. Verify if the name exists.
         try {
-            if (ZKUtils.appExists(appName)) {
-                LOGGER.error("Application name already exists.");
+            if (!ZKUtils.appExists(appName)) {
+                LOGGER.error("Application does not exist.");
                 return false;
             }
         } catch (Exception e) {
-            LOGGER.error("Error occurred while checking existing "
-                    + "applications: {}", e);
+            LOGGER.error("Could not contact ZK, {}", e);
             return false;
         }
 
-        //STEP 1b. Reserve the app name and set status to
-        // "Request received".
+
         String appPath = ZKUtils.getApplicationPath(appName);
 
         String appStatusPath = ZKUtils.getApplicationStatusPath(appName);
 
         LOGGER.info("App Path to store the configuration:" + appPath);
         try {
-            ZKClient.getInstance().getCuratorClient()
-                    .create().creatingParentsIfNeeded()
-                    .forPath(appStatusPath,
-                            Utils.serialize(
-                                    AppStatus.NEW_REQ_RECEIVED));
+            ZKUtils.setAppStatus(appName, AppStatus.NEW_REQ_RECEIVED);
+
         } catch (Exception e) {
             LOGGER.error("Could not update status");
             return false;
         }
-
-
-        //STEP 1c. Verify topology. (TODO)
 
         return true;
     }
@@ -87,14 +86,15 @@ public class StartAppTransition extends BaseAppTransition {
      */
     @Override
     public final boolean postTransition(final ResourceMapping mapping) {
-        //No Post transition.
-        return true;
+        //No Post transition required.
+        return false;
     }
 
     /**
      * Transition specific update resource mapping function.
-     * @param appName the applicaiton name.
-     * @param app The TFloeApp applicaiton object.
+     *
+     * @param appName        the applicaiton name.
+     * @param app            The TFloeApp applicaiton object.
      * @param currentMapping Current Resource mapping.
      * @param args transaction specific arguments
      * @return updated resource mapping based on the transition.
@@ -105,10 +105,14 @@ public class StartAppTransition extends BaseAppTransition {
             final TFloeApp app,
             final ResourceMapping currentMapping,
             final Map<String, Object> args) {
-        ResourceMapping mapping = ResourceManagerFactory.getResourceManager()
-                .getInitialMapping(appName, app);
+        ScaleDirection direction = (ScaleDirection) args.get("direction");
+        String pelletName = (String) args.get("pelletName");
+        Integer count = (Integer) args.get("count");
 
-        return mapping;
+        ResourceMapping newMapping = ResourceManagerFactory.getResourceManager()
+                .scale(currentMapping, direction, pelletName, count);
+
+        return newMapping;
     }
 
     /**
@@ -116,6 +120,6 @@ public class StartAppTransition extends BaseAppTransition {
      */
     @Override
     public final String getName() {
-        return "StartAppTransition";
+        return "ScaleTransition";
     }
 }
