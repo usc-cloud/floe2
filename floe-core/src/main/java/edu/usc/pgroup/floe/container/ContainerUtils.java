@@ -63,7 +63,10 @@ public final class ContainerUtils {
      *                      connections from the succeeding pellets.
      * @param backChannelPortMap map of port for the dispersion. One port
      *                           per target pellet.
-     * @param channelTypeMap Map of target pellet to channel type (one per edge)
+     * @param successorChannelTypeMap Map of target pellet to channel type
+     *                                (one per edge)
+     * @param predChannelTypeMap Map of src pellet to channel type
+     *                                (one per edge)
      * @param pelletStreamsMap map of pellet name to list of stream names.
      * @return the flake id of the launched flake.
      */
@@ -74,7 +77,8 @@ public final class ContainerUtils {
             final String cid,
             final Map<String, Integer> pelletPortMap,
             final Map<String, Integer> backChannelPortMap,
-            final Map<String, String> channelTypeMap,
+            final Map<String, String> successorChannelTypeMap,
+            final Map<String, String> predChannelTypeMap,
             final Map<String, List<String>> pelletStreamsMap) {
 
         final String fid  = String.valueOf(getUniqueFlakeId());
@@ -105,7 +109,12 @@ public final class ContainerUtils {
         }
 
         args.add("-channeltype");
-        for (Map.Entry<String, String> p: channelTypeMap.entrySet()) {
+        for (Map.Entry<String, String> p: successorChannelTypeMap.entrySet()) {
+            args.add(p.getKey() + ':' + p.getValue());
+        }
+
+        args.add("-predchanneltype");
+        for (Map.Entry<String, String> p: predChannelTypeMap.entrySet()) {
             args.add(p.getKey() + ':' + p.getValue());
         }
 
@@ -471,7 +480,8 @@ public final class ContainerUtils {
                     containerId,
                     flakeInstance.getPelletPortMapping(),
                     flakeInstance.getPelletBackChannelPortMapping(),
-                    flakeInstance.getPelletChannelTypeMapping(),
+                    flakeInstance.getTargetPelletChannelTypeMapping(),
+                    flakeInstance.getSrcPelletChannelTypeMapping(),
                     flakeInstance.getPelletStreamsMapping());
 
             try {

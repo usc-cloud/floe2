@@ -21,6 +21,8 @@ import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.messaging.FlakeMessageReceiver;
 import edu.usc.pgroup.floe.flake.messaging.FlakeMessageSender;
+import edu.usc.pgroup.floe.flake.messaging
+        .dispersion.FlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -84,6 +86,12 @@ public class Flake {
      * Map of target pellet to channel type (one per edge).
      */
     private final Map<String, String> pelletChannelTypeMap;
+
+    /**
+     * Map of src pellet to channel type (one per edge).
+     */
+    private final Map<String, String> predPelletChannelTypeMap;
+
 
     /**
      * Recurring timer for sending heartbeats.
@@ -159,7 +167,10 @@ public class Flake {
      *                       static application configuration and not on
      * @param backChannelPortMap map of port for the dispersion. One port
      *                           per target pellet.
-     * @param channelTypeMap Map of target pellet to channel type (one per edge)
+     * @param successorChannelTypeMap Map of target pellet to channel type
+     *                                (one per edge)
+     * @param predChannelTypeMap Map of src pellet to channel type
+     *                                (one per edge)
      * @param streamsMap map from successor pellets to subscribed
      *                         streams.
      */
@@ -170,13 +181,15 @@ public class Flake {
                  final String jar,
                  final Map<String, Integer> portMap,
                  final Map<String, Integer> backChannelPortMap,
-                 final Map<String, String> channelTypeMap,
+                 final Map<String, String> successorChannelTypeMap,
+                 final Map<String, String> predChannelTypeMap,
                  final Map<String, List<String>> streamsMap) {
         this.flakeId = Utils.generateFlakeId(cid, fid);
         this.containerId = cid;
         this.pelletPortMap = portMap;
         this.pelletBackChannelPortMap = backChannelPortMap;
-        this.pelletChannelTypeMap = channelTypeMap;
+        this.pelletChannelTypeMap = successorChannelTypeMap;
+        this.predPelletChannelTypeMap = predChannelTypeMap;
         this.pelletStreamsMap = streamsMap;
         this.appName = app;
         this.appJar = jar;
@@ -209,6 +222,14 @@ public class Flake {
     }
 
     /**
+     * @return the pred to channel type map. (used by the message receiver to
+     * decide the local dispersion strategy)
+     */
+    public final Map<String, String> getPredPelletChannelTypeMap() {
+        return predPelletChannelTypeMap;
+    }
+
+    /**
      * Start receiving data from the predecessor.
      */
     private void startFlakeReciever() {
@@ -220,7 +241,7 @@ public class Flake {
      * Start receiving data from the predecessor.
      */
     private void startFlakeSender() {
-        flakeSender = new FlakeMessageSender(sharedContext, flakeId,
+        flakeSender = new FlakeMessageSender(sharedContext, pelletId, flakeId,
                 pelletPortMap, pelletBackChannelPortMap,
                 pelletChannelTypeMap,
                 pelletStreamsMap);
@@ -317,8 +338,9 @@ public class Flake {
     /**
      * Create a new pellet instance.
      * @param p the deserialized pellet instance received from the user.
+     * @return the pellet instance id of the newly created pellet.
      */
-    public final void incrementPellet(final byte[] p) {
+    public final String incrementPellet(final byte[] p) {
         LOGGER.info("Starting pellet");
         int nextPEIdx = 0;
 
@@ -334,6 +356,7 @@ public class Flake {
 
         runningPelletInstances.add(pe);
         pe.start();
+        return pe.getPelletInstanceId();
     }
 
     /**
@@ -355,18 +378,23 @@ public class Flake {
      * @param command Flake Command.
      * @param signal Signal socket to be used to send signals to the pellet
      *               instances. //ugly.. :( find a better way.
+     * @param localDispersionStratMap pointer to the strategy map so that
+     *                                pelletinstances may be added or removed.
      * @return the result after processing the command.
      */
     public final byte[] processControlSignal(
             final FlakeControlCommand command,
-            final ZMQ.Socket signal) {
+            final ZMQ.Socket signal,
+            final Map<String, FlakeLocalDispersionStrategy>
+                    localDispersionStratMap) {
 
         LOGGER.warn("Processing command: " + command);
         switch (command.getCommand()) {
             case INCREMENT_PELLET:
                 byte[] bpellet = (byte[]) command.getData();
                 LOGGER.info("CREATING PELLET: on " + getFlakeId());
-                incrementPellet(bpellet);
+                String peId = incrementPellet(bpellet);
+                notifyPelletAdded(peId, localDispersionStratMap);
                 break;
             case DECREMENT_PELLET:
                 String dpid = (String) command.getData();
@@ -382,11 +410,14 @@ public class Flake {
                             SystemSignal.SystemSignalType.KillInstance,
                             null);
                     signal.send(Utils.serialize(systemSignal), 0);
+                    notifyPelletRemoved(insToRemove.getPelletInstanceId(),
+                            localDispersionStratMap);
                 } else {
                     LOGGER.error("Flake {} does not have any running pellet "
                             + "instances.", getFlakeId());
                 }
                 //decrementPellet();
+
                 break;
             case DECREMENT_ALL_PELLETS:
 
@@ -401,6 +432,8 @@ public class Flake {
                             SystemSignal.SystemSignalType.KillInstance,
                             null);
                     signal.send(Utils.serialize(systemSignal), 0);
+                    notifyPelletRemoved(insToRemove.getPelletInstanceId(),
+                            localDispersionStratMap);
                 }
 
                 LOGGER.error("Flake {} does not have any running pellet "
@@ -434,5 +467,35 @@ public class Flake {
         //Get valid results here. Must define a results format.
         byte[] result = new byte[]{'1'};
         return result;
+    }
+
+    /**
+     * NOtifies all strategy instances that a pellet has been added.
+     * @param localDispersionStratMap the map of pred to strategies.
+     * @param peInstanceId instance id for the added pellet.
+     */
+    private void notifyPelletAdded(
+            final String peInstanceId,
+            final Map<String, FlakeLocalDispersionStrategy>
+                    localDispersionStratMap) {
+        for (FlakeLocalDispersionStrategy strat
+                : localDispersionStratMap.values()) {
+            strat.pelletAdded(peInstanceId);
+        }
+    }
+
+    /**
+     * NOtifies all strategy instances that a pellet has been removed.
+     * @param localDispersionStratMap the map of pred to strategies.
+     * @param peInstanceId instance id for the added pellet.
+     */
+    private void notifyPelletRemoved(
+            final String peInstanceId,
+            final Map<String, FlakeLocalDispersionStrategy>
+                    localDispersionStratMap) {
+        for (FlakeLocalDispersionStrategy strat
+                : localDispersionStratMap.values()) {
+            strat.pelletRemoved(peInstanceId);
+        }
     }
 }

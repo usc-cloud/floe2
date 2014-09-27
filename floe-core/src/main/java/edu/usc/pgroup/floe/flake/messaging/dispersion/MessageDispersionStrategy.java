@@ -38,5 +38,5 @@ public interface MessageDispersionStrategy extends BackChannelReceiver {
      * @param tuple tuple object.
      * @return the list of target instances to send the given tuple.
      */
-    List<String> getTargetPelletInstances(Tuple tuple);
+    List<String> getTargetFlakeIds(Tuple tuple);
 }

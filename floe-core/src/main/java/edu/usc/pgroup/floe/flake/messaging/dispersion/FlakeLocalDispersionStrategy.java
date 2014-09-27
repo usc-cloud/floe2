@@ -16,18 +16,27 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import edu.usc.pgroup.floe.app.Tuple;
+
+import java.util.List;
+
 /**
  * @author kumbhare
  */
-public interface BackChannelReceiver {
+public interface FlakeLocalDispersionStrategy extends PelletUpdateListener {
     /**
-     * Call back whenever a message is received from a target pellet instance
-     * on the back channel. This can be used by dispersion strategy to choose
-     * the target instance to send the message to.
-     * @param targetFlakeId pellet instance id from which the
-     *                               message is received.
-     * @param message message body.
+     * Initializes the strategy.
+     * @param args the arguments sent by the user. Fix Me: make this a better
+     *             interface.
      */
-    void backChannelMessageReceived(String targetFlakeId,
-                                    byte[] message);
+    void initialize(String args);
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     * @param tuple tuple object.
+     * @return the list of target instances to send the given tuple.
+     */
+    List<String> getTargetPelletInstances(Tuple tuple);
 }
+

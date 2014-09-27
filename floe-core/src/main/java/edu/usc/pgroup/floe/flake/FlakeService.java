@@ -70,7 +70,10 @@ public final class FlakeService {
      *                       static application configuration and not on
      * @param backChannelPortMap map of port for the dispersion. One port
      *                           per target pellet.
-     * @param channelTypeMap Map of target pellet to channel type (one per edge)
+     * @param successorChannelTypeMap Map of target pellet to channel type
+     *                                (one per edge)
+     * @param predChannelTypeMap Map of src pellet to channel type
+     *                                (one per edge)
      * @param pelletStreamsMap map from successor pellets to subscribed
      *                         streams.
      */
@@ -81,7 +84,8 @@ public final class FlakeService {
                          final String jar,
                          final Map<String, Integer> pelletPortMap,
                          final Map<String, Integer> backChannelPortMap,
-                         final Map<String, String> channelTypeMap,
+                         final Map<String, String> successorChannelTypeMap,
+                         final Map<String, String> predChannelTypeMap,
                          final Map<String, List<String>> pelletStreamsMap) {
         flake = new Flake(pid, fid,
                 cid,
@@ -89,7 +93,8 @@ public final class FlakeService {
                 jar,
                 pelletPortMap,
                 backChannelPortMap,
-                channelTypeMap,
+                successorChannelTypeMap,
+                predChannelTypeMap,
                 pelletStreamsMap);
     }
 
@@ -102,13 +107,10 @@ public final class FlakeService {
 
 
     /**
-     * Entry point for the flake.
-     *
-     * @param args commandline arguments. (TODO)
+     * Builds the CLI options.
+     * @return the configured options required for commandline execution.
      */
-    public static void main(final String[] args) {
-
-
+    private static Options buildOptions() {
         Options options = new Options();
 
         Option pidOption = OptionBuilder.withArgName("Pellet id")
@@ -117,9 +119,9 @@ public final class FlakeService {
                 .create("pid");
 
         Option idOption = OptionBuilder.withArgName("flakeId")
-                                 .hasArg().isRequired()
-                                 .withDescription("Container Local Flake id")
-                                 .create("id");
+                .hasArg().isRequired()
+                .withDescription("Container Local Flake id")
+                .create("id");
 
         Option cidOption = OptionBuilder.withArgName("containerId")
                 .hasArg().isRequired()
@@ -156,6 +158,13 @@ public final class FlakeService {
                 .withDescription("Type of the channel per out edge.")
                 .create("channeltype");
 
+        Option predChannelTypeOption = OptionBuilder.withArgName(
+                "pellet:channel type")
+                .withValueSeparator(',')
+                .hasArgs().isRequired()
+                .withDescription("Type of the channel per incoming edge.")
+                .create("predchanneltype");
+
         Option streamsOption = OptionBuilder.withArgName("pellet:<streams> "
                 + "list").hasArgs().isRequired()
                 .withValueSeparator(',')
@@ -171,6 +180,20 @@ public final class FlakeService {
         options.addOption(backPortsOption);
         options.addOption(streamsOption);
         options.addOption(channelTypeOption);
+        options.addOption(predChannelTypeOption);
+
+        return options;
+    }
+
+    /**
+     * Entry point for the flake.
+     *
+     * @param args commandline arguments. (TODO)
+     */
+    public static void main(final String[] args) {
+
+
+        Options options = buildOptions();
 
         CommandLineParser parser = new BasicParser();
         CommandLine line;
@@ -220,6 +243,15 @@ public final class FlakeService {
             pelletChannelTypeMap.put(pellet, type);
         }
 
+        String[] spredChannelTypes = line.getOptionValues("predchanneltype");
+        Map<String, String> predPelletChannelTypeMap = new HashMap<>();
+        for (String ctype: spredChannelTypes) {
+            String[] sp = ctype.split(":");
+            String pellet = sp[0];
+            String type = sp[1];
+            predPelletChannelTypeMap.put(pellet, type);
+        }
+
         String[] streams = line.getOptionValues("streams");
         Map<String, List<String>> pelletStreamsMap = new HashMap<>();
         for (String sStreams: streams) {
@@ -233,10 +265,12 @@ public final class FlakeService {
         }
 
         LOGGER.info("pid: {}, id:{}, cid:{}, app:{}, jar:{}, ports:{}, "
-                + "backports:{}, stream:{}, channeltype:{}", pid, id, cid,
-                appName, jar, pelletPortMap, pelletBackChannelPortMap,
-                pelletStreamsMap,
-                pelletChannelTypeMap);
+            + "backports:{}, stream:{}, channeltype:{}, predChanneltype:{}",
+            pid, id,
+            cid,
+            appName, jar, pelletPortMap, pelletBackChannelPortMap,
+            pelletStreamsMap,
+            pelletChannelTypeMap, predPelletChannelTypeMap);
         try {
             new FlakeService(pid,
                     id,
@@ -246,6 +280,7 @@ public final class FlakeService {
                     pelletPortMap,
                     pelletBackChannelPortMap,
                     pelletChannelTypeMap,
+                    predPelletChannelTypeMap,
                     pelletStreamsMap).start();
         } catch (Exception e) {
             LOGGER.error("Invalid port number: Exception: {}", e);

@@ -63,4 +63,35 @@ public final class MessageDispersionStrategyFactory {
         return strategy;
     }
 
+    /**
+     * Factory function for creating the MessageDispersionStrategy.
+     * @param channelType type of the channel (edge) in the application.
+     * @param args Any arguments to be sent to the Strategy Class while
+     *             initialization.
+     * @return new instance of MessageDispersionStrategy based on the edge type.
+     * @throws java.lang.ClassNotFoundException if the given channel type is
+     * invalid or the class for custom strategy is not found.
+     */
+    public static FlakeLocalDispersionStrategy
+    getFlakeLocalDispersionStrategy(
+            final TChannelType channelType,
+            final String args) throws ClassNotFoundException {
+
+        RRFlakeLocalDispersionStrategy strategy = null;
+
+        switch (channelType) {
+            case ROUND_ROBIN:
+                strategy = new RRFlakeLocalDispersionStrategy();
+                break;
+            case REDUCE:
+            case LOAD_BALANCED:
+            case CUSTOM:
+            default:
+                throw new ClassNotFoundException(channelType.toString());
+        }
+
+        strategy.initialize(args);
+        return strategy;
+    }
+
 }

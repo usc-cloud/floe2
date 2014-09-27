@@ -77,8 +77,14 @@ public class FlakeMessageSender extends Thread {
     private final Map<String, String> pelletChannelTypeMap;
 
     /**
+     * Pellet's name to be sent with each message.
+     */
+    private final String myPelletName;
+
+    /**
      * constructor.
      * @param zmqContext Shared ZMQ context.
+     * @param pelletName Pellet's name to be sent with each message.
      * @param flakeId flake id to which this sender belongs.
      * @param portMap the map of ports on which this flake should
      *                       listen on. Note: This is fine here (and not as a
@@ -90,11 +96,13 @@ public class FlakeMessageSender extends Thread {
      *                         streams.
      */
     public FlakeMessageSender(final ZMQ.Context zmqContext,
+                              final String pelletName,
                               final String flakeId,
                               final Map<String, Integer> portMap,
                               final Map<String, Integer> backChannelPortMap,
                               final Map<String, String> channelTypeMap,
                               final Map<String, List<String>> streamsMap) {
+        this.myPelletName = pelletName;
         this.ctx = zmqContext;
         this.fid = flakeId;
         this.pelletPortMap = portMap;
@@ -267,14 +275,15 @@ public class FlakeMessageSender extends Thread {
 
                     Tuple tuple = tupleSerializer.deserialize(message);
 
-                    List<String> pelletInstanceIds = dispersionStrategy
-                            .getTargetPelletInstances(tuple);
+                    List<String> flakeIds = dispersionStrategy
+                            .getTargetFlakeIds(tuple);
 
-                    if (pelletInstanceIds != null
-                            && pelletInstanceIds.size() > 0) {
-                        for (String pelletInstanceId : pelletInstanceIds) {
-                            LOGGER.debug("Sending to:" + pelletInstanceId);
-                            backend.sendMore(pelletInstanceId);
+                    if (flakeIds != null
+                            && flakeIds.size() > 0) {
+                        for (String flakeId : flakeIds) {
+                            LOGGER.debug("Sending to:" + flakeId);
+                            backend.sendMore(flakeId);
+                            backend.sendMore(myPelletName);
                             backend.send(message, 0);
                         }
                     } else { //should queue up messages.
@@ -285,15 +294,15 @@ public class FlakeMessageSender extends Thread {
                 } else if (pollerItems.pollin(1)) { //kill signal
                     break;
                 } else if (pollerItems.pollin(2)) { //backChannel from successor
-                    String pelletInstanceId = backendBackChannel.recvStr(
+                    String flakeId = backendBackChannel.recvStr(
                             Charset.defaultCharset());
-                    LOGGER.info("MSG ON BACKCHANNEL: {}", pelletInstanceId);
+                    LOGGER.info("MSG ON BACKCHANNEL: {}", flakeId);
                     byte[] data = null;
                     if (backendBackChannel.hasReceiveMore()) {
                         data = backendBackChannel.recv();
                     }
                     dispersionStrategy.backChannelMessageReceived(
-                            pelletInstanceId, data);
+                            flakeId, data);
                 }
             }
             //ZMQ.proxy(middleendreceiver, backend, null);

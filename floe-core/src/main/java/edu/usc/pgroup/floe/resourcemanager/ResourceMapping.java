@@ -487,7 +487,12 @@ public class ResourceMapping implements Serializable {
         /**
          * Map from target pellet name (i.e. per edge) to the channel type.
          */
-        private final Map<String, String> pelletChannelTypeMapping;
+        private final Map<String, String> targetPelletChannelTypeMapping;
+
+        /**
+         * Map from src pellet name (i.e. per edge) to the channel type.
+         */
+        private final Map<String, String> srcPelletChannelTypeMapping;
 
         /**
          * The map from pellet name (the immediate downstream pellets) to the
@@ -521,7 +526,9 @@ public class ResourceMapping implements Serializable {
             this.host = hostnameOrIpAddr;
             this.listeningPorts = new HashMap<>();
             this.pelletBackChannelPortMapping = new HashMap<>();
-            this.pelletChannelTypeMapping = new HashMap<>();
+            this.targetPelletChannelTypeMapping = new HashMap<>();
+            this.srcPelletChannelTypeMapping = new HashMap<>();
+
             this.streamNames = new HashMap<>();
 
             this.numPelletInstances = 0;
@@ -548,25 +555,42 @@ public class ResourceMapping implements Serializable {
                     if (edge.get_channelTypeArgs() != null) {
                         channelType += "__" + edge.get_channelTypeArgs();
                     }
-                    pelletChannelTypeMapping.put(
+                    targetPelletChannelTypeMapping.put(
                             edge.get_destPelletId(), channelType);
 
                     List<String> streams = oe.getValue();
                     streamNames
                             .put(edge.get_destPelletId(), streams);
                 }
-
             } else {
                 LOGGER.info("No OUTPUT PELLETS for: {}", tPellet.get_id());
                 listeningPorts.put("OUT_PELLET"
                         , flPorts[0]);
                 pelletBackChannelPortMapping.put("OUT_PELLET"
                         , flPorts[1]);
-                pelletChannelTypeMapping.put("OUT_PELLET", "NONE");
+                targetPelletChannelTypeMapping.put("OUT_PELLET", "NONE");
                 streamNames.put("OUT_PELLET",
                         new ArrayList<String>());
             }
 
+            //Add incoming edges
+            if (tPellet.get_incomingEdges().size() > 0) {
+                for (TEdge edge : tPellet.get_incomingEdges()) {
+                    String srcPid = edge.get_srcPelletId();
+
+                    String channelType = edge.get_channelType().toString();
+                    if (edge.get_channelTypeArgs() != null) {
+                        channelType += "__" + edge.get_channelTypeArgs();
+                    }
+                    targetPelletChannelTypeMapping.put(
+                            edge.get_destPelletId(), channelType);
+
+                    srcPelletChannelTypeMapping.put(srcPid, channelType);
+                }
+            } else {
+                LOGGER.info("No INCOMING PELLETS for: {}", tPellet.get_id());
+                srcPelletChannelTypeMapping.put("IN_PELLET", "NONE");
+            }
         }
 
 
@@ -683,10 +707,19 @@ public class ResourceMapping implements Serializable {
         }
 
         /**
-         * @return the pellet to channel type mapping.
+         * @return the pellet to channel type mapping for target (successor)
+         * pellets.
          */
-        public final Map<String, String> getPelletChannelTypeMapping() {
-            return pelletChannelTypeMapping;
+        public final Map<String, String> getTargetPelletChannelTypeMapping() {
+            return targetPelletChannelTypeMapping;
+        }
+
+        /**
+         * @return the pellet to channel type mapping for predecessor pellets
+         * (incoming edges).
+         */
+        public final Map<String, String> getSrcPelletChannelTypeMapping() {
+            return srcPelletChannelTypeMapping;
         }
     }
 }

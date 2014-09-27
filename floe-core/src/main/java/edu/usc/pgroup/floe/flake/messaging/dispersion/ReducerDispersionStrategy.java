@@ -35,7 +35,7 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
     /**
      * List of target pellet instances.
      */
-    private List<String> targetPelletInstances;
+    private List<String> targetFlakeIds;
 
 
     /**
@@ -46,7 +46,7 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
      */
     @Override
     public final void initialize(final String args) {
-        this.targetPelletInstances = new ArrayList<>();
+        this.targetFlakeIds = new ArrayList<>();
         this.keyFieldName = args;
     }
 
@@ -58,10 +58,10 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
      * @return the list of target instances to send the given tuple.
      */
     @Override
-    public final List<String> getTargetPelletInstances(final Tuple tuple) {
+    public final List<String> getTargetFlakeIds(final Tuple tuple) {
         Object value = tuple.get(keyFieldName);
-        int currentIndex = value.hashCode() % targetPelletInstances.size();
-        List<String> target = targetPelletInstances.subList(
+        int currentIndex = value.hashCode() % targetFlakeIds.size();
+        List<String> target = targetFlakeIds.subList(
                 currentIndex,
                 currentIndex + 1);
         return target;
@@ -72,16 +72,16 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
      * on the back channel. This can be used by dispersion strategy to choose
      * the target instance to send the message to.
      *
-     * @param targetPelletInstanceId pellet instance id from which the
+     * @param targetFlakeId pellet instance id from which the
      *                               message is received.
      * @param message                message body.
      */
     @Override
     public final void backChannelMessageReceived(
-                                            final String targetPelletInstanceId,
+                                            final String targetFlakeId,
                                             final byte[] message) {
-        if (!targetPelletInstances.contains(targetPelletInstanceId)) {
-            targetPelletInstances.add(targetPelletInstanceId);
+        if (!targetFlakeIds.contains(targetFlakeId)) {
+            targetFlakeIds.add(targetFlakeId);
         }
     }
 }

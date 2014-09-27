@@ -19,15 +19,16 @@ package edu.usc.pgroup.floe.flake.messaging.dispersion;
 /**
  * @author kumbhare
  */
-public interface BackChannelReceiver {
+public interface PelletUpdateListener {
     /**
-     * Call back whenever a message is received from a target pellet instance
-     * on the back channel. This can be used by dispersion strategy to choose
-     * the target instance to send the message to.
-     * @param targetFlakeId pellet instance id from which the
-     *                               message is received.
-     * @param message message body.
+     * Called whenever a new pellet is added.
+     * @param pelletId pellet instance id which has been added.
      */
-    void backChannelMessageReceived(String targetFlakeId,
-                                    byte[] message);
+    void pelletAdded(String pelletId);
+
+    /**
+     * Called whenever a pellet is removed.
+     * @param pelletId pellet instance id which has been added.
+     */
+    void pelletRemoved(String pelletId);
 }

@@ -229,8 +229,7 @@ public class PelletExecutor extends Thread {
                 Utils.Constants.FLAKE_BACKCHANNEL_PELLET_PROXY_PREFIX
                         + flakeId);
 
-
-        int a = 1;
+        /*int a = 1;
         final int cnt = 5;
         while (a++ <= cnt) { //FIX ME
             LOGGER.info("Sending ping message on backchannel: {}",
@@ -242,7 +241,7 @@ public class PelletExecutor extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
 
 //        Thread shutdownHook = new Thread(
 //                new Runnable() {

@@ -17,13 +17,15 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author kumbhare
  */
-public class RRDispersionStrategy implements MessageDispersionStrategy {
+public class RRFlakeLocalDispersionStrategy
+        implements FlakeLocalDispersionStrategy {
 
     /**
      * Current index in the RR strategy.
@@ -34,7 +36,7 @@ public class RRDispersionStrategy implements MessageDispersionStrategy {
     /**
      * List of target pellet instances.
      */
-    private List<String> targetFlakeIds;
+    private List<String> targetPelletInstances;
 
     /**
      * Initializes the strategy.
@@ -44,7 +46,7 @@ public class RRDispersionStrategy implements MessageDispersionStrategy {
      */
     @Override
     public final void initialize(final String args) {
-        targetFlakeIds = new ArrayList<>();
+        targetPelletInstances = new ArrayList<>();
         currentIndex = 0;
     }
 
@@ -56,38 +58,43 @@ public class RRDispersionStrategy implements MessageDispersionStrategy {
      * @return the list of target instances to send the given tuple.
      */
     @Override
-    public final List<String> getTargetFlakeIds(
-            final Tuple tuple) {
-        if (currentIndex >= targetFlakeIds.size()) {
+    public final List<String> getTargetPelletInstances(final Tuple tuple) {
+        if (currentIndex >= targetPelletInstances.size()) {
             currentIndex = 0;
         }
 
-        if (targetFlakeIds.size() == 0) {
+        if (targetPelletInstances.size() == 0) {
             return null;
         }
 
-        List<String> target = targetFlakeIds.subList(
-                                                    currentIndex,
-                                                    currentIndex + 1);
+        List<String> target = targetPelletInstances.subList(
+                currentIndex,
+                currentIndex + 1);
         currentIndex++;
         return target;
     }
 
     /**
-     * Call back whenever a message is received from a target pellet instance
-     * on the back channel. This can be used by dispersion strategy to choose
-     * the target instance to send the message to.
+     * Called whenever a new pellet is added.
      *
-     * @param targetFlakeId pellet instance id from which the
-     *                               message is received.
-     * @param message                message body.
+     * @param pelletId pellet instance id which has been added.
      */
     @Override
-    public final void backChannelMessageReceived(
-            final String targetFlakeId,
-            final byte[] message) {
-        if (!targetFlakeIds.contains(targetFlakeId)) {
-            targetFlakeIds.add(targetFlakeId);
+    public final void pelletAdded(final String pelletId) {
+        if (!targetPelletInstances.contains(pelletId)) {
+            targetPelletInstances.add(pelletId);
+        }
+    }
+
+    /**
+     * Called whenever a pellet is removed.
+     *
+     * @param pelletId pellet instance id which has been added.
+     */
+    @Override
+    public final void pelletRemoved(final String pelletId) {
+        if (targetPelletInstances.contains(pelletId)) {
+            targetPelletInstances.remove(pelletId);
         }
     }
 }
