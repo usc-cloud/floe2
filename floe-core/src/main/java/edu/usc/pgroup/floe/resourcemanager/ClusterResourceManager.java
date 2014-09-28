@@ -154,6 +154,7 @@ public class ClusterResourceManager extends ResourceManager {
                 return null;
             }
 
+            LOGGER.info("Flakes:{}", flakes);
             //TODO: Order containers w.r.t availability.
 
             //Randomly select a flake to remove instance.

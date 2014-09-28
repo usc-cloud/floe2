@@ -16,8 +16,10 @@
 
 package edu.usc.pgroup.floe.examples.pellets;
 
+import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.BasePellet;
 import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -39,9 +41,14 @@ public class HelloGreetingPellet extends BasePellet {
 
     /**
      * The setup function is called once to let the pellet initialize.
+     * @param appContext Application's context. Some data related to
+     *                   application's deployment.
+     * @param pelletContext Pellet instance context. Related to this
+     *                      particular pellet instance.
      */
     @Override
-    public void setup() {
+    public void setup(final AppContext appContext,
+                      final PelletContext pelletContext) {
 
     }
 

@@ -74,7 +74,6 @@ public abstract class BaseAppTransition extends ClusterTransition {
                     + "Pre-transition failed.");
         }
 
-
         //STEP 1: Schedule app, Get resource mapping and update it in ZK
         ResourceMapping updatedMapping = schedule(appName, app,
                 currentMapping, args);

@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake;
 
 import edu.usc.pgroup.floe.app.Pellet;
+import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.app.Signallable;
@@ -138,6 +139,7 @@ public class PelletExecutor extends Thread {
         this(pelletIndex, sharedContext, fid);
         this.pelletClass = fqdnClass;
         this.pellet = (Pellet) Utils.instantiateObject(pelletClass);
+        this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
 
 
@@ -157,6 +159,7 @@ public class PelletExecutor extends Thread {
                           final ZMQ.Context sharedContext) {
         this(pelletIndex, sharedContext, fid);
         this.pellet = p;
+        this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
 
     /**
@@ -190,12 +193,12 @@ public class PelletExecutor extends Thread {
             );
 
             this.pellet = (Pellet) Utils.deserialize(p, loader);
+
+            this.pellet.setup(null, new PelletContext(pelletInstanceId));
         } catch (MalformedURLException e) {
             e.printStackTrace();
             LOGGER.error("Invalid Jar URL Exception: {}", e);
         }
-
-
     }
 
 
@@ -337,6 +340,7 @@ public class PelletExecutor extends Thread {
                 LOGGER.warn("Switching pellet alternate.");
                 this.pellet = (Pellet) Utils.deserialize(signal.getSignalData(),
                         loader);
+                this.pellet.setup(null, new PelletContext(pelletInstanceId));
                 break;
             case StartInstance:
                 LOGGER.info("Starting pellets.");

@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.coordinator.transitions.coordinatortransitions;
 
 import edu.usc.pgroup.floe.resourcemanager.ResourceManagerFactory;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
+import edu.usc.pgroup.floe.resourcemanager.ResourceMappingDelta;
 import edu.usc.pgroup.floe.thriftgen.AppStatus;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
@@ -25,6 +26,7 @@ import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -112,6 +114,53 @@ public class ScaleTransition extends BaseAppTransition {
         ResourceMapping newMapping = ResourceManagerFactory.getResourceManager()
                 .scale(currentMapping, direction, pelletName, count);
 
+        for (String containerId: newMapping.getAllContainers()) {
+
+            Map<String, ResourceMappingDelta.FlakeInstanceDelta>
+                    modifiedFlakes = new HashMap<>();
+
+
+            if (newMapping.getDelta()
+                    .getNewlyAddedFlakes(containerId) != null) {
+                LOGGER.info("Added flakes:{}",
+                        newMapping.getDelta().getNewlyAddedFlakes(containerId));
+                modifiedFlakes.putAll(
+                        newMapping.getDelta().getNewlyAddedFlakes(containerId));
+            }
+
+            if (newMapping.getDelta().getUpdatedFlakes(containerId) != null) {
+                LOGGER.info("Modified flakes:{}",
+                        newMapping.getDelta().getUpdatedFlakes(containerId));
+                modifiedFlakes.putAll(
+                        newMapping.getDelta().getUpdatedFlakes(containerId));
+            }
+
+//            if (newMapping.getDelta().getRemovedFlakes(containerId) != null) {
+//                LOGGER.info("Removed flakes:{}",
+//                        newMapping.getDelta().getRemovedFlakes(containerId));
+//                modifiedFlakes.putAll(
+//                        newMapping.getDelta().getRemovedFlakes(containerId));
+//            }
+
+
+
+            if (modifiedFlakes != null && modifiedFlakes.size() > 0) {
+                for (Map.Entry<String, ResourceMappingDelta.FlakeInstanceDelta>
+                        fd : modifiedFlakes.entrySet()) {
+
+                    int diffPellets = fd.getValue().getNumInstancesAdded()
+                            - fd.getValue().getNumInstancesRemoved();
+
+                    LOGGER.info("Flake to update: INCR/DECR pellets by {}, "
+                                    + "{}, {}",
+                            fd.getValue().getNumInstancesAdded(),
+                            fd.getValue().getNumInstancesRemoved(),
+                            diffPellets);
+                }
+            } else {
+                LOGGER.warn("No new pellets for this container.");
+            }
+        }
         return newMapping;
     }
 

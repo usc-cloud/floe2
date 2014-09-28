@@ -180,34 +180,40 @@ public final class ContainerActions {
             }
         } else {
             Map<String, ResourceMappingDelta.FlakeInstanceDelta>
-                    addedflakeDeltas = new HashMap<>();
+                    modifiedFlakes = new HashMap<>();
 
 
             if (mapping.getDelta().getNewlyAddedFlakes(containerId) != null) {
-                addedflakeDeltas.putAll(
+                modifiedFlakes.putAll(
                         mapping.getDelta().getNewlyAddedFlakes(containerId));
             }
 
             if (mapping.getDelta().getUpdatedFlakes(containerId) != null) {
-                addedflakeDeltas.putAll(
+                modifiedFlakes.putAll(
                         mapping.getDelta().getUpdatedFlakes(containerId));
             }
 
-            if (mapping.getDelta().getRemovedFlakes(containerId) != null) {
-                addedflakeDeltas.putAll(
-                        mapping.getDelta().getRemovedFlakes(containerId));
-            }
+//            if (mapping.getDelta().getRemovedFlakes(containerId) != null) {
+//                modifiedFlakes.putAll(
+//                        mapping.getDelta().getRemovedFlakes(containerId));
+//            }
 
 
-            if (addedflakeDeltas != null && addedflakeDeltas.size() > 0) {
+            if (modifiedFlakes != null && modifiedFlakes.size() > 0) {
                 flakes = new HashMap<>();
 
                 for (Map.Entry<String, ResourceMappingDelta.FlakeInstanceDelta>
-                        fd : addedflakeDeltas.entrySet()) {
+                        fd : modifiedFlakes.entrySet()) {
                     flakes.put(fd.getKey(), fd.getValue().getFlakeInstance());
 
                     int diffPellets = fd.getValue().getNumInstancesAdded()
                             - fd.getValue().getNumInstancesRemoved();
+
+                    LOGGER.info("Flake to update: INCR/DECR pellets by {}, "
+                            + "{}, {}",
+                            fd.getValue().getNumInstancesAdded(),
+                            fd.getValue().getNumInstancesRemoved(),
+                            diffPellets);
 
                     pelletsToIncrOrDecr.put(fd.getKey(), diffPellets);
                 }

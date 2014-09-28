@@ -29,9 +29,12 @@ public interface Pellet extends Serializable {
 
     /**
      * The setup function is called once to let the pellet initialize.
-     * TODO: ADD A FLOE CONTEXT OBJECT.
+     * @param appContext Application's context. Some data related to
+     *                   application's deployment.
+     * @param pelletContext Pellet instance context. Related to this
+     *                      particular pellet instance.
      */
-    void setup();
+    void setup(AppContext appContext, PelletContext pelletContext);
 
 
     /**

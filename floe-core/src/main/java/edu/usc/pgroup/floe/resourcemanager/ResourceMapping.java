@@ -171,6 +171,17 @@ public class ResourceMapping implements Serializable {
                         flakeInstance.getContainerId());
             }
 
+            List<FlakeInstance> pidFlakes = null;
+            if (pidFlakeMap
+                    .containsKey(flakeInstance.getCorrespondingPelletId())) {
+                pidFlakes = pidFlakeMap
+                        .get(flakeInstance.getCorrespondingPelletId());
+                pidFlakes.remove(flakeInstance);
+            } else {
+                LOGGER.warn("This should not happen. No Flakes found in the "
+                        + "PID map, but clearly this flake instance exists.");
+            }
+
             if (containerInstance != null) {
                 containerInstance.removeFlake(
                         flakeInstance.getCorrespondingPelletId());
@@ -328,6 +339,14 @@ public class ResourceMapping implements Serializable {
             return mappingDelta.getContainersToUpdate();
         }*/
         return containerMap.size();
+    }
+
+    /**
+     * temp. function to return all updated containers.
+     * @return containers.
+     */
+    public final java.util.Set<String> getAllContainers() {
+        return containerMap.keySet();
     }
 
     /**
@@ -622,7 +641,6 @@ public class ResourceMapping implements Serializable {
          * Removes one pellet instance from the flake.
          */
         public final void removePelletInstance() {
-
             if (numPelletInstances > 0) {
                 numPelletInstances--;
             } else {

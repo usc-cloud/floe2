@@ -20,6 +20,8 @@ package edu.usc.pgroup.floe.resourcemanager;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -31,6 +33,12 @@ import java.util.Map;
  * @author kumbhare
  */
 public class ResourceMappingDelta implements Serializable {
+
+    /**
+     * Logger.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ResourceMappingDelta.class);
 
     /**
      * The floe application.
@@ -155,7 +163,8 @@ public class ResourceMappingDelta implements Serializable {
             flMap = addedFlakes.get(containerId);
         } else if (updatedFlakes.containsKey(containerId)) {
             flMap = updatedFlakes.get(containerId);
-        } else if (removedFlakes.containsKey(containerId)) {
+        } else if (removedFlakes.containsKey(containerId)) { //No need for
+        // the removed flakes check. doesnt make sense.
             flMap = removedFlakes.get(containerId);
         }
 
@@ -175,7 +184,10 @@ public class ResourceMappingDelta implements Serializable {
         if (type == UpdateType.InstanceAdded) {
             flDelta.instanceAdded();
         } else if (type == UpdateType.InstanceRemoved) {
+            LOGGER.info("Removing pellet instance");
             flDelta.instanceRemoved();
+            LOGGER.info("Removed pellet instance: {}",
+                    flDelta.getNumInstancesRemoved());
         } else if (type == UpdateType.ActiveAlternateChanged) {
             flDelta.activeAlternateChanged();
         }
