@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
+import org.zeromq.ZMQ;
 
 /**
  * @author kumbhare
@@ -66,8 +67,9 @@ public final class MessageDispersionStrategyFactory {
     /**
      * Factory function for creating the MessageDispersionStrategy.
      * @param channelType type of the channel (edge) in the application.
-     * @param args Any arguments to be sent to the Strategy Class while
-     *             initialization.
+     * @param srcPelletName The name of the src pellet on this edge.
+     * @param context shared ZMQ context.
+     * @param flakeId Current flake id.
      * @return new instance of MessageDispersionStrategy based on the edge type.
      * @throws java.lang.ClassNotFoundException if the given channel type is
      * invalid or the class for custom strategy is not found.
@@ -75,13 +77,16 @@ public final class MessageDispersionStrategyFactory {
     public static FlakeLocalDispersionStrategy
     getFlakeLocalDispersionStrategy(
             final TChannelType channelType,
-            final String args) throws ClassNotFoundException {
+            final String srcPelletName,
+            final ZMQ.Context context,
+            final String flakeId) throws ClassNotFoundException {
 
         RRFlakeLocalDispersionStrategy strategy = null;
 
         switch (channelType) {
             case ROUND_ROBIN:
-                strategy = new RRFlakeLocalDispersionStrategy();
+                strategy = new RRFlakeLocalDispersionStrategy(srcPelletName,
+                        context, flakeId);
                 break;
             case REDUCE:
             case LOAD_BALANCED:
@@ -90,7 +95,7 @@ public final class MessageDispersionStrategyFactory {
                 throw new ClassNotFoundException(channelType.toString());
         }
 
-        strategy.initialize(args);
+        strategy.initialize(null);
         return strategy;
     }
 

@@ -351,10 +351,16 @@ public final class Utils {
 
 
         /**
-         * Pellet facing proxy for the dispersion.
+         * Flake backchannel sender prefix.
          */
-        public static final String FLAKE_BACKCHANNEL_PELLET_PROXY_PREFIX
-                = "inproc://flake-dispersion-pellet-";
+        public static final String FLAKE_BACKCHANNEL_SENDER_PREFIX
+                = "inproc://flake-backchannel-sender-";
+
+        /**
+         * Flake backchannel sender control prefix. Used to trigger the send.
+         */
+        public static final String FLAKE_BACKCHANNEL_CONTROL_PREFIX
+                = "inproc://flake-backchannel-control-";
 
         /**
          * Flake sender middle-end prefix (this is suffixed by a listening

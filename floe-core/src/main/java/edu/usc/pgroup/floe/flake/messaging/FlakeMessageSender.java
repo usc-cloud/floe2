@@ -240,7 +240,7 @@ public class FlakeMessageSender extends Thread {
             backendBackChannel.bind(
                     Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
                             + backChannelPort);
-            backendBackChannel.subscribe("".getBytes());
+            backendBackChannel.subscribe(myPelletName.getBytes());
 
 
             ZMQ.Poller pollerItems = new ZMQ.Poller(2 + 1);
@@ -294,12 +294,18 @@ public class FlakeMessageSender extends Thread {
                 } else if (pollerItems.pollin(1)) { //kill signal
                     break;
                 } else if (pollerItems.pollin(2)) { //backChannel from successor
+                    String mypid = backendBackChannel.recvStr(
+                            Charset.defaultCharset());
                     String flakeId = backendBackChannel.recvStr(
                             Charset.defaultCharset());
-                    LOGGER.debug("MSG ON BACKCHANNEL: {}", flakeId);
+
                     byte[] data = null;
                     if (backendBackChannel.hasReceiveMore()) {
                         data = backendBackChannel.recv();
+                    }
+
+                    if (data != null) {
+                        LOGGER.info("MSG ON BACKCHANNEL: {}", data);
                     }
                     dispersionStrategy.backChannelMessageReceived(
                             flakeId, data);

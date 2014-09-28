@@ -19,7 +19,6 @@ package edu.usc.pgroup.floe.flake.messaging;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.Flake;
-import edu.usc.pgroup.floe.flake.messaging.dispersion.BackChannelSender;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.flake.messaging
@@ -114,7 +113,12 @@ public class FlakeMessageReceiver extends Thread {
                 TChannelType type = Enum.valueOf(TChannelType.class, ctype);
                 try {
                     strat = MessageDispersionStrategyFactory
-                            .getFlakeLocalDispersionStrategy(type, args);
+                            .getFlakeLocalDispersionStrategy(
+                                    type,
+                                    src,
+                                    ctx,
+                                    flake.getFlakeId()
+                                    );
                     localDispersionStratMap.put(src, strat);
                 } catch (Exception ex) {
                     LOGGER.error("Invalid dispersion strategy: {}. "
@@ -231,16 +235,17 @@ public class FlakeMessageReceiver extends Thread {
         LOGGER.info("WAITING FOR BACKCHANNEL CONNECTINON "
                 + "FROM back channel sender. {}", flake.getFlakeId());
         xsubFromPelletsSock.bind(
-                Utils.Constants.FLAKE_BACKCHANNEL_PELLET_PROXY_PREFIX
+                Utils.Constants.FLAKE_BACKCHANNEL_SENDER_PREFIX
                         + flake.getFlakeId());
 
         //connect to the predecessor's back channel on connect signal.
         final ZMQ.Socket xpubToPredSock = ctx.socket(ZMQ.XPUB);
 
         //Start the backchannelsender.
-        BackChannelSender backChannelSender
-                = new BackChannelSender(ctx, flake.getFlakeId());
-        backChannelSender.start();
+        ZMQ.Socket backChannelPingger = ctx.socket(ZMQ.PUB);
+        backChannelPingger.bind(
+                Utils.Constants.FLAKE_BACKCHANNEL_CONTROL_PREFIX
+                        + flake.getFlakeId());
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(6);
         pollerItems.register(frontend, ZMQ.Poller.POLLIN);
@@ -283,6 +288,7 @@ public class FlakeMessageReceiver extends Thread {
                         LOGGER.info("back channel: " + backChannel);
                         frontend.connect(dataChannel);
                         xpubToPredSock.connect(backChannel);
+                        backChannelPingger.send(result, 0);
                         break;
                     case DISCONNECT_PRED:
                         String disconnectstr = (String) command.getData();

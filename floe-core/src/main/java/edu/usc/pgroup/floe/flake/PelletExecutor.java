@@ -226,7 +226,7 @@ public class PelletExecutor extends Thread {
         LOGGER.info("Open back channel from pellet");
         final ZMQ.Socket backendBackChannel = context.socket(ZMQ.PUB);
         backendBackChannel.connect(
-                Utils.Constants.FLAKE_BACKCHANNEL_PELLET_PROXY_PREFIX
+                Utils.Constants.FLAKE_BACKCHANNEL_SENDER_PREFIX
                         + flakeId);
 
         /*int a = 1;

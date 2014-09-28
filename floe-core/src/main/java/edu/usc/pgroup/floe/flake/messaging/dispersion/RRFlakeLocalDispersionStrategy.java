@@ -17,6 +17,9 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.zeromq.ZMQ;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +28,13 @@ import java.util.List;
  * @author kumbhare
  */
 public class RRFlakeLocalDispersionStrategy
-        implements FlakeLocalDispersionStrategy {
+        extends FlakeLocalDispersionStrategy {
+
+    /**
+     * the global logger instance.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(RRFlakeLocalDispersionStrategy.class);
 
     /**
      * Current index in the RR strategy.
@@ -37,6 +46,19 @@ public class RRFlakeLocalDispersionStrategy
      * List of target pellet instances.
      */
     private List<String> targetPelletInstances;
+
+    /**
+     * Constructor.
+     *
+     * @param srcPelletName The name of the src pellet on this edge.
+     * @param context shared ZMQ context.
+     * @param flakeId Current flake id.
+     */
+    public RRFlakeLocalDispersionStrategy(final String srcPelletName,
+                                          final ZMQ.Context context,
+                                          final String flakeId) {
+        super(srcPelletName, context, flakeId);
+    }
 
     /**
      * Initializes the strategy.
@@ -72,6 +94,17 @@ public class RRFlakeLocalDispersionStrategy
                 currentIndex + 1);
         currentIndex++;
         return target;
+    }
+
+    /**
+     * @return the current backchannel data (e.g. for loadbalancing or the
+     * token on the ring etc.)
+     */
+    @Override
+    public final byte[] getCurrentBackchannelData() {
+        byte[] b = new byte[]{'a'};
+        LOGGER.info("Sending data on bk channel {}", b);
+        return b;
     }
 
     /**

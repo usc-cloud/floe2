@@ -17,19 +17,32 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import org.zeromq.ZMQ;
 
 import java.util.List;
 
 /**
  * @author kumbhare
  */
-public interface FlakeLocalDispersionStrategy extends PelletUpdateListener {
+public abstract class FlakeLocalDispersionStrategy
+        implements PelletUpdateListener {
+
+    /**
+     * The name of the src pellet on this edge.
+     */
+    private final String srcPellet;
+
+    /**
+     * Backchannel sender specific to this edge.
+     */
+    private final BackChannelSender backChannelSender;
+
     /**
      * Initializes the strategy.
      * @param args the arguments sent by the user. Fix Me: make this a better
      *             interface.
      */
-    void initialize(String args);
+    public abstract void initialize(String args);
 
     /**
      * Returns the list of target instances to send the given tuple using the
@@ -37,6 +50,28 @@ public interface FlakeLocalDispersionStrategy extends PelletUpdateListener {
      * @param tuple tuple object.
      * @return the list of target instances to send the given tuple.
      */
-    List<String> getTargetPelletInstances(Tuple tuple);
+    public abstract List<String> getTargetPelletInstances(Tuple tuple);
+
+    /**
+     * @return the current backchannel data (e.g. for loadbalancing or the
+     * token on the ring etc.)
+     */
+    public abstract byte[] getCurrentBackchannelData();
+
+    /**
+     * Constructor.
+     * @param srcPelletName The name of the src pellet on this edge.
+     * @param context shared ZMQ context.
+     * @param flakeId Current flake id.
+     */
+    public FlakeLocalDispersionStrategy(final String srcPelletName,
+                                        final ZMQ.Context context,
+                                        final String flakeId) {
+        this.srcPellet = srcPelletName;
+        backChannelSender
+                = new BackChannelSender(this, context, srcPelletName, flakeId);
+        backChannelSender.start();
+    }
+
 }
 
