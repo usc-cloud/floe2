@@ -305,7 +305,7 @@ public class FlakeMessageSender extends Thread {
                     }
 
                     if (data != null) {
-                        LOGGER.info("MSG ON BACKCHANNEL: {}", data);
+                        LOGGER.debug("MSG ON BACKCHANNEL: {}", data);
                     }
                     dispersionStrategy.backChannelMessageReceived(
                             flakeId, data);

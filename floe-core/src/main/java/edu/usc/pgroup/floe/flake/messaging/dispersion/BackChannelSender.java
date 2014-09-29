@@ -118,7 +118,7 @@ public class BackChannelSender extends Thread {
                       int multiplier = 2;
 
                       while (!Thread.currentThread().isInterrupted()) {
-                          LOGGER.info("BK Sender Sleeping for:" + sleep);
+                          LOGGER.debug("BK Sender Sleeping for:" + sleep);
                           Thread.currentThread().sleep(
                                   sleep
                           );
@@ -152,12 +152,12 @@ public class BackChannelSender extends Thread {
             } else if (pollerItems.pollin(1)) { //backend
                 backendChannelControl2.recv();
             }
-            LOGGER.info("Sending backchannel msg for {}, {}.",
-                    srcPellet, flakeId);
+            byte[] data = dispersionStrategy.getCurrentBackchannelData();
+            LOGGER.debug("Sending backchannel msg for {}, {}, {}.",
+                    srcPellet, flakeId, data);
             backendBackChannel.sendMore(srcPellet);
             backendBackChannel.sendMore(flakeId);
-            backendBackChannel.send(
-                    dispersionStrategy.getCurrentBackchannelData(), 0);
+            backendBackChannel.send(data, 0);
         }
     }
 }

@@ -117,7 +117,8 @@ public class FlakeMessageReceiver extends Thread {
                                     type,
                                     src,
                                     ctx,
-                                    flake.getFlakeId()
+                                    flake.getFlakeId(),
+                                    args
                                     );
                     localDispersionStratMap.put(src, strat);
                 } catch (Exception ex) {

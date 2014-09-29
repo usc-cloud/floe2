@@ -58,12 +58,21 @@ public final class WordCountApp {
         System.out.println("Hello World!");
         ApplicationBuilder builder = new ApplicationBuilder();
 
-        String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
+        final int numWords = 100;
+        final int maxWordLength = 1;
+        final int numReducers = 4;
+        final int numChars = 26;
+        String[] words = new String[numWords];
+
+        for (int i = 0; i < numWords; i++) {
+            words[i] = Character.toString((char) ('a' + i % numChars));
+        }
+        //String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
         builder.addPellet("words", new WordPellet(words)).setParallelism(1);
 
         builder.addPellet("count", new WordCountReducer("word"))
-                .setParallelism(2 * 2).reduce("words");
+                .setParallelism(numReducers).reduce("words");
 
         TFloeApp app = builder.generateApp();
         try {

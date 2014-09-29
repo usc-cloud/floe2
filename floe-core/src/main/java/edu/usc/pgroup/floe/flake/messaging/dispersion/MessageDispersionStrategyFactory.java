@@ -16,6 +16,10 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import edu.usc.pgroup.floe.flake.messaging
+        .dispersion.elasticreducer.ElasticReducerDispersion;
+import edu.usc.pgroup.floe.flake.messaging
+        .dispersion.elasticreducer.ElasticReducerFlakeLocalDispersion;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import org.zeromq.ZMQ;
 
@@ -52,7 +56,7 @@ public final class MessageDispersionStrategyFactory {
                 strategy = new RRDispersionStrategy();
                 break;
             case REDUCE:
-                strategy = new ReducerDispersionStrategy();
+                strategy = new ElasticReducerDispersion();
                 break;
             case LOAD_BALANCED:
             case CUSTOM:
@@ -70,6 +74,8 @@ public final class MessageDispersionStrategyFactory {
      * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
+     * @param args Any arguments to be sent to the Strategy Class while
+     *             initialization.
      * @return new instance of MessageDispersionStrategy based on the edge type.
      * @throws java.lang.ClassNotFoundException if the given channel type is
      * invalid or the class for custom strategy is not found.
@@ -79,9 +85,10 @@ public final class MessageDispersionStrategyFactory {
             final TChannelType channelType,
             final String srcPelletName,
             final ZMQ.Context context,
-            final String flakeId) throws ClassNotFoundException {
+            final String flakeId,
+            final String args) throws ClassNotFoundException {
 
-        RRFlakeLocalDispersionStrategy strategy = null;
+        FlakeLocalDispersionStrategy strategy = null;
 
         switch (channelType) {
             case ROUND_ROBIN:
@@ -89,13 +96,16 @@ public final class MessageDispersionStrategyFactory {
                         context, flakeId);
                 break;
             case REDUCE:
+                strategy = new ElasticReducerFlakeLocalDispersion(
+                        srcPelletName, context, flakeId);
+                break;
             case LOAD_BALANCED:
             case CUSTOM:
             default:
                 throw new ClassNotFoundException(channelType.toString());
         }
 
-        strategy.initialize(null);
+        strategy.initialize(args);
         return strategy;
     }
 
