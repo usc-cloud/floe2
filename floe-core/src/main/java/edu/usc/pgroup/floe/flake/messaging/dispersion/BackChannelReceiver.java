@@ -27,7 +27,10 @@ public interface BackChannelReceiver {
      * @param targetFlakeId pellet instance id from which the
      *                               message is received.
      * @param message message body.
+     * @param toContinue true if the flake is sending a regular backchannel
+     *                   msg. False if the message is sent on scaling down i
+     *                   .e. 'terminate' is called on the target flake.
      */
     void backChannelMessageReceived(String targetFlakeId,
-                                    byte[] message);
+                                    byte[] message, Boolean toContinue);
 }

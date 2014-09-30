@@ -271,7 +271,7 @@ public class FlakeMessageReceiver extends Thread {
             } else if (pollerItems.pollin(1)) { //controlSocket
                 message = controlSocket.recv();
 
-                byte[] result = new byte[]{'1'};
+                byte[] result = new byte[]{1};
 
                 //process control message.
                 FlakeControlCommand command
@@ -289,6 +289,7 @@ public class FlakeMessageReceiver extends Thread {
                         LOGGER.info("back channel: " + backChannel);
                         frontend.connect(dataChannel);
                         xpubToPredSock.connect(backChannel);
+                        result[0] = 1;
                         backChannelPingger.send(result, 0);
                         break;
                     case DISCONNECT_PRED:
@@ -314,12 +315,19 @@ public class FlakeMessageReceiver extends Thread {
                         signal.sendMore(Utils.Constants.PUB_ALL);
                         signal.send(Utils.serialize(systemSignal), 0);
                         break;
+                    case TERMINATE:
+                        result[0] = 0;
+                        backChannelPingger.send(result, 0);
+                        //NOTE: NO NEED TO BREAK HERE SINCE WE WANT THIS
+                        // FORWARDED TO THE FLAKE.
+                        break;
                     default:
                         result = flake.processControlSignal(command, signal,
                                 localDispersionStratMap);
                 }
                 controlSocket.send(result, 0);
             } else if (pollerItems.pollin(2)) { //kill socket
+                //DO NOT BREAK HERE.. :(
                 break;
             } else if (pollerItems.pollin(3)) { //from xsubFromPelletsSock
                 forwardCompleteMessage(xsubFromPelletsSock, xpubToPredSock);
@@ -328,14 +336,12 @@ public class FlakeMessageReceiver extends Thread {
             }
         }
         LOGGER.warn("Closing flake receiver sockets");
-
         frontend.close();
         controlSocket.close();
         killsock.close();
         xsubFromPelletsSock.close();
         xpubToPredSock.close();
         backend.close();
-
         //Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
 

@@ -134,7 +134,7 @@ public class ElasticReducerFlakeLocalDispersion
                 hash = tailMap.firstKey();
             }
         }
-        LOGGER.info("LOCAL Key:{}, actualHash:{}, token:{}, target:{}",
+        LOGGER.debug("LOCAL Key:{}, actualHash:{}, token:{}, target:{}",
                 key, actualHash, hash, circle.get(hash));
         targetPelletIds.clear();
         targetPelletIds.add(circle.get(hash));
@@ -162,7 +162,7 @@ public class ElasticReducerFlakeLocalDispersion
 
         reverseMap.put(pelletId, pelletPosition);
         circle.put(pelletPosition, pelletId);
-        LOGGER.info("Circle: {}", circle);
+        LOGGER.info("Added. Circle: {}", circle);
     }
 
     /**
@@ -171,7 +171,9 @@ public class ElasticReducerFlakeLocalDispersion
      * @param pelletId pellet instance id which has been added.
      */
     @Override
-    public void pelletRemoved(final String pelletId) {
-        //Fixme
+    public final void pelletRemoved(final String pelletId) {
+        Integer key = reverseMap.get(pelletId);
+        circle.remove(key);
+        LOGGER.info("Removed. Circle: {}", circle);
     }
 }

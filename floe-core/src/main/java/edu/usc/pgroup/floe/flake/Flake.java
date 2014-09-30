@@ -289,6 +289,7 @@ public class Flake {
      * Terminates all the relevant threads of the flake.
      */
     private void terminateFlake() {
+
         if (runningPelletInstances.size() > 0) {
             LOGGER.error("Cannot terminate. Pellets are running. Use "
                     + "Decrement Pellet command to kill all pellet "
@@ -297,6 +298,12 @@ public class Flake {
         }
 
         LOGGER.info("Sending Kill Signal to receiver/sender Flake.");
+        LOGGER.warn("Waiting few seconds before termination.");
+        try {
+            Thread.currentThread().sleep(Utils.Constants.MILLI * 2);
+        } catch (InterruptedException e) {
+            LOGGER.warn("Thread interrupted while terminating flake");
+        }
         byte[] dummy = new byte[]{1};
         killsock.sendMore(Utils.Constants.PUB_ALL);
         killsock.send(dummy, 0);

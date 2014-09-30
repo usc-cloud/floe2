@@ -71,15 +71,17 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
      * Call back whenever a message is received from a target pellet instance
      * on the back channel. This can be used by dispersion strategy to choose
      * the target instance to send the message to.
-     *
-     * @param targetFlakeId pellet instance id from which the
+     *  @param targetFlakeId pellet instance id from which the
      *                               message is received.
      * @param message                message body.
+     * @param toContinue true if the flake is sending a regular backchannel
+     *                   msg. False if the message is sent on scaling down i
+     *                   .e. 'terminate' is called on the target flake.
      */
     @Override
     public final void backChannelMessageReceived(
-                                            final String targetFlakeId,
-                                            final byte[] message) {
+            final String targetFlakeId,
+            final byte[] message, final Boolean toContinue) {
         if (!targetFlakeIds.contains(targetFlakeId)) {
             targetFlakeIds.add(targetFlakeId);
         }

@@ -298,6 +298,8 @@ public class FlakeMessageSender extends Thread {
                             Charset.defaultCharset());
                     String flakeId = backendBackChannel.recvStr(
                             Charset.defaultCharset());
+                    String toContinue = backendBackChannel.recvStr(
+                            Charset.defaultCharset());
 
                     byte[] data = null;
                     if (backendBackChannel.hasReceiveMore()) {
@@ -305,10 +307,21 @@ public class FlakeMessageSender extends Thread {
                     }
 
                     if (data != null) {
-                        LOGGER.debug("MSG ON BACKCHANNEL: {}", data);
+                        LOGGER.debug("MSG ON BACKCHANNEL: {},{}",
+                                data, toContinue);
+                    } else {
+                        LOGGER.debug("MSG ON BACKCHANNEL: {},{}",
+                                "NNOOOOO DATA", toContinue);
+                    }
+
+                    Boolean btoContinue = true;
+                    if ("0".equalsIgnoreCase(toContinue)) {
+                        btoContinue = false;
+                        LOGGER.warn("TERMINATE MSG ON BACKCHANNEL: {}",
+                                btoContinue);
                     }
                     dispersionStrategy.backChannelMessageReceived(
-                            flakeId, data);
+                            flakeId, data, btoContinue);
                 }
             }
             //ZMQ.proxy(middleendreceiver, backend, null);

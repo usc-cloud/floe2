@@ -88,17 +88,17 @@ public class BackChannelSender extends Thread {
                         + flakeId);
 
 
-        final ZMQ.Socket backendChannelControl1 = ctx.socket(ZMQ.SUB);
-        backendChannelControl1.subscribe("".getBytes());
-        backendChannelControl1.connect(
+        final ZMQ.Socket backChannelPingerControl = ctx.socket(ZMQ.SUB);
+        backChannelPingerControl.subscribe("".getBytes());
+        backChannelPingerControl.connect(
                 Utils.Constants.FLAKE_BACKCHANNEL_CONTROL_PREFIX
                         + flakeId);
 
 
-        final ZMQ.Socket backendChannelControl2 = ctx.socket(ZMQ.PULL);
-        backendChannelControl2.bind(
-                 Utils.Constants.FLAKE_BACKCHANNEL_CONTROL_PREFIX
-                 + "TIMER-" + srcPellet + "-" + flakeId);
+        final ZMQ.Socket backChannelTimerControl = ctx.socket(ZMQ.PULL);
+        backChannelTimerControl.bind(
+                Utils.Constants.FLAKE_BACKCHANNEL_CONTROL_PREFIX
+                        + "TIMER-" + srcPellet + "-" + flakeId);
 
         Thread pingger = new Thread(
           new Runnable() {
@@ -140,23 +140,32 @@ public class BackChannelSender extends Thread {
 
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(2);
-        pollerItems.register(backendChannelControl1, ZMQ.Poller.POLLIN);
-        pollerItems.register(backendChannelControl2, ZMQ.Poller.POLLIN);
+        pollerItems.register(backChannelPingerControl, ZMQ.Poller.POLLIN);
+        pollerItems.register(backChannelTimerControl, ZMQ.Poller.POLLIN);
 
         while (!Thread.currentThread().interrupted()) {
 
             pollerItems.poll(); //receive trigger.
-
+            byte[] pingData = new byte[]{1};
             if (pollerItems.pollin(0)) {
-                backendChannelControl1.recv();
+                pingData = backChannelPingerControl.recv();
             } else if (pollerItems.pollin(1)) { //backend
-                backendChannelControl2.recv();
+                pingData = backChannelTimerControl.recv();
             }
             byte[] data = dispersionStrategy.getCurrentBackchannelData();
             LOGGER.debug("Sending backchannel msg for {}, {}, {}.",
                     srcPellet, flakeId, data);
+
+            String toContinue = "1";
+            if (pingData[0] == 0) {
+                pingger.interrupt();
+                toContinue = "0";
+            }
+
+            LOGGER.debug("sending toContinue:{}", toContinue);
             backendBackChannel.sendMore(srcPellet);
             backendBackChannel.sendMore(flakeId);
+            backendBackChannel.sendMore(toContinue);
             backendBackChannel.send(data, 0);
         }
     }

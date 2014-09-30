@@ -122,25 +122,31 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy {
      * Call back whenever a message is received from a target pellet instance
      * on the back channel. This can be used by dispersion strategy to choose
      * the target instance to send the message to.
-     *
-     * @param targetFlakeId pellet instance id from which the
+     *  @param targetFlakeId pellet instance id from which the
      *                      message is received.
      * @param message       message body.
+     * @param toContinue true if the flake is sending a regular backchannel
+     *                   msg. False if the message is sent on scaling down i
+     *                   .e. 'terminate' is called on the target flake.
      */
     @Override
     public final void backChannelMessageReceived(final String targetFlakeId,
-                                                 final byte[] message) {
+                                                 final byte[] message,
+                                                 final Boolean toContinue) {
+
         Integer current = reverseMap.get(targetFlakeId);
         if (current != null) {
             circle.remove(current);
         }
 
-        Integer newPosition = (Integer) Utils.deserialize(message);
+        if (toContinue) {
+            Integer newPosition = (Integer) Utils.deserialize(message);
 
-        LOGGER.debug("received Token: {}", newPosition);
+            LOGGER.debug("received Token: {}", newPosition);
 
-        reverseMap.put(targetFlakeId, newPosition);
-        circle.put(newPosition, targetFlakeId);
+            reverseMap.put(targetFlakeId, newPosition);
+            circle.put(newPosition, targetFlakeId);
+        }
         LOGGER.debug("Circle: {}", circle);
     }
 }

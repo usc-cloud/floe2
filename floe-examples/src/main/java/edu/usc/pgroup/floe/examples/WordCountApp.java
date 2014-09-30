@@ -24,6 +24,7 @@ import edu.usc.pgroup.floe.examples.pellets.WordCountReducer;
 import edu.usc.pgroup.floe.examples.pellets.WordPellet;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.Utils;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,18 +59,21 @@ public final class WordCountApp {
         System.out.println("Hello World!");
         ApplicationBuilder builder = new ApplicationBuilder();
 
-        final int numWords = 100;
-        final int maxWordLength = 1;
+        final int numWords = 20;
+        final int maxWordLength = 3;
         final int numReducers = 4;
         final int numChars = 26;
         String[] words = new String[numWords];
 
+
         for (int i = 0; i < numWords; i++) {
-            words[i] = Character.toString((char) ('a' + i % numChars));
+            //words[i] = Character.toString((char) ('a' + i % numChars));
+            words[i] = i + ":"
+                    + RandomStringUtils.randomAlphabetic(maxWordLength);
         }
         //String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
-        builder.addPellet("words", new WordPellet(words)).setParallelism(1);
+        builder.addPellet("words", new WordPellet(words)).setParallelism(2);
 
         builder.addPellet("count", new WordCountReducer("word"))
                 .setParallelism(numReducers).reduce("words");
