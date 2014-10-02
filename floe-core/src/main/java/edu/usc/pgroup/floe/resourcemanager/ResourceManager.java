@@ -158,4 +158,13 @@ public abstract class ResourceManager {
             ResourceMapping currentMapping,
             String pelletName,
             String alternateName) throws AlternateNotFoundException;
+
+    /**
+     * Prepares the application to be killed by removing all pelletinstances,
+     * all flakes.
+     * @param current current resource mapping for the application to be killed.
+     * @return the updated resource mapping with the ResourceMappingDelta set
+     * appropriately.
+     */
+    public abstract ResourceMapping kill(ResourceMapping current);
 }

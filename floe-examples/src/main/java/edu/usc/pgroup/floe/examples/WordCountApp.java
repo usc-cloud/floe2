@@ -61,7 +61,7 @@ public final class WordCountApp {
 
         final int numWords = 20;
         final int maxWordLength = 3;
-        final int numReducers = 4;
+        final int numReducers = 2;
         final int numChars = 26;
         String[] words = new String[numWords];
 
@@ -73,7 +73,7 @@ public final class WordCountApp {
         }
         //String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
-        builder.addPellet("words", new WordPellet(words)).setParallelism(2);
+        builder.addPellet("words", new WordPellet(words)).setParallelism(1);
 
         builder.addPellet("count", new WordCountReducer("word"))
                 .setParallelism(numReducers).reduce("words");

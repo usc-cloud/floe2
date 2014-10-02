@@ -18,7 +18,6 @@ package edu.usc.pgroup.floe.coordinator.transitions.coordinatortransitions;
 
 import edu.usc.pgroup.floe.resourcemanager.ResourceManagerFactory;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
-import edu.usc.pgroup.floe.resourcemanager.ResourceMappingDelta;
 import edu.usc.pgroup.floe.thriftgen.AppStatus;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
@@ -26,7 +25,6 @@ import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -114,7 +112,7 @@ public class ScaleTransition extends BaseAppTransition {
         ResourceMapping newMapping = ResourceManagerFactory.getResourceManager()
                 .scale(currentMapping, direction, pelletName, count);
 
-        for (String containerId: newMapping.getAllContainers()) {
+        /*for (String containerId: newMapping.getAllContainers()) {
 
             Map<String, ResourceMappingDelta.FlakeInstanceDelta>
                     modifiedFlakes = new HashMap<>();
@@ -160,7 +158,7 @@ public class ScaleTransition extends BaseAppTransition {
             } else {
                 LOGGER.warn("No new pellets for this container.");
             }
-        }
+        }*/
         return newMapping;
     }
 

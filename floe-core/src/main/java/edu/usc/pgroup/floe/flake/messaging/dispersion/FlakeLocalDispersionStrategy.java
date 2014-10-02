@@ -17,6 +17,9 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.FlakeComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.util.List;
@@ -24,8 +27,14 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public abstract class FlakeLocalDispersionStrategy
+public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
         implements PelletUpdateListener {
+
+    /**
+     * the global logger instance.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(FlakeLocalDispersionStrategy.class);
 
     /**
      * The name of the src pellet on this edge.
@@ -35,7 +44,7 @@ public abstract class FlakeLocalDispersionStrategy
     /**
      * Backchannel sender specific to this edge.
      */
-    private final BackChannelSender backChannelSender;
+    private final BackChannelSenderComponent backChannelSenderComponent;
 
     /**
      * Initializes the strategy.
@@ -67,11 +76,37 @@ public abstract class FlakeLocalDispersionStrategy
     public FlakeLocalDispersionStrategy(final String srcPelletName,
                                         final ZMQ.Context context,
                                         final String flakeId) {
+
+        super(flakeId, "FL-LOCAL-STRATEGY", context);
         this.srcPellet = srcPelletName;
-        backChannelSender
-                = new BackChannelSender(this, context, srcPelletName, flakeId);
-        backChannelSender.start();
+        LOGGER.info("Initializing flake local strategy.");
+//        backChannelSender
+//              = new BackChannelSender2(this, context, srcPelletName, flakeId);
+//        backChannelSender.start();
+
+        backChannelSenderComponent = new BackChannelSenderComponent(this,
+                getFid(), "BACK-CHANNEL-SENDER", context, srcPelletName);
     }
 
+    /**
+     * Starts all the sub parts of the given component and notifies when
+     * components starts completely. This will be in a different thread,
+     * so no need to worry.. block as much as you want.
+     * @param terminateSignalReceiver terminate signal receiver.
+     */
+    @Override
+    protected final void runComponent(
+            final ZMQ.Socket terminateSignalReceiver) {
+
+        LOGGER.info("Starting fl local strategy.");
+        backChannelSenderComponent.startAndWait();
+        notifyStarted(true);
+
+        terminateSignalReceiver.recv();
+
+        LOGGER.info("Stopping back channel sender.");
+        backChannelSenderComponent.stopAndWait();
+        notifyStopped(true);
+    }
 }
 

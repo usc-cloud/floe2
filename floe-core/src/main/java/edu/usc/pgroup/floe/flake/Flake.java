@@ -16,13 +16,9 @@
 
 package edu.usc.pgroup.floe.flake;
 
-import edu.usc.pgroup.floe.config.ConfigProperties;
-import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
-import edu.usc.pgroup.floe.flake.messaging.FlakeMessageReceiver;
-import edu.usc.pgroup.floe.flake.messaging.FlakeMessageSender;
-import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.FlakeLocalDispersionStrategy;
+import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
+import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
 import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -101,7 +97,7 @@ public class Flake {
     /**
      * Flake heartbeat task.
      */
-    private FlakeHeartbeatTask flakeHeartbeatTask;
+    private FlakeHeartbeatComponent flakeHeartbeatComponent;
 
     /**
      * the flakeInfo object sent during heartbeats.
@@ -112,13 +108,13 @@ public class Flake {
      * The flake receiver object, responsible for listening for and receiving
      * messages from the preceding pellets in the graph.
      */
-    private FlakeMessageReceiver flakeRecevier;
+    //private FlakeMessageReceiver2 flakeRecevier;
 
     /**
      * The flake sender object responsible for sending message to the
      * succeeding pellets in the graph.
      */
-    private FlakeMessageSender flakeSender;
+    //private FlakeMessageSender2 flakeSender;
 
     /**
      * Shared ZMQ Context.
@@ -134,11 +130,6 @@ public class Flake {
      * Pellet id/name.
      */
     private final String pelletId;
-
-    /**
-     * the kill socket used while terminating the flake.
-     */
-    private ZMQ.Socket killsock;
 
     /**
      * Shutdown hook to close sockets etc on Cntl-C or unexpected shutdown.
@@ -222,33 +213,6 @@ public class Flake {
     }
 
     /**
-     * @return the pred to channel type map. (used by the message receiver to
-     * decide the local dispersion strategy)
-     */
-    public final Map<String, String> getPredPelletChannelTypeMap() {
-        return predPelletChannelTypeMap;
-    }
-
-    /**
-     * Start receiving data from the predecessor.
-     */
-    private void startFlakeReciever() {
-        flakeRecevier = new FlakeMessageReceiver(sharedContext, this);
-        flakeRecevier.start();
-    }
-
-    /**
-     * Start receiving data from the predecessor.
-     */
-    private void startFlakeSender() {
-        flakeSender = new FlakeMessageSender(sharedContext, pelletId, flakeId,
-                pelletPortMap, pelletBackChannelPortMap,
-                pelletChannelTypeMap,
-                pelletStreamsMap);
-        flakeSender.start();
-    }
-
-    /**
      * Initializes the flake. Including:
      * setup the flakeInfo object (for heartbeat)
      */
@@ -256,90 +220,39 @@ public class Flake {
         flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
 
-        LOGGER.info("Setting up Flake Receiver");
-        startFlakeReciever();
-
         LOGGER.info("Start the command receiver");
-        startFlakeSender();
+        SenderFEComponent flakeSenderComponent = new SenderFEComponent(
+                sharedContext,
+                pelletId,
+                flakeId,
+                "FLAKE-SENDER",
+                pelletPortMap,
+                pelletBackChannelPortMap,
+                pelletChannelTypeMap,
+                pelletStreamsMap
+        );
+        flakeSenderComponent.startAndWait();
 
+        LOGGER.info("Setting up Flake Receiver");
+        MsgReceiverComponent flakeReceiverComponent
+                = new MsgReceiverComponent(flakeId, "MSG-RECEIVER",
+                sharedContext, predPelletChannelTypeMap);
+        flakeReceiverComponent.startAndWait();
+
+        //start heartbeat
         LOGGER.info("Scheduling flake heartbeat.");
-        flakeHeartbeatTask = new FlakeHeartbeatTask(flakeInfo, sharedContext);
-        scheduleHeartBeat();
+        flakeHeartbeatComponent = new FlakeHeartbeatComponent(flakeInfo,
+                flakeId, "HEAET-BEAT", sharedContext);
+        flakeHeartbeatComponent.startAndWait();
 
-        LOGGER.info("Initializing kill socket for Flake.");
-        killsock  = sharedContext.socket(ZMQ.PUB);
-        killsock.bind(
-                Utils.Constants.FLAKE_KILL_CONTROL_SOCK_PREFIX
-                        + flakeId);
+        LOGGER.info("Flake started. Starting control channel.");
+        startControlChannel();
 
-//        shutdownHook = new Thread(
-//                new Runnable() {
-//                    @Override
-//                    public void run() {
-//                       LOGGER.info("Closing flake killsock.");
-//                       killsock.close();
-//                    }
-//                });
-//        Runtime.getRuntime().addShutdownHook(shutdownHook);
+        flakeReceiverComponent.stopAndWait();
+        flakeSenderComponent.stopAndWait();
+        flakeHeartbeatComponent.stopAndWait();
 
-        LOGGER.info("flake Started: {}.", getFlakeId());
-    }
-
-    /**
-     * Terminates all the relevant threads of the flake.
-     */
-    private void terminateFlake() {
-
-        if (runningPelletInstances.size() > 0) {
-            LOGGER.error("Cannot terminate. Pellets are running. Use "
-                    + "Decrement Pellet command to kill all pellet "
-                    + "instances.");
-            return;
-        }
-
-        LOGGER.info("Sending Kill Signal to receiver/sender Flake.");
-        LOGGER.warn("Waiting few seconds before termination.");
-        try {
-            Thread.currentThread().sleep(Utils.Constants.MILLI * 2);
-        } catch (InterruptedException e) {
-            LOGGER.warn("Thread interrupted while terminating flake");
-        }
-        byte[] dummy = new byte[]{1};
-        killsock.sendMore(Utils.Constants.PUB_ALL);
-        killsock.send(dummy, 0);
-
-        //stop heartbeat.
-        flakeHeartbeatTask.setCancelled();
-
-        //close kill sock.
-        killsock.close();
-
-//        if (shutdownHook != null) {
-//            Runtime.getRuntime().removeShutdownHook(shutdownHook);
-//        }
-
-        //FIX ME: should terminate the context. but after all sockets are
-        // cleanly closed..
-        //sharedContext.close();
-        //sharedContext.term();
-    }
-
-    /**
-     * Schedules and starts recurring the flake heartbeat.
-     */
-    private void scheduleHeartBeat() {
-        long delay = FloeConfig.getConfig().getInt(ConfigProperties
-                .FLAKE_HEARTBEAT_PERIOD) * Utils.Constants.MILLI;
-        if (heartBeatTimer == null) {
-            heartBeatTimer = new Timer();
-            heartBeatTimer.scheduleAtFixedRate(flakeHeartbeatTask
-                    , 0
-                    , delay);
-            LOGGER.info("Heartbeat scheduled with period: "
-                    + FloeConfig.getConfig().getInt(
-                    ConfigProperties.FLAKE_HEARTBEAT_PERIOD)
-                    + " seconds");
-        }
+        LOGGER.info("Finished flake execution. {}", flakeId);
     }
 
     /**
@@ -374,10 +287,90 @@ public class Flake {
     }
 
     /**
-     * @return the application's jar name.
+     * Starts the control channel.
      */
-    public final String getAppJar() {
-        return appJar;
+    private void startControlChannel() {
+
+        LOGGER.info("Starting inproc socket to send signals to pellets: "
+                + Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
+                + flakeId);
+        final ZMQ.Socket signal = sharedContext.socket(ZMQ.PUB);
+        signal.bind(
+                Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
+                        + flakeId);
+
+        LOGGER.info("Starting backend ipc socket for control channel at: "
+                + Utils.Constants.FLAKE_CONTROL_SOCK_PREFIX
+                + flakeId);
+        final ZMQ.Socket controlSocket = sharedContext.socket(ZMQ.REP);
+        controlSocket.connect(
+                Utils.Constants.FLAKE_CONTROL_SOCK_PREFIX
+                        + flakeId);
+
+        LOGGER.info("Starting backend ipc socket for control channel at: "
+                + Utils.Constants.FLAKE_RECEIVER_CONTROL_FWD_PREFIX
+                + flakeId);
+        final ZMQ.Socket msgReceivercontrolForwardSocket
+                = sharedContext.socket(ZMQ.REQ);
+        msgReceivercontrolForwardSocket.connect(
+                Utils.Constants.FLAKE_RECEIVER_CONTROL_FWD_PREFIX
+                        + flakeId);
+
+        boolean done = false;
+        while (!done && !Thread.currentThread().isInterrupted()) {
+            byte[] message = controlSocket.recv();
+            byte[] result = new byte[]{1};
+
+            //process control message.
+            FlakeControlCommand command
+                    = (FlakeControlCommand) Utils.deserialize(
+                    message);
+
+            LOGGER.info("Received command: " + command);
+            switch (command.getCommand()) {
+                case CONNECT_PRED:
+                case DISCONNECT_PRED:
+                    //Send to the receiver.
+                    LOGGER.info("CONNECT/DISCONNECT COMMAND RECEIVED.");
+                    msgReceivercontrolForwardSocket.send(message, 0);
+                    result = msgReceivercontrolForwardSocket.recv();
+                    break;
+                case PELLET_SIGNAL:
+                    //forward singal to the pellet.
+                    LOGGER.info("Received signal for: "
+                            + flakeId);
+                    signal.sendMore(Utils.Constants.PUB_ALL);
+                    signal.send((byte[]) command.getData(), 0);
+                    break;
+                case SWITCH_ALTERNATE:
+                    //create a switch alternate signal and send to pellets.
+                    LOGGER.info("Switching alternate for: "
+                            + flakeId);
+                    SystemSignal systemSignal = new SystemSignal(
+                            getAppName(),
+                            getPelletId(),
+                            SystemSignal.SystemSignalType.SwitchAlternate,
+                            (byte[]) command.getData()
+                    );
+                    signal.sendMore(Utils.Constants.PUB_ALL);
+                    signal.send(Utils.serialize(systemSignal), 0);
+                    break;
+                case TERMINATE:
+                    if (runningPelletInstances.size() == 0) {
+                        done = true; //aaahh.. bug.. this will send the reply
+                        // before stopping the components.
+                    } else {
+                        LOGGER.warn("Flake has running pellets. "
+                                + "Cannot terminate");
+                    }
+                    break; //?? Do we need anything else? Prob. Not.
+                default:
+                    processControlSignal(command,
+                            signal, msgReceivercontrolForwardSocket);
+            }
+
+            controlSocket.send(result, 0);
+        }
     }
 
     /**
@@ -385,23 +378,31 @@ public class Flake {
      * @param command Flake Command.
      * @param signal Signal socket to be used to send signals to the pellet
      *               instances. //ugly.. :( find a better way.
-     * @param localDispersionStratMap pointer to the strategy map so that
-     *                                pelletinstances may be added or removed.
+     * @param msgReceivercontrolForwardSocket socket to forward command (or
+     *                                        part of it to the flake receiver).
      * @return the result after processing the command.
      */
     public final byte[] processControlSignal(
             final FlakeControlCommand command,
             final ZMQ.Socket signal,
-            final Map<String, FlakeLocalDispersionStrategy>
-                    localDispersionStratMap) {
+            final ZMQ.Socket msgReceivercontrolForwardSocket) {
 
         LOGGER.warn("Processing command: " + command);
+        byte[] result = new byte[]{1};
+        FlakeControlCommand newCommand;
+
         switch (command.getCommand()) {
             case INCREMENT_PELLET:
                 byte[] bpellet = (byte[]) command.getData();
                 LOGGER.info("CREATING PELLET: on " + getFlakeId());
                 String peId = incrementPellet(bpellet);
-                notifyPelletAdded(peId, localDispersionStratMap);
+                newCommand = new FlakeControlCommand(
+                        FlakeControlCommand.Command.INCREMENT_PELLET,
+                        peId
+                );
+                msgReceivercontrolForwardSocket.send(
+                        Utils.serialize(newCommand), 0);
+                msgReceivercontrolForwardSocket.recv();
                 break;
             case DECREMENT_PELLET:
                 String dpid = (String) command.getData();
@@ -417,8 +418,15 @@ public class Flake {
                             SystemSignal.SystemSignalType.KillInstance,
                             null);
                     signal.send(Utils.serialize(systemSignal), 0);
-                    notifyPelletRemoved(insToRemove.getPelletInstanceId(),
-                            localDispersionStratMap);
+                    //notifyPelletRemoved(insToRemove.getPelletInstanceId());
+
+                    newCommand = new FlakeControlCommand(
+                            FlakeControlCommand.Command.DECREMENT_PELLET,
+                            insToRemove.getPelletInstanceId()
+                    );
+                    msgReceivercontrolForwardSocket.send(
+                            Utils.serialize(newCommand), 0);
+                    result = msgReceivercontrolForwardSocket.recv();
                 } else {
                     LOGGER.error("Flake {} does not have any running pellet "
                             + "instances.", getFlakeId());
@@ -439,8 +447,14 @@ public class Flake {
                             SystemSignal.SystemSignalType.KillInstance,
                             null);
                     signal.send(Utils.serialize(systemSignal), 0);
-                    notifyPelletRemoved(insToRemove.getPelletInstanceId(),
-                            localDispersionStratMap);
+                    //notifyPelletRemoved(insToRemove.getPelletInstanceId());
+                    newCommand = new FlakeControlCommand(
+                            FlakeControlCommand.Command.DECREMENT_PELLET,
+                            insToRemove.getPelletInstanceId()
+                    );
+                    msgReceivercontrolForwardSocket.send(
+                            Utils.serialize(newCommand), 0);
+                    result = msgReceivercontrolForwardSocket.recv();
                 }
 
                 LOGGER.error("Flake {} does not have any running pellet "
@@ -462,47 +476,12 @@ public class Flake {
                             + "instances.", getFlakeId());
                 }
                 break;
-            case TERMINATE:
-                //No pellet should be running
-                terminateFlake();
-                break;
             default:
                 LOGGER.warn("Unrecognized command: " + command);
                 break;
         }
 
         //Get valid results here. Must define a results format.
-        byte[] result = new byte[]{'1'};
         return result;
-    }
-
-    /**
-     * NOtifies all strategy instances that a pellet has been added.
-     * @param localDispersionStratMap the map of pred to strategies.
-     * @param peInstanceId instance id for the added pellet.
-     */
-    private void notifyPelletAdded(
-            final String peInstanceId,
-            final Map<String, FlakeLocalDispersionStrategy>
-                    localDispersionStratMap) {
-        for (FlakeLocalDispersionStrategy strat
-                : localDispersionStratMap.values()) {
-            strat.pelletAdded(peInstanceId);
-        }
-    }
-
-    /**
-     * NOtifies all strategy instances that a pellet has been removed.
-     * @param localDispersionStratMap the map of pred to strategies.
-     * @param peInstanceId instance id for the added pellet.
-     */
-    private void notifyPelletRemoved(
-            final String peInstanceId,
-            final Map<String, FlakeLocalDispersionStrategy>
-                    localDispersionStratMap) {
-        for (FlakeLocalDispersionStrategy strat
-                : localDispersionStratMap.values()) {
-            strat.pelletRemoved(peInstanceId);
-        }
     }
 }

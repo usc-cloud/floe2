@@ -103,6 +103,7 @@ public final class FlakeService {
      */
     private void start() {
         flake.start();
+        LOGGER.info("Flake execution completed. Exiting now.");
     }
 
 

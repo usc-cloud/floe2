@@ -107,9 +107,9 @@ public final class FlakeControlSignalSender {
             this.id = flakeId;
             this.sender = zcontext.socket(ZMQ.REQ);
             LOGGER.info("Connecting to control channel at: "
-                    + Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
+                    + Utils.Constants.FLAKE_CONTROL_SOCK_PREFIX
                     + flakeId);
-            sender.bind(Utils.Constants.FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
+            sender.bind(Utils.Constants.FLAKE_CONTROL_SOCK_PREFIX
                     + flakeId);
 
             Thread shutdownHook = new Thread(
@@ -132,7 +132,7 @@ public final class FlakeControlSignalSender {
             LOGGER.info("Sending command: {} to flake {}", command, id);
             sender.send(data, 0);
             byte[] results = sender.recv();
-            LOGGER.info("Received data: {} to flake", results[0]);
+            LOGGER.info("Received data: {} from flake", results[0]);
         }
     }
 }

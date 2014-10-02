@@ -59,7 +59,7 @@ public abstract class BaseAppTransition extends ClusterTransition {
     @Override
     protected final void execute(final Map<String, Object> args)
             throws Exception {
-        LOGGER.info("Executing StartApp transition.");
+        LOGGER.info("Executing base app transition.");
 
         String appName = (String) args.get("appName");
 
@@ -113,6 +113,12 @@ public abstract class BaseAppTransition extends ClusterTransition {
         startPellets(updatedMapping, barrier);
         LOGGER.info("All pellets Started. The application is now "
                 + "running");
+
+        if (!postTransition(currentMapping)) {
+            LOGGER.error("Post-Transition failed.");
+            throw new Exception("Transition may have been executed partially. "
+                    + "Pre-transition failed.");
+        }
     }
 
     /**

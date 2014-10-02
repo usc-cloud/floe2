@@ -21,6 +21,7 @@ import edu.usc.pgroup.floe.config.FloeConfig;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.zeromq.ZMQ;
 
 
 import java.io.ByteArrayInputStream;
@@ -258,6 +259,33 @@ public final class Utils {
         return cid + "-" + fid;
     }
 
+
+    /**
+     * Once the poller.poll returns, use this function as a component in the
+     * proxy to forward messages from one socket to another.
+     * @param from socket to read from.
+     * @param to socket to send messages to
+     */
+    public static void forwardCompleteMessage(final ZMQ.Socket from,
+                                              final ZMQ.Socket to) {
+        byte[] message;
+        boolean more = false;
+        while (true) {
+            // receive message
+            message = from.recv(0);
+            more = from.hasReceiveMore();
+            // Broker it
+            int flags = 0;
+            if (more) {
+                flags = ZMQ.SNDMORE;
+            }
+            to.send(message, flags);
+            if (!more) {
+                break;
+            }
+        }
+    }
+
     /**
      * Various Constants used across the project.
      * Note: The string constants for configuration file,
@@ -322,7 +350,7 @@ public final class Utils {
          * Flake receiver Control socket prefix (this is suffixed by flake id).
          * Used for receiving control signals from the container.
          */
-        public static final String FLAKE_RECEIVER_CONTROL_SOCK_PREFIX
+        public static final String FLAKE_CONTROL_SOCK_PREFIX
                 = "ipc://flake-control-";
 
 
@@ -330,8 +358,8 @@ public final class Utils {
          * Flake receiver Control socket prefix (this is suffixed by flake id).
          * Used for receiving control signals from the container.
          */
-        public static final String FLAKE_KILL_CONTROL_SOCK_PREFIX
-                = "inproc://flake-control-kill-";
+        public static final String FLAKE_RECEIVER_CONTROL_FWD_PREFIX
+                = "inproc://flake-control-fwd-";
 
         /**
          * Flake sender front-end prefix (this is suffixed by flake id).
@@ -378,6 +406,21 @@ public final class Utils {
          */
         public static final String FLAKE_HEARBEAT_SOCK_PREFIX
                 = "ipc://flake-heartbeat-";
+
+
+        /**
+         * Flake Component uses this to listen for start/stop notification
+         * signals.
+         */
+        public static final String FLAKE_COMPONENT_NOTIFY_PREFIX
+                = "inproc://flake-comp-notify-";
+
+        /**
+         * Flake Component uses this to send kill signal to the component
+         * implementation.
+         */
+        public static final String FLAKE_COMPONENT_KILL_PREFIX
+                = "inproc://flake-comp-kill-";
 
         /**
          * Number of i/o threads to be used by ZMQ for a single flake.

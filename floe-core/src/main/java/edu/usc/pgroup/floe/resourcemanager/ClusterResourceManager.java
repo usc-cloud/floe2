@@ -201,4 +201,41 @@ public class ClusterResourceManager extends ResourceManager {
         }
         return currentMapping;
     }
+
+    /**
+     * Prepares the application to be killed by removing all pelletinstances,
+     * all flakes.
+     *
+     * @param currentMapping current resource mapping for the application to be
+     *                 killed.
+     * @return the updated resource mapping with the ResourceMappingDelta set
+     * appropriately.
+     */
+    @Override
+    public final ResourceMapping kill(final  ResourceMapping currentMapping) {
+        currentMapping.resetDelta();
+        for (String peName
+                : currentMapping.getFloeApp().get_pellets().keySet()) {
+            List<ResourceMapping.FlakeInstance> flakes
+                    = currentMapping.getFlakeInstancesForPellet(peName);
+
+            if (flakes == null || flakes.size() <= 0) {
+                LOGGER.warn("No flakes executing the given pellet exist.");
+                continue;
+            }
+
+            LOGGER.info("Flakes:{}", flakes);
+
+
+            ResourceMapping.FlakeInstance flake;
+            while (flakes.size() > 0) {
+                flake = flakes.get(0);
+                int numInstances = flake.getNumPelletInstances();
+                for (int i = 0; i < numInstances; i++) {
+                    currentMapping.removePelletInstance(peName, flake);
+                }
+            }
+        }
+        return currentMapping;
+    }
 }
