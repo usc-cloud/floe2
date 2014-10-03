@@ -16,15 +16,22 @@
 
 package edu.usc.pgroup.floe.flake;
 
+import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
+import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
+import edu.usc.pgroup.floe.flake.statemanager.StateManagerFactory;
 import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -141,6 +148,11 @@ public class Flake {
      */
     private final List<PelletExecutor> runningPelletInstances;
 
+    /**
+     * The state manager component.
+     */
+    private StateManagerComponent stateManager;
+
 
     /**
      * Constructor.
@@ -220,7 +232,7 @@ public class Flake {
         flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
 
-        LOGGER.info("Start the command receiver");
+        LOGGER.info("Start the command receiver.");
         SenderFEComponent flakeSenderComponent = new SenderFEComponent(
                 sharedContext,
                 pelletId,
@@ -270,13 +282,58 @@ public class Flake {
                     .getPelletInstanceIndex() + 1;
         }
 
-        PelletExecutor pe = new PelletExecutor(nextPEIdx, p, appName, appJar,
+        Pellet pellet = deserializePellet(p);
+
+        if (stateManager == null) {
+            //Start the state manager.
+            LOGGER.info("Starting state manager.");
+            stateManager = StateManagerFactory.getStateManager(pellet,
+                    flakeId, "STATE=MANAGER", sharedContext);
+
+            if (stateManager != null) {
+                stateManager.startAndWait();
+            }
+        }
+
+        PelletExecutor pe = new PelletExecutor(nextPEIdx,
+                pellet, flakeId, sharedContext, stateManager);
+
+        /*PelletExecutor pe = new PelletExecutor(nextPEIdx, p, appName, appJar,
                 flakeId,
-                sharedContext);
+                sharedContext, stateManager);*/
 
         runningPelletInstances.add(pe);
         pe.start();
         return pe.getPelletInstanceId();
+    }
+
+    /**
+     * Deserializes the pellet using the given appjar.
+     * @param p the serialized pellet.
+     * @return THe deserialized pellet.
+     */
+    private Pellet deserializePellet(final byte[] p) {
+        URLClassLoader loader;
+        Pellet pellet = null;
+        try {
+            File relativeJarLoc = new File(
+                    Utils.getContainerJarDownloadPath(appName, appJar));
+
+            URL jarLoc = new URL(
+                    "file://" + relativeJarLoc.getAbsolutePath());
+
+            LOGGER.info("Loading jar: {} into class loader.", jarLoc);
+            loader = URLClassLoader.newInstance(
+                    new URL[]{jarLoc},
+                    getClass().getClassLoader()
+            );
+
+            pellet = (Pellet) Utils.deserialize(p, loader);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            LOGGER.error("Invalid Jar URL Exception: {}", e);
+        }
+        return pellet;
     }
 
     /**

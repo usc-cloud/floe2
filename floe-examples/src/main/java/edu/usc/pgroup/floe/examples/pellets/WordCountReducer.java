@@ -21,9 +21,11 @@ import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.ReducerPellet;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.app.PelletState;
+import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * @author kumbhare
@@ -53,19 +55,6 @@ public class WordCountReducer extends ReducerPellet {
     }
 
     /**
-     * Used to initialize the state for a given key.
-     *
-     * @param key The unique key for which the state should be initialized.
-     * @return the newly initialized state.
-     */
-    @Override
-    public final PelletState initializeState(final Object key) {
-        PelletState state = new PelletState();
-        state.setState(new Integer(0));
-        return state;
-    }
-
-    /**
      * Reducer specific execute function which is called for each input tuple
      * with the state corresponding to the key. This state will be persisted
      * across executes for each of the keys.
@@ -79,9 +68,12 @@ public class WordCountReducer extends ReducerPellet {
                         final Emitter emitter,
                         final PelletState state) {
         String word = (String) t.get(tupleWordKey);
-        Integer count = (Integer) state.getState();
+        Integer count = (Integer) state.getValue("count");
+        if (count == null) {
+            count = 0;
+        }
         count++;
-        state.setState(count);
+        state.setValue("count", count);
         LOGGER.info("Count for {}: {}", word, count);
     }
 
@@ -119,5 +111,14 @@ public class WordCountReducer extends ReducerPellet {
     @Override
     public final void teardown() {
 
+    }
+
+    /**
+     * @return The names of the streams to be used later during emitting
+     * messages.
+     */
+    @Override
+    public final List<String> getOutputStreamNames() {
+        return null;
     }
 }

@@ -17,8 +17,8 @@
 package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
-import edu.usc.pgroup.floe.app.BasePellet;
 import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.StatelessPellet;
 import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class WordMultiStreamPellet extends BasePellet {
+public class WordMultiStreamPellet extends StatelessPellet {
     /**
      * the global logger instance.
      */

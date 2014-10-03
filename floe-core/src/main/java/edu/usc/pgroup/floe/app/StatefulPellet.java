@@ -16,29 +16,20 @@
 
 package edu.usc.pgroup.floe.app;
 
+import edu.usc.pgroup.floe.flake.statemanager.PelletState;
+
 /**
  * @author kumbhare
  */
-public class PelletState {
+public abstract class StatefulPellet implements Pellet {
 
     /**
-     * Pellet specific state object.
+     * Reducer specific execute function which is called for each input tuple
+     * with the state corresponding to the key. This state will be persisted
+     * across executes for each of the keys.
+     * @param t input tuple received from the preceding pellet.
+     * @param emitter An output emitter which may be used by the user to emmit.
+     * @param state State specific to the key value given in the tuple.
      */
-    private Object pelletState;
-
-
-    /**
-     * sets the state for the pellet.
-     * @param state the new state object.
-     */
-    public final void setState(final Object state) {
-        this.pelletState = state;
-    }
-
-    /**
-     * @return the current state of the pellet.
-     */
-    public final Object getState() {
-        return pelletState;
-    }
+    public abstract void execute(Tuple t, Emitter emitter, PelletState state);
 }

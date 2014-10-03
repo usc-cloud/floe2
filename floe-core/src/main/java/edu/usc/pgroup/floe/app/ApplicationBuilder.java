@@ -58,7 +58,8 @@ public final class ApplicationBuilder {
      * @return A PelletBuilder to configure the pellet (e.g. subscribe to
      * streams etc.)
      */
-    public PelletBuilder addPellet(final String pelletId, final Pellet p) {
+    public PelletBuilder addPellet(final String pelletId,
+                                         final Pellet p) {
 
         TPellet tPellet = initializePellet(pelletId);
 
@@ -324,7 +325,7 @@ public final class ApplicationBuilder {
         public final DynamicPelletBuilder addAlternate(
                 final String alternateName,
                 final Double value,
-                final Pellet p) {
+                final StatelessPellet p) {
 
             TAlternate alternate = new TAlternate();
             alternate.set_serializedPellet(Utils.serialize(p));

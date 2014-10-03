@@ -17,19 +17,23 @@
 package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
-import edu.usc.pgroup.floe.app.BasePellet;
 import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.StatelessPellet;
 import edu.usc.pgroup.floe.app.PelletContext;
+import edu.usc.pgroup.floe.app.Signallable;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * @author kumbhare
  */
-public class WelcomeGreetingPellet extends BasePellet {
+public class WelcomeGreetingPellet
+        extends StatelessPellet implements Signallable {
 
 
     /**
@@ -93,6 +97,15 @@ public class WelcomeGreetingPellet extends BasePellet {
     @Override
     public void teardown() {
 
+    }
+
+    /**
+     * @return The names of the streams to be used later during emitting
+     * messages.
+     */
+    @Override
+    public final List<String> getOutputStreamNames() {
+        return null;
     }
 
     /**

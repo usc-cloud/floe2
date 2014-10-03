@@ -16,17 +16,17 @@
 
 package edu.usc.pgroup.floe.app;
 
+import edu.usc.pgroup.floe.flake.statemanager.PelletState;
+
 import java.io.Serializable;
 import java.util.List;
 
-
 /**
- * The Pellet interface which is the basic unit of user code.
- *
+ * The Pellet common interface which is the basic unit of user code.
+ * Stateful and stateless pellets are derived from this common.
  * @author kumbhare
  */
 public interface Pellet extends Serializable {
-
     /**
      * The setup function is called once to let the pellet initialize.
      * @param appContext Application's context. Some data related to
@@ -48,15 +48,6 @@ public interface Pellet extends Serializable {
     void onStart(Emitter emitter);
 
     /**
-     * The execute method which is called for each tuple.
-     *
-     * @param t       input tuple received from the preceding pellet.
-     * @param emitter An output emitter which may be used by the user to emmit
-     *                results.
-     */
-    void execute(Tuple t, Emitter emitter);
-
-    /**
      * The teardown function, called when the topology is killed.
      * Or when the Pellet instance is scaled down.
      */
@@ -67,4 +58,14 @@ public interface Pellet extends Serializable {
      * messages.
      */
     List<String> getOutputStreamNames();
+
+    /**
+     * The execute method which is called for each tuple.
+     *
+     * @param t       input tuple received from the preceding pellet.
+     * @param emitter An output emitter which may be used by the user to emmit
+     *                results.
+     * @param state state associated with the current execution of the pellet.
+     */
+    void execute(Tuple t, Emitter emitter, PelletState state);
 }

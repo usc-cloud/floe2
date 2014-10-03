@@ -246,8 +246,19 @@ public final class ZKUtils {
      */
     public static AppStatus getAppStatus(final String appName)
             throws Exception {
-        byte[] bstatus = ZKClient.getInstance().getCuratorClient().getData()
-                .forPath(ZKUtils.getApplicationStatusPath(appName));
+        byte[] bstatus = null;
+
+        if (ZKClient.getInstance().getCuratorClient().checkExists()
+                .forPath(ZKUtils.getApplicationStatusPath(appName)) == null) {
+            return null;
+        }
+
+        try {
+            bstatus = ZKClient.getInstance().getCuratorClient().getData()
+                    .forPath(ZKUtils.getApplicationStatusPath(appName));
+        } catch (Exception ex) {
+            LOGGER.warn("Application does not exists, or terminated already.");
+        }
         return (AppStatus) Utils.deserialize(bstatus);
     }
 

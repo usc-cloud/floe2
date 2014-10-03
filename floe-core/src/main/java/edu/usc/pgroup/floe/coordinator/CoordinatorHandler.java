@@ -19,6 +19,7 @@ package edu.usc.pgroup.floe.coordinator;
 import edu.usc.pgroup.floe.signals.SignalHandler;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.thriftgen.AppNotFoundException;
 import edu.usc.pgroup.floe.thriftgen.AppStatus;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TCoordinator;
@@ -418,12 +419,17 @@ public class CoordinatorHandler implements TCoordinator.Iface {
             TException {
 
         try {
-            return Coordinator.getInstance().getApplicationStatus(appName);
+            AppStatus status
+                    = Coordinator.getInstance().getApplicationStatus(appName);
+            if (status == null) {
+                throw new AppNotFoundException("Application " + appName
+                        + "does not exist or has been terminated.");
+            }
+            return status;
         } catch (Exception e) {
             LOGGER.error("Could not retrieve app status.");
             throw new TException(e);
         }
-
     }
 
     /**

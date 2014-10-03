@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
-
 /**
- * SignallablePellet.
  * @author kumbhare
  */
-public interface SignallablePellet extends Pellet, Signallable {
-}
+package edu.usc.pgroup.floe.flake.statemanager;

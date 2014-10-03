@@ -17,19 +17,23 @@
 package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
-import edu.usc.pgroup.floe.app.BasePellet;
 import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.StatefulPellet;
 import edu.usc.pgroup.floe.app.PelletContext;
+import edu.usc.pgroup.floe.app.Signallable;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * @author kumbhare
  */
-public class PrintPellet extends BasePellet {
+public class PrintPellet extends StatefulPellet implements Signallable {
 
     /**
      * Pellet's instance id.
@@ -75,13 +79,44 @@ public class PrintPellet extends BasePellet {
      *
      * @param t       input tuple received from the preceding pellet.
      * @param emitter An output emitter which may be used by the user to emmit
-     */
+
     @Override
     public final void execute(final Tuple t, final Emitter emitter) {
         if (t == null) {
             LOGGER.info("Dummy execute PRINT.");
         } else {
             LOGGER.info("{} : Received: {}", peInstanceId, t.get("word"));
+            emitter.emit(t);
+        }
+    }*/
+
+    /**
+     * Reducer specific execute function which is called for each input tuple
+     * with the state corresponding to the key. This state will be persisted
+     * across executes for each of the keys.
+     *
+     * @param t       input tuple received from the preceding pellet.
+     * @param emitter An output emitter which may be used by the user to emmit.
+     * @param state   State specific to the key value given in the tuple.
+     */
+    @Override
+    public final void execute(
+            final Tuple t,
+            final Emitter emitter,
+            final PelletState state) {
+        if (t == null) {
+            LOGGER.info("Dummy execute PRINT.");
+        } else {
+            Object value = state.getValue("count");
+            Integer count = 0;
+            if (value != null) {
+                count = (Integer) value + 1;
+            }
+            state.setValue("count", count);
+            LOGGER.info("{} : {} : Received: {}",
+                    peInstanceId,
+                    count,
+                    t.get("word"));
             emitter.emit(t);
         }
     }
@@ -91,8 +126,17 @@ public class PrintPellet extends BasePellet {
      * Or when the Pellet instance is scaled down.
      */
     @Override
-    public void teardown() {
+    public final void teardown() {
 
+    }
+
+    /**
+     * @return The names of the streams to be used later during emitting
+     * messages.
+     */
+    @Override
+    public final List<String> getOutputStreamNames() {
+        return null;
     }
 
     /**

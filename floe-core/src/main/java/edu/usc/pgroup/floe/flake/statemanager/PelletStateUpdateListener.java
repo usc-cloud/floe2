@@ -14,30 +14,22 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
-
-import edu.usc.pgroup.floe.signals.PelletSignal;
-
-import java.util.List;
+package edu.usc.pgroup.floe.flake.statemanager;
 
 /**
  * @author kumbhare
  */
-public abstract class BasePellet implements Pellet, Signallable {
-
+public interface PelletStateUpdateListener {
     /**
-     * @return The names of the streams to be used later during emitting
-     * messages.
+     * @param srcPeId pellet instance id which resulted in this update
+     * @param customId A custom identifier that can be used to further
+     *                 identify this state's owner.
+     * @param key the key for the state update.
+     * @param value the updated value.
+     * NOTE: THIS HAS TO BE THREAD SAFE....
      */
-    @Override
-    public List<String> getOutputStreamNames() {
-        return null;
-    }
-
-    /**
-     * Called when a signal is received for the component.
-     * @param signal the signal received for this pellet.
-     */
-    @Override
-    public void onSignal(final PelletSignal signal) { }
+    void stateUpdated(String srcPeId,
+                             String customId,
+                             String key,
+                             Object value);
 }

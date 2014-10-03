@@ -19,6 +19,8 @@ package edu.usc.pgroup.floe.flake;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.statemanager.PelletState;
+import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
 import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.app.Signallable;
 import edu.usc.pgroup.floe.flake.messaging.MessageEmitter;
@@ -30,9 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 
@@ -69,6 +68,13 @@ public class PelletExecutor extends Thread {
      * Pellet instance index on the given flake.
      */
     private final int pelletInstanceIndex;
+
+    /**
+     *  The common state manager object. This is one per
+     *                     flake and common fro all pellet instances. Should
+     *                     be thread safe.
+     */
+    private final StateManagerComponent pelletStateManager;
 
 
     /**
@@ -111,17 +117,22 @@ public class PelletExecutor extends Thread {
      * @param sharedContext shared ZMQ context to be used in inproc comm. for
      *                      receiving message from the flake.
      * @param fid flake's id to which this pellet belongs.
+     * @param stateManager The common state manager object. This is one per
+     *                     flake and common fro all pellet instances. Should
+     *                     be thread safe.
      */
     private PelletExecutor(
             final int pelletIndex,
             final ZMQ.Context sharedContext,
-            final String fid) {
+            final String fid,
+            final StateManagerComponent stateManager) {
         this.context = sharedContext;
         this.tupleSerializer = SerializerFactory.getSerializer();
         this.flakeId = fid;
         this.pelletInstanceId = fid + "-" + pelletIndex;
         this.pelletInstanceIndex = pelletIndex;
         this.killSignalReceived = false;
+        this.pelletStateManager = stateManager;
     }
 
     /**
@@ -132,11 +143,15 @@ public class PelletExecutor extends Thread {
      * @param sharedContext shared ZMQ context to be used in inproc comm. for
      *                      receiving message from the flake.
      * @param fid flake's id to which this pellet belongs.
+     * @param stateManager The common state manager object. This is one per
+     *                     flake and common fro all pellet instances. Should
+     *                     be thread safe.
      */
     public PelletExecutor(final int pelletIndex,
                     final String fqdnClass, final String fid,
-                    final ZMQ.Context sharedContext) {
-        this(pelletIndex, sharedContext, fid);
+                    final ZMQ.Context sharedContext,
+                    final StateManagerComponent stateManager) {
+        this(pelletIndex, sharedContext, fid, stateManager);
         this.pelletClass = fqdnClass;
         this.pellet = (Pellet) Utils.instantiateObject(pelletClass);
         this.pellet.setup(null, new PelletContext(pelletInstanceId));
@@ -152,12 +167,16 @@ public class PelletExecutor extends Thread {
      * @param sharedContext shared ZMQ context to be used in inproc comm. for
      *                      receiving message from the flake.
      * @param fid flake's id to which this pellet belongs.
+     * @param stateManager The common state manager object. This is one per
+     *                     flake and common fro all pellet instances. Should
+     *                     be thread safe.
      */
     public PelletExecutor(final int pelletIndex,
                           final Pellet p,
                           final String fid,
-                          final ZMQ.Context sharedContext) {
-        this(pelletIndex, sharedContext, fid);
+                          final ZMQ.Context sharedContext,
+                          final StateManagerComponent stateManager) {
+        this(pelletIndex, sharedContext, fid, stateManager);
         this.pellet = p;
         this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
@@ -170,15 +189,19 @@ public class PelletExecutor extends Thread {
      * @param appJar application's jar file namne.
      * @param fid flake id
      * @param sharedContext shared zmq contex.
-     */
+     * @param stateManager The common state manager object. This is one per
+     *                     flake and common fro all pellet instances. Should
+     *                     be thread safe.
+     *
     public PelletExecutor(final int pelletIndex,
                           final byte[] p,
                           final String app,
                           final String appJar,
                           final String fid,
-                          final ZMQ.Context sharedContext) {
+                          final ZMQ.Context sharedContext,
+                          final StateManagerComponent stateManager) {
 
-        this(pelletIndex, sharedContext, fid);
+        this(pelletIndex, sharedContext, fid, stateManager);
         try {
             File relativeJarLoc = new File(
                     Utils.getContainerJarDownloadPath(app, appJar));
@@ -199,7 +222,7 @@ public class PelletExecutor extends Thread {
             e.printStackTrace();
             LOGGER.error("Invalid Jar URL Exception: {}", e);
         }
-    }
+    }*/
 
 
     /**
@@ -232,32 +255,6 @@ public class PelletExecutor extends Thread {
                 Utils.Constants.FLAKE_BACKCHANNEL_SENDER_PREFIX
                         + flakeId);
 
-        /*int a = 1;
-        final int cnt = 5;
-        while (a++ <= cnt) { //FIX ME
-            LOGGER.info("Sending ping message on backchannel: {}",
-                    pelletInstanceId);
-            backendBackChannel.sendMore(pelletInstanceId);
-            backendBackChannel.send("ping".getBytes(), 0);
-            try {
-                Thread.sleep(Utils.Constants.MILLI);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }*/
-
-//        Thread shutdownHook = new Thread(
-//                new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        LOGGER.info("Closing flake pellet executor.");
-//                        dataReceiver.close();
-//                        signalReceiver.close();
-//                        backendBackChannel.close();
-//                    }
-//                });
-//        Runtime.getRuntime().addShutdownHook(shutdownHook);
-
         //Create the emitter.
         emitter = new MessageEmitter(flakeId,
                         context, tupleSerializer);
@@ -281,7 +278,8 @@ public class PelletExecutor extends Thread {
                 byte[] serializedTuple = dataReceiver.recv();
                 Tuple tuple = tupleSerializer.deserialize(serializedTuple);
                 //Run pellet.execute here.
-                pellet.execute(tuple, emitter);
+                PelletState state = getPelletState(tuple);
+                pellet.execute(tuple, emitter, state);
             } else if (pollerItems.pollin(1)) {
                 String envelope = signalReceiver
                         .recvStr(Charset.defaultCharset());
@@ -330,6 +328,20 @@ public class PelletExecutor extends Thread {
     }
 
     /**
+     * Gets the state associated with the combination of the pellet instance
+     * and the current tuple.
+     * @param tuple current tuple to be processed.
+     * @return associated state.
+     */
+    private PelletState getPelletState(final Tuple tuple) {
+        if (pelletStateManager != null) {
+            return pelletStateManager.getState(pelletInstanceId, tuple);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * processes the system signal for the pellet.
      * @param signal system signal.
      */
@@ -338,14 +350,17 @@ public class PelletExecutor extends Thread {
         switch (signal.getSystemSignalType()) {
             case SwitchAlternate:
                 LOGGER.warn("Switching pellet alternate.");
-                this.pellet = (Pellet) Utils.deserialize(signal.getSignalData(),
-                        loader);
+                this.pellet = (Pellet) Utils.deserialize(
+                                                signal.getSignalData(),
+                                                loader);
                 this.pellet.setup(null, new PelletContext(pelletInstanceId));
                 break;
             case StartInstance:
                 LOGGER.info("Starting pellets.");
                 this.pellet.onStart(emitter);
-                this.pellet.execute(null, emitter);
+                //FIXME..
+                PelletState state = getPelletState(null);
+                this.pellet.execute(null, emitter, state);
                 break;
             case KillInstance:
                 LOGGER.warn("Kill Instance signal received. Terminating "
