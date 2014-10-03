@@ -29,7 +29,7 @@ public interface PelletStateUpdateListener {
      * NOTE: THIS HAS TO BE THREAD SAFE....
      */
     void stateUpdated(String srcPeId,
-                             String customId,
-                             String key,
-                             Object value);
+                      Object customId,
+                      String key,
+                      Object value);
 }

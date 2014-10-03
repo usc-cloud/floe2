@@ -32,7 +32,7 @@ public class PelletState {
      * A custom identifier that can be used to further identify this state's
      * owner.
      */
-    private final String customId;
+    private final Object customId;
 
     /**
      * Pellet specific state object.
@@ -55,7 +55,7 @@ public class PelletState {
      *                 state is updated.
      */
     PelletState(final String peInstanceId,
-                final String customSubId,
+                final Object customSubId,
                 final PelletStateUpdateListener listener) {
         this.pelletState = new HashMap<>();
         this.updateListener = listener;

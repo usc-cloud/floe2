@@ -67,10 +67,14 @@ public class WordCountReducer extends ReducerPellet {
     public final void execute(final Tuple t,
                         final Emitter emitter,
                         final PelletState state) {
+        if (t == null) {
+            return;
+        }
         String word = (String) t.get(tupleWordKey);
-        Integer count = (Integer) state.getValue("count");
-        if (count == null) {
-            count = 0;
+        Object value = state.getValue("count");
+        Integer count = 0;
+        if (value != null) {
+            count = (Integer) value + count;
         }
         count++;
         state.setValue("count", count);

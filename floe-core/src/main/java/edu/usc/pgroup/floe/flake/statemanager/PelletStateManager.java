@@ -101,7 +101,7 @@ public class PelletStateManager extends StateManagerComponent
      */
     @Override
     public final void stateUpdated(final String srcPeId,
-                             final String customId,
+                             final Object customId,
                              final String key,
                              final Object value) {
         LOGGER.info("State updated for: {}, key:{}, new value:{}",

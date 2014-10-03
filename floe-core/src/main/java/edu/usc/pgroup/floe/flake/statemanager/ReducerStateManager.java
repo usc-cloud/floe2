@@ -17,24 +17,51 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
+
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author kumbhare
  */
-public class ReducerStateManager extends StateManagerComponent {
+public class ReducerStateManager extends StateManagerComponent
+        implements PelletStateUpdateListener {
+
+    /**
+     * the global logger instance.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ReducerStateManager.class);
+
+    /**
+     * Key field name used by the reducer for grouping.
+     */
+    private final String keyFieldName;
+
+
+    /**
+     * The pellet instance id to pellet state map.
+     */
+    private ConcurrentHashMap<String,
+            HashMap<Object, PelletState>> pelletStateMap;
 
     /**
      * Constructor.
-     *
-     * @param flakeId       Flake's id to which this component belongs.
+     *  @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
+     * @param fieldName     The fieldName used by the reducer for grouping.
      */
     public ReducerStateManager(final String flakeId,
                                final String componentName,
-                               final ZMQ.Context ctx) {
+                               final ZMQ.Context ctx,
+                               final String fieldName) {
         super(flakeId, componentName, ctx);
+        this.pelletStateMap = new ConcurrentHashMap<>(); //fixme. add size,
+        this.keyFieldName = fieldName;
     }
 
     /**
@@ -51,7 +78,24 @@ public class ReducerStateManager extends StateManagerComponent {
      */
     @Override
     public final PelletState getState(final String peId, final Tuple tuple) {
-        return null;
+
+        if (tuple == null) {
+            return null;
+        }
+
+        if (!pelletStateMap.containsKey(peId)) {
+            LOGGER.info("Creating new state for peid: {}", peId);
+            pelletStateMap.put(peId, new HashMap<Object, PelletState>());
+        }
+        HashMap<Object, PelletState> keyStateMap = pelletStateMap.get(peId);
+
+        Object value = tuple.get(keyFieldName);
+        if (!keyStateMap.containsKey(value)) {
+            LOGGER.info("Creating new state for value: {}", value);
+            keyStateMap.put(value, new PelletState(peId, value, this));
+        }
+
+        return keyStateMap.get(value);
     }
 
     /**
@@ -64,6 +108,25 @@ public class ReducerStateManager extends StateManagerComponent {
     @Override
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
+        notifyStarted(true);
+        terminateSignalReceiver.recv();
+        notifyStopped(true);
+    }
 
+    /**
+     * @param srcPeId  pellet instance id which resulted in this update
+     * @param customId A custom identifier that can be used to further
+     *                 identify this state's owner.
+     * @param key      the key for the state update.
+     * @param value    the updated value.
+     * NOTE: THIS HAS TO BE THREAD SAFE....
+     */
+    @Override
+    public final void stateUpdated(final String srcPeId,
+                                   final Object customId,
+                                   final String key,
+                                   final Object value) {
+        LOGGER.info("State updated for: {}, reducer key:{} , state key:{}, "
+                        + "new value:{}", srcPeId, customId, key, value);
     }
 }

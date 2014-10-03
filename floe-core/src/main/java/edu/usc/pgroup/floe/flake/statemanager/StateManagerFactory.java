@@ -63,7 +63,9 @@ public final class StateManagerFactory {
             manager = null;
         } else if (pellet instanceof ReducerPellet) {
             LOGGER.info("Reducer pellet. Creating reducer state manager.");
-            manager =  new ReducerStateManager(flakeId, componentName, ctx);
+            String fieldName = ((ReducerPellet) pellet).getKeyFieldName();
+            manager =  new ReducerStateManager(
+                    flakeId, componentName, ctx, fieldName);
         } else if (pellet instanceof StatefulPellet) {
             LOGGER.info("regular Statefull pellet. Creating pellet state "
                     + "manager.");
