@@ -17,6 +17,8 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -25,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SortedMap;
@@ -84,6 +87,12 @@ public class ElasticReducerFlakeLocalDispersion
     private HashingFunction hashingFunction;
 
     /**
+     * Replication factor to be used.
+     */
+    private int replication;
+
+
+    /**
      * Initializes the strategy.
      * @param args the arguments sent by the user. Fix Me: make this a better
      *             interface.
@@ -91,10 +100,12 @@ public class ElasticReducerFlakeLocalDispersion
     @Override
     public final void initialize(final String args) {
         this.targetPelletIds = new ArrayList<>();
-        this.circle = new TreeMap<>();
+        this.circle = new TreeMap<>(Collections.reverseOrder());
         this.reverseMap = new HashMap<>();
         this.keyFieldName = args;
         this.hashingFunction = new Murmur32();
+        this.replication = FloeConfig.getConfig().getInt(
+                ConfigProperties.FLAKE_TOLERANCE_LEVEL);
     }
 
     /**
@@ -120,18 +131,42 @@ public class ElasticReducerFlakeLocalDispersion
         int actualHash = hashingFunction.hash(seralized);
         int hash = actualHash;
         if (!circle.containsKey(hash)) {
-            SortedMap<Integer, String> tailMap = circle.tailMap(hash);
+            SortedMap<Integer, String> headMap = circle.headMap(hash);
 
-            if (tailMap.isEmpty()) {
-                hash = circle.firstKey();
+            if (headMap.isEmpty()) {
+                hash = circle.lastKey();
             } else {
-                hash = tailMap.firstKey();
+                hash = headMap.lastKey();
             }
         }
+
         LOGGER.debug("LOCAL Key:{}, actualHash:{}, token:{}, target:{}",
                 key, actualHash, hash, circle.get(hash));
         targetPelletIds.clear();
+
         targetPelletIds.add(circle.get(hash));
+
+        /** NOT REQUIRED............... SINCE FLAKES KNOW ABOUT THEIR
+         * NEIGHBOURS. EACH NEIGHBOUR CAN JUST AD AN EXTRA SUBSCRIPTION.
+         * THAT WAY WE CAN TAKE ADVANTAGE OF THE MULTI CAST PROTOCOL EASILY.
+         */
+        //Add backups.. for PEER MESSAGE BACKUP
+        /*SortedMap<Integer, String> tail = circle.tailMap(hash);
+        Iterator<Integer> iterator = tail.keySet().iterator();
+        iterator.next(); //ignore the self's token.
+
+        int i = 0;
+        for (; i < replication && iterator.hasNext(); i++) {
+            Integer neighborToken = iterator.next();
+            targetPelletIds.add(circle.get(neighborToken));
+        }
+
+        Iterator<Integer> frontIterator = circle.keySet().iterator();
+        for (; i < replication && frontIterator.hasNext(); i++) {
+            Integer neighborToken = frontIterator.next();
+            targetPelletIds.add(circle.get(neighborToken));
+        }*/
+
         return targetPelletIds;
     }
 

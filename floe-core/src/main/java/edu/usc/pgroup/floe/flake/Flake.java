@@ -20,6 +20,7 @@ import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.coordination.CoordinationComponent;
 import edu.usc.pgroup.floe.flake.coordination.CoordinationManagerFactory;
+import edu.usc.pgroup.floe.flake.coordination.ReducerCoordinationComponent;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
@@ -495,6 +496,22 @@ public class Flake {
                 msgReceivercontrolForwardSocket.send(
                         Utils.serialize(newCommand), 0);
                 msgReceivercontrolForwardSocket.recv();
+
+                //NOTE: WE SHOULD DO THIS ON SPECIAL COMMAND. BUT
+                // DOING IT HERE JUST TO TEST.
+                if (coordinationManager
+                        instanceof ReducerCoordinationComponent) {
+
+                    List<String> neighbors = ((ReducerCoordinationComponent)
+                            coordinationManager).getNeighborsToBackupMsgsFor();
+                    newCommand = new FlakeControlCommand(
+                            FlakeControlCommand.Command.UPDATE_SUBSCRIPTION,
+                            neighbors
+                            );
+                    msgReceivercontrolForwardSocket.send(
+                            Utils.serialize(newCommand), 0);
+                    msgReceivercontrolForwardSocket.recv();
+                }
                 break;
             case DECREMENT_PELLET:
                 String dpid = (String) command.getData();

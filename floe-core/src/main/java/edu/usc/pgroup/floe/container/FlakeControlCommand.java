@@ -62,6 +62,10 @@ public class FlakeControlCommand implements Serializable {
          */
         DECREMENT_ALL_PELLETS,
         /**
+         * Flake command to update subscription for message backup.
+         */
+        UPDATE_SUBSCRIPTION,
+        /**
          * Command to terminate self.
          */
         TERMINATE

@@ -21,11 +21,13 @@ import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +55,15 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
      * Fixme. Should not be string.
      * K = toleranceLevel Neighbor flakes in counter clockwise direction.
      */
-    private final SortedMap<Integer, String> neighbors;
+    private final SortedMap<Integer, String> stateBackupNeighbors;
+
+
+    /**
+     * Fixme. Should not be string.
+     * K = toleranceLevel Neighbor flakes in counter clockwise direction.
+     */
+    private final SortedMap<Integer, String> neighborsToBackupMsgsFor;
+
 
     /**
      * Flake's current token on the ring.
@@ -86,7 +96,8 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                                         final Integer tolerance) {
         super(app, pellet, flakeId, componentName, ctx);
         this.toleranceLevel = tolerance;
-        this.neighbors = new TreeMap<>();
+        this.stateBackupNeighbors = new TreeMap<>();
+        this.neighborsToBackupMsgsFor = new TreeMap<>();
         this.myToken = token;
     }
 
@@ -114,7 +125,8 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
 
             List<ChildData> childData = flakeCache.getCurrentData();
 
-            extractNeighbours(childData);
+            extractNeighboursToBackupState(childData);
+            extractNeighboursToSubscribeForMessages(childData);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -140,7 +152,8 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
      * Finds k neighbor flakes in counter clockwise direction.
      * @param childData data received from ZK cache.
      */
-    private void extractNeighbours(final List<ChildData> childData) {
+    private void extractNeighboursToBackupState(
+            final List<ChildData> childData) {
         SortedMap<Integer, String> allFlakes = new TreeMap<>(
                 Collections.reverseOrder());
 
@@ -158,15 +171,79 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
         int i = 0;
         for (; i < toleranceLevel && iterator.hasNext(); i++) {
             Integer neighborToken = iterator.next();
-            neighbors.put(neighborToken, allFlakes.get(neighborToken));
+            stateBackupNeighbors.put(neighborToken,
+                    allFlakes.get(neighborToken));
         }
 
         Iterator<Integer> headIterator = allFlakes.keySet().iterator();
         for (; i < toleranceLevel && headIterator.hasNext(); i++) {
             Integer neighborToken = headIterator.next();
-            neighbors.put(neighborToken, allFlakes.get(neighborToken));
+            stateBackupNeighbors.put(neighborToken,
+                    allFlakes.get(neighborToken));
         }
 
-        LOGGER.info("ME:{}, Neighbors: {}", myToken, neighbors);
+        LOGGER.info("ME:{}, I WILL BACKUP MY STATE AT: {}", myToken,
+                stateBackupNeighbors);
+    }
+
+    /**
+     * Finds k neighbor flakes in counter clockwise direction.
+     * @param childData data received from ZK cache.
+     */
+    private void extractNeighboursToSubscribeForMessages(
+            final List<ChildData> childData) {
+
+        SortedMap<Integer, String> allFlakes = new TreeMap<>();
+
+        for (ChildData child: childData) {
+            String path = child.getPath();
+            Integer data = (Integer) Utils.deserialize(child.getData());
+            allFlakes.put(data, path);
+            LOGGER.info("CHILDREN: {} , TOKEN: {}", path, data);
+        }
+
+        SortedMap<Integer, String> tail = allFlakes.tailMap(myToken);
+        Iterator<Integer> iterator = tail.keySet().iterator();
+        iterator.next(); //ignore the self's token.
+
+        int i = 0;
+        for (; i < toleranceLevel && iterator.hasNext(); i++) {
+            Integer neighborToken = iterator.next();
+            neighborsToBackupMsgsFor.put(neighborToken,
+                    parseFlakeId(allFlakes.get(neighborToken)));
+        }
+
+        Iterator<Integer> headIterator = allFlakes.keySet().iterator();
+        for (; i < toleranceLevel && headIterator.hasNext(); i++) {
+            Integer neighborToken = headIterator.next();
+            neighborsToBackupMsgsFor.put(neighborToken,
+                    parseFlakeId(allFlakes.get(neighborToken)));
+        }
+
+        LOGGER.info("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,
+                neighborsToBackupMsgsFor);
+    }
+
+    /**
+     * Parses the flake id from the full path.
+     * @param path path to the flake id which stores the token.
+     * @return returns the flake id.
+     */
+    private String parseFlakeId(final String path) {
+        return ZKPaths.getNodeFromPath(path);
+    }
+
+    /**
+     * @return the list of neighbors to backup msgs for.
+     */
+    public final List<String> getNeighborsToBackupMsgsFor() {
+        return new ArrayList<>(neighborsToBackupMsgsFor.values());
+    }
+
+    /**
+     * @return the list of neighbors to be used for state backup.
+     */
+    public final List<String> getStateBackupNeighbors() {
+        return new ArrayList<>(stateBackupNeighbors.values());
     }
 }

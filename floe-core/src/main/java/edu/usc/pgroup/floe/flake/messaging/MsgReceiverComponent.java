@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,9 +66,14 @@ public class MsgReceiverComponent extends FlakeComponent {
     Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap;
 
     /**
-     * Serializer to be used to serialize and deserialize the data tuples.
+     * Serializer to be used to serialize and deserialized the data tuples.
      */
     private final TupleSerializer tupleSerializer;
+
+    /**
+     * The neighbors currently subscribed for.
+     */
+    private List<String> neighborsSubscribedFor;
 
     /**
      * Constructor.
@@ -122,6 +128,11 @@ public class MsgReceiverComponent extends FlakeComponent {
             // Connect only when the signal for connect is received.
             LOGGER.info("Starting front end receiver socket");
             frontend.subscribe(getFid().getBytes());
+
+            //SUBSCRIBE HERE FOR THE FLAKES FOR WHICH THIS GUY WILL BE THE
+            // BACKUP.
+
+
 
             //Backend socket to talk to the Pellets contained in the flake. The
             // pellets may be added or removed dynamically.
@@ -279,6 +290,13 @@ public class MsgReceiverComponent extends FlakeComponent {
                     case DECREMENT_PELLET:
                         String dpeId = (String) command.getData();
                         notifyPelletRemoved(dpeId);
+                        break;
+                    case UPDATE_SUBSCRIPTION:
+                        List<String> currentNeighborsToSubscribe
+                                = (List<String>) command.getData();
+                        updateFrontendSubscription(
+                                frontend, currentNeighborsToSubscribe);
+                        break;
                     default:
                         LOGGER.warn("Should have been processed by the flake.");
                 }
@@ -297,6 +315,49 @@ public class MsgReceiverComponent extends FlakeComponent {
                 }
             }
         }
+    }
+
+    /**
+     * Updates the front end subscription.
+     * @param frontend the frontend socket to update the subscriptions for.
+     * @param newNeighborsToSubscribe the list of neighbors to subscribe
+     *                                    for received from the coordination
+     */
+    private void updateFrontendSubscription(
+            final ZMQ.Socket frontend,
+            final List<String> newNeighborsToSubscribe) {
+
+        List<String> toAdd = new ArrayList<>();
+        List<String> toRemove = new ArrayList<>();
+
+        if (this.neighborsSubscribedFor == null) {
+            this.neighborsSubscribedFor = newNeighborsToSubscribe;
+            toAdd.addAll(this.neighborsSubscribedFor);
+        } else {
+
+            for (String currentSubscribed: neighborsSubscribedFor) {
+                if (!newNeighborsToSubscribe.contains(currentSubscribed)) {
+                    toRemove.add(currentSubscribed);
+                }
+            }
+
+            for (String newNeighbor: newNeighborsToSubscribe) {
+                if (!neighborsSubscribedFor.contains(newNeighbor)) {
+                    toAdd.add(newNeighbor);
+                }
+            }
+        }
+
+        for (String token: toAdd) {
+            frontend.subscribe(token.getBytes());
+        }
+
+        for (String token: toRemove) {
+            frontend.unsubscribe(token.getBytes());
+        }
+
+        neighborsSubscribedFor.removeAll(toRemove);
+        neighborsSubscribedFor.addAll(toAdd);
     }
 
     /**

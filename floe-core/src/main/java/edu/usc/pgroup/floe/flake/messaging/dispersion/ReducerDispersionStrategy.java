@@ -17,7 +17,6 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +35,6 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
      * List of target pellet instances.
      */
     private List<String> targetFlakeIds;
-
 
     /**
      * Initializes the strategy.
