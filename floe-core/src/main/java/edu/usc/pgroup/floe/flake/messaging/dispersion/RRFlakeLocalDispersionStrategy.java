@@ -53,11 +53,13 @@ public class RRFlakeLocalDispersionStrategy
      * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
+     * @param token Flake's token on the ring.
      */
     public RRFlakeLocalDispersionStrategy(final String srcPelletName,
                                           final ZMQ.Context context,
-                                          final String flakeId) {
-        super(srcPelletName, context, flakeId);
+                                          final String flakeId,
+                                          final Integer token) {
+        super(srcPelletName, context, flakeId, token);
     }
 
     /**

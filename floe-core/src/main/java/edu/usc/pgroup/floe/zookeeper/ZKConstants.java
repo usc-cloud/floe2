@@ -103,6 +103,18 @@ public final class ZKConstants {
          * which will be used for barrier synchronization.
          */
         public static final String APP_BARRIER = "barrier";
+
+        /**
+         * the location, relative to the specific application's node,
+         * which will be used for barrier synchronization.
+         */
+        public static final String APP_DATA = "appdata";
+
+        /**
+         * the location, relative to the specific application's node,
+         * which will be used for barrier synchronization.
+         */
+        public static final String APP_FLAKE_TOKENS = "tokens";
     }
 
     /**

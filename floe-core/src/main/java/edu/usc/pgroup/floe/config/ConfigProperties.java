@@ -132,6 +132,12 @@ public final class ConfigProperties {
             = "floe.flake.backchannel.period";
 
     /**
+     * The tolerance level (and replication factor) for the flakes.
+     */
+    public static final java.lang.String FLAKE_TOLERANCE_LEVEL
+            = "floe.flake.tolerance.level";
+
+    /**
      * The tuple serializer plugin.
      */
     public static final java.lang.String TUPLE_SERIALIZER = "floe.tuple"
@@ -202,7 +208,6 @@ public final class ConfigProperties {
      * System property for pointing to Path separator.
      */
     public static final String SYS_PATH_SEPARATOR = "path.separator";
-
 
     /**
      * Hiding the default constructor.

@@ -18,12 +18,15 @@ package edu.usc.pgroup.floe.flake;
 
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
+import edu.usc.pgroup.floe.flake.coordination.CoordinationComponent;
+import edu.usc.pgroup.floe.flake.coordination.CoordinationManagerFactory;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerFactory;
 import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
+import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -36,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Timer;
 
 /**
@@ -153,6 +157,17 @@ public class Flake {
      */
     private StateManagerComponent stateManager;
 
+    /**
+     * The local coordination manager.
+     */
+    private CoordinationComponent coordinationManager;
+
+    /**
+     * Flake's token on the ring.
+     */
+    private int myToken;
+
+
 
     /**
      * Constructor.
@@ -232,6 +247,10 @@ public class Flake {
         flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
 
+        this.myToken = new Random(System.nanoTime()).nextInt();
+
+        ZKUtils.updateToken(appName, pelletId, flakeId, myToken);
+
         LOGGER.info("Start the command receiver.");
         SenderFEComponent flakeSenderComponent = new SenderFEComponent(
                 sharedContext,
@@ -248,7 +267,7 @@ public class Flake {
         LOGGER.info("Setting up Flake Receiver");
         MsgReceiverComponent flakeReceiverComponent
                 = new MsgReceiverComponent(flakeId, "MSG-RECEIVER",
-                sharedContext, predPelletChannelTypeMap);
+                sharedContext, predPelletChannelTypeMap, myToken);
         flakeReceiverComponent.startAndWait();
 
         //start heartbeat
@@ -256,6 +275,7 @@ public class Flake {
         flakeHeartbeatComponent = new FlakeHeartbeatComponent(flakeInfo,
                 flakeId, "HEAET-BEAT", sharedContext);
         flakeHeartbeatComponent.startAndWait();
+
 
         LOGGER.info("Flake started. Starting control channel.");
         startControlChannel();
@@ -288,10 +308,25 @@ public class Flake {
             //Start the state manager.
             LOGGER.info("Starting state manager.");
             stateManager = StateManagerFactory.getStateManager(pellet,
-                    flakeId, "STATE=MANAGER", sharedContext);
+                    flakeId, "STATE-MANAGER", sharedContext);
 
             if (stateManager != null) {
                 stateManager.startAndWait();
+            }
+        }
+
+        if (coordinationManager == null) {
+            //Start the state manager.
+            LOGGER.info("Starting state manager.");
+            coordinationManager = CoordinationManagerFactory
+                    .getCoordinationManager(appName,
+                            pelletId,
+                            pellet,
+                            flakeId, myToken,
+                            "COORDINATION-MANAGER", sharedContext);
+
+            if (coordinationManager != null) {
+                coordinationManager.startAndWait();
             }
         }
 

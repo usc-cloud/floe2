@@ -59,9 +59,9 @@ public final class WordCountApp {
         System.out.println("Hello World!");
         ApplicationBuilder builder = new ApplicationBuilder();
 
-        final int numWords = 20;
+        final int numWords = 10;
         final int maxWordLength = 3;
-        final int numReducers = 2;
+        final int numReducers = 4;
         final int numChars = 26;
         String[] words = new String[numWords];
 

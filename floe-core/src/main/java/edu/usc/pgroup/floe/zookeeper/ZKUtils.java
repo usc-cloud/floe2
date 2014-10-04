@@ -145,6 +145,52 @@ public final class ZKUtils {
     }
 
     /**
+     * @param appName the application name.
+     * @return Returns the application's data path. This is used to store
+     * application specific data.
+     */
+    public static String getApplicationDataPath(final String appName) {
+        return ZKPaths.makePath(
+                getApplicationPath(appName),
+                ZKConstants.Coordinator.APP_DATA
+        );
+    }
+
+    /**
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @return Returns the path for the flake, pellet and app combination.
+     */
+    public static String getApplicationPelletTokenPath(final String appName,
+                                                      final String pelletName) {
+        String tokens = ZKPaths.makePath(
+                getApplicationDataPath(appName),
+                ZKConstants.Coordinator.APP_FLAKE_TOKENS
+        );
+
+        String pelletTokens = ZKPaths.makePath(tokens, pelletName);
+
+        return pelletTokens;
+    }
+
+    /**
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @param fid flake id.
+     * @return Returns the path for the flake, pellet and app combination.
+     */
+    public static String getApplicationFlakeTokenPath(final String appName,
+                                                      final String pelletName,
+                                                      final String fid) {
+        String tokens = ZKPaths.makePath(
+                getApplicationPelletTokenPath(appName, pelletName),
+                fid
+        );
+
+        return tokens;
+    }
+
+    /**
      * @return the root path for coordinating signals.
      */
     public static String getSignalsRootPath() {
@@ -313,4 +359,33 @@ public final class ZKUtils {
         return resourceMapping;
     }
 
+    /**
+     * Updates the token associated with the given app and flakeid.
+     * Note: flake id is globally unique.
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @param flakeId flake id.
+     * @param myToken Flake's token.
+     */
+    public static void updateToken(final String appName,
+                                   final String pelletName,
+                                   final String flakeId,
+                                   final Integer myToken) {
+        String flakeTokenPath = getApplicationFlakeTokenPath(
+                appName, pelletName, flakeId);
+
+        try {
+            if (ZKClient.getInstance().getCuratorClient()
+                    .checkExists().forPath(flakeTokenPath) != null) {
+                ZKClient.getInstance().getCuratorClient().setData()
+                    .forPath(flakeTokenPath, Utils.serialize(myToken));
+            } else {
+                ZKClient.getInstance().getCuratorClient()
+                        .create().creatingParentsIfNeeded()
+                        .forPath(flakeTokenPath, Utils.serialize(myToken));
+            }
+        } catch (Exception e) {
+            LOGGER.error("Could not update flake's token.");
+        }
+    }
 }

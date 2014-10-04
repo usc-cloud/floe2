@@ -27,7 +27,6 @@ import org.zeromq.ZMQ;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -36,12 +35,6 @@ import java.util.TreeMap;
  */
 public class ElasticReducerFlakeLocalDispersion
         extends FlakeLocalDispersionStrategy {
-
-    /**
-     * Randomly generated token for this flake on the ring.
-     * LATER: WE CAN ADD FEATURES SUCH AS RACK_LOCAL, DATACENTER_LOCAL etc.
-     */
-    private final Integer myToken;
 
     /**
      * the global logger instance.
@@ -55,12 +48,13 @@ public class ElasticReducerFlakeLocalDispersion
      * @param srcPelletName The name of the src pellet on this edge.
      * @param context       shared ZMQ context.
      * @param flakeId       Current flake id.
+     * @param token Flake's token on the ring.
      */
     public ElasticReducerFlakeLocalDispersion(final String srcPelletName,
                                               final ZMQ.Context context,
-                                              final String flakeId) {
-        super(srcPelletName, context, flakeId);
-        myToken = new Random(System.nanoTime()).nextInt();
+                                              final String flakeId,
+                                              final Integer token) {
+        super(srcPelletName, context, flakeId, token);
     }
 
     /**
@@ -147,8 +141,8 @@ public class ElasticReducerFlakeLocalDispersion
      */
     @Override
     public final byte[] getCurrentBackchannelData() {
-        LOGGER.debug("MyToken: {}", myToken);
-        return Utils.serialize(myToken);
+        LOGGER.debug("MyToken: {}", getToken());
+        return Utils.serialize(getToken());
     }
 
     /**

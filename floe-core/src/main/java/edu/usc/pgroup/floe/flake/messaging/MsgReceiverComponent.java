@@ -47,6 +47,11 @@ public class MsgReceiverComponent extends FlakeComponent {
     private static final Logger LOGGER =
             LoggerFactory.getLogger(MsgReceiverComponent.class);
 
+    /**
+     * Flake's token on the ring.
+     */
+    private final Integer myToken;
+
 
     /**
      * Predecessor to channel type map.
@@ -71,15 +76,18 @@ public class MsgReceiverComponent extends FlakeComponent {
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      * @param predChannelTypeMap the pred. to channel type map.
+     * @param token Flake's token on the ring.
      */
     public MsgReceiverComponent(final String flakeId,
                                 final String componentName,
                                 final ZMQ.Context ctx,
-                                final Map<String, String> predChannelTypeMap) {
+                                final Map<String, String> predChannelTypeMap,
+                                final Integer token) {
         super(flakeId, componentName, ctx);
         this.predChannelMap = predChannelTypeMap;
         this.localDispersionStratMap = new HashMap<>();
         this.tupleSerializer = SerializerFactory.getSerializer();
+        this.myToken = token;
     }
 
     /**
@@ -360,6 +368,7 @@ public class MsgReceiverComponent extends FlakeComponent {
                                     src,
                                     getContext(),
                                     getFid(),
+                                    myToken,
                                     args
                                 );
                     strat.startAndWait();

@@ -30,6 +30,13 @@ import java.util.List;
 public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
         implements PelletUpdateListener {
 
+
+    /**
+     * Randomly generated token for this flake on the ring.
+     * LATER: WE CAN ADD FEATURES SUCH AS RACK_LOCAL, DATACENTER_LOCAL etc.
+     */
+    private Integer myToken;
+
     /**
      * the global logger instance.
      */
@@ -72,20 +79,36 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
      * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
+     * @param token Flake's random 32bit token on the ring.
      */
     public FlakeLocalDispersionStrategy(final String srcPelletName,
                                         final ZMQ.Context context,
-                                        final String flakeId) {
+                                        final String flakeId,
+                                        final Integer token) {
 
         super(flakeId, "FL-LOCAL-STRATEGY", context);
         this.srcPellet = srcPelletName;
-        LOGGER.info("Initializing flake local strategy.");
-//        backChannelSender
-//              = new BackChannelSender2(this, context, srcPelletName, flakeId);
-//        backChannelSender.start();
 
+        this.myToken = token;
+
+        LOGGER.info("Initializing flake local strategy.");
         backChannelSenderComponent = new BackChannelSenderComponent(this,
                 getFid(), "BACK-CHANNEL-SENDER", context, srcPelletName);
+    }
+
+    /**
+     * @return The flake's token on the ring.
+     */
+    public final Integer getToken() {
+        return myToken;
+    }
+
+    /**
+     * Sets/updates the flake's token on the ring.
+     * @param token the new token.
+     */
+    public final void updateToken(final Integer token) {
+        this.myToken = token;
     }
 
     /**

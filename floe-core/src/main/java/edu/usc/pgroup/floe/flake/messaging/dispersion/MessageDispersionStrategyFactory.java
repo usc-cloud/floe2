@@ -74,6 +74,7 @@ public final class MessageDispersionStrategyFactory {
      * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
+     * @param token Flake's token on the ring.
      * @param args Any arguments to be sent to the Strategy Class while
      *             initialization.
      * @return new instance of MessageDispersionStrategy based on the edge type.
@@ -86,6 +87,7 @@ public final class MessageDispersionStrategyFactory {
             final String srcPelletName,
             final ZMQ.Context context,
             final String flakeId,
+            final Integer token,
             final String args) throws ClassNotFoundException {
 
         FlakeLocalDispersionStrategy strategy = null;
@@ -93,11 +95,11 @@ public final class MessageDispersionStrategyFactory {
         switch (channelType) {
             case ROUND_ROBIN:
                 strategy = new RRFlakeLocalDispersionStrategy(srcPelletName,
-                        context, flakeId);
+                        context, flakeId, token);
                 break;
             case REDUCE:
                 strategy = new ElasticReducerFlakeLocalDispersion(
-                        srcPelletName, context, flakeId);
+                        srcPelletName, context, flakeId, token);
                 break;
             case LOAD_BALANCED:
             case CUSTOM:
