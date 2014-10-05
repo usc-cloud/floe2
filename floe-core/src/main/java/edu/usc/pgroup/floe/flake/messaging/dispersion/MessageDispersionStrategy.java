@@ -27,10 +27,12 @@ public interface MessageDispersionStrategy extends BackChannelReceiver {
 
     /**
      * Initializes the strategy.
+     * @param appName Application name.
+     * @param destPelletName dest pellet name to be used to get data from ZK.
      * @param args the arguments sent by the user. Fix Me: make this a better
      *             interface.
      */
-    void initialize(String args);
+    void initialize(String appName, String destPelletName, String args);
 
     /**
      * Returns the list of target instances to send the given tuple using the

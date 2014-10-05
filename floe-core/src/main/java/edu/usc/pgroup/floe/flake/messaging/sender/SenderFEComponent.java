@@ -65,8 +65,14 @@ public class SenderFEComponent extends FlakeComponent {
     private final String myPelletName;
 
     /**
+     * Application name.
+     */
+    private final String appName;
+
+    /**
      * constructor.
      * @param ctx Shared ZMQ context.
+     * @param app Application name.
      * @param pelletName Pellet's name to be sent with each message.
      * @param flakeId flake id to which this sender belongs.
      * @param componentName Component name.
@@ -80,6 +86,7 @@ public class SenderFEComponent extends FlakeComponent {
      *                         streams.
      */
     public SenderFEComponent(final ZMQ.Context ctx,
+                               final String app,
                                final String pelletName,
                                final String flakeId,
                                final String componentName,
@@ -88,6 +95,7 @@ public class SenderFEComponent extends FlakeComponent {
                                final Map<String, String> channelTypeMap,
                                final Map<String, List<String>> streamsMap) {
         super(flakeId, componentName, ctx);
+        this.appName = app;
         this.myPelletName = pelletName;
         this.pelletPortMap = portMap;
         this.pelletBackChannelPortMap = backChannelPortMap;
@@ -121,7 +129,8 @@ public class SenderFEComponent extends FlakeComponent {
 
             SenderBEComponent be
                     = new SenderBEComponent(getFid(), "BE", getContext(),
-                    port, bpPort, channelType, streams, myPelletName);
+                    port, bpPort, appName, pellet,
+                    channelType, streams, myPelletName);
 
             be.startAndWait();
             bes.add(be);

@@ -17,6 +17,14 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.zookeeper.ZKClient;
+import edu.usc.pgroup.floe.zookeeper.ZKUtils;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.utils.ZKPaths;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +32,12 @@ import java.util.List;
  * @author kumbhare
  */
 public class ReducerDispersionStrategy implements MessageDispersionStrategy {
+
+    /**
+     * Logger.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ReducerDispersionStrategy.class);
 
     /**
      * Key field name to be used for grouping.
@@ -37,15 +51,41 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
     private List<String> targetFlakeIds;
 
     /**
+     * Path cache to monitor the tokens.
+     */
+    private PathChildrenCache flakeCache;
+
+    /**
      * Initializes the strategy.
-     *
+     * @param appName Application name.
+     * @param destPelletName dest pellet name to be used to get data from ZK.
      * @param args the arguments sent by the user. Fix Me: make this a better
      *             interface.
      */
     @Override
-    public final void initialize(final String args) {
+    public final void initialize(
+            final String appName,
+            final String destPelletName,
+            final String args) {
         this.targetFlakeIds = new ArrayList<>();
         this.keyFieldName = args;
+        String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
+                appName, destPelletName);
+        this.flakeCache = new PathChildrenCache(ZKClient.getInstance()
+                .getCuratorClient(), pelletTokenPath, true);
+
+        try {
+            flakeCache.start();
+            flakeCache.rebuild();
+            List<ChildData> childData = flakeCache.getCurrentData();
+            for (ChildData child: childData) {
+                targetFlakeIds.add(ZKPaths.getNodeFromPath(child.getPath()));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOGGER.warn("Error occured while retreving flake information for "
+                    + "destination pellet,");
+        }
     }
 
     /**

@@ -182,6 +182,15 @@ public final class Container {
                             + "abort");
                 }
                 break;
+            case INITIALIZE_FLAKES:
+                try {
+                    initializeFlakes(signal);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    LOGGER.error("Error occurred while Initializing flakes. "
+                            + " Will abort");
+                }
+                break;
             case TERMINATE_FLAKES:
                 try {
                     terminateFlakes(signal);
@@ -325,6 +334,42 @@ public final class Container {
                 ContainerActions.terminateFlakes(resourceMapping);
             } catch (Exception e) {
                 LOGGER.error("Could not terminate flakes. Exception {}", e);
+            } finally {
+                barrier.leave();
+            }
+        }
+    }
+
+    /**
+     * initializes newly created flakes on the container.
+     * @param signal The signal (with associated data) received.
+     * @throws Exception If an error occurs while performing the action.
+     */
+    private void initializeFlakes(final ContainerSignal signal)
+            throws Exception {
+
+        String appName = signal.getDestApp();
+
+        ResourceMapping resourceMapping
+                = ZKUtils.getResourceMapping(appName);
+
+        String appUpdateBarrierPath = ZKUtils
+                .getApplicationBarrierPath(appName);
+
+        int numContainersToUpdate = resourceMapping.getContainersToUpdate();
+
+        DistributedDoubleBarrier barrier = new DistributedDoubleBarrier(
+                ZKClient.getInstance().getCuratorClient(),
+                appUpdateBarrierPath,
+                numContainersToUpdate + 1
+        );
+
+        if (ContainerActions.isContainerUpdated(resourceMapping)) {
+            barrier.enter();
+            try {
+                ContainerActions.initializeFlakes(resourceMapping);
+            } catch (Exception e) {
+                LOGGER.error("Could not create flakes. Exception {}", e);
             } finally {
                 barrier.leave();
             }

@@ -331,6 +331,16 @@ public final class Utils {
                 = "tcp://";
 
         /**
+         * Flake sender middle-end prefix (this is suffixed by a listening
+         * port).
+         * Receives data messages from the middle end. and uses PUSH to
+         * send it to all flakes containing the pellet instances for the
+         * succeeding pellet.
+         */
+        public static final String FLAKE_SENDER_BACKEND_SOCK_PREFIX
+                = "tcp://*:";
+
+        /**
          * Flake receiver backend prefix (this is suffixed by flake id).
          * Used for a PUSH socket to receive data from RECEIVER frontend and
          * send it to the pellets evenly.
@@ -390,15 +400,7 @@ public final class Utils {
         public static final String FLAKE_BACKCHANNEL_CONTROL_PREFIX
                 = "inproc://flake-backchannel-control-";
 
-        /**
-         * Flake sender middle-end prefix (this is suffixed by a listening
-         * port).
-         * Receives data messages from the middle end. and uses PUSH to
-         * send it to all flakes containing the pellet instances for the
-         * succeeding pellet.
-         */
-        public static final String FLAKE_SENDER_BACKEND_SOCK_PREFIX
-                = "tcp://*:";
+
 
         /**
          * the endpoint to be used by flakes to send their heartbeat to the

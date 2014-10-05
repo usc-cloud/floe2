@@ -52,6 +52,53 @@ public final class ContainerActions {
     }
 
     /**
+     * Function to initialize flakes within the container from the resource
+     * mapping.
+     * @param mapping Current Resource mapping
+     * @throws Exception if there is an error communicating with ZK or while
+     * launching flakes.
+     */
+    public static void initializeFlakes(final ResourceMapping mapping)
+            throws Exception {
+
+        String appName = mapping.getAppName();
+
+        String containerId = ContainerInfo.getInstance().getContainerId();
+
+        Map<String, ResourceMapping.FlakeInstance> flakes = null;
+
+        if (mapping.getDelta() == null) {
+            ResourceMapping.ContainerInstance container
+                    = mapping.getContainer(containerId);
+            if (container != null) {
+                flakes = container.getFlakes();
+            } else {
+                LOGGER.warn("No flakes for this container.");
+            }
+        } else {
+            Map<String, ResourceMappingDelta.FlakeInstanceDelta>
+                    addedflakeDeltas
+                    = mapping.getDelta().getNewlyAddedFlakes(containerId);
+
+            if (addedflakeDeltas != null) {
+                flakes = new HashMap<>();
+
+                for (Map.Entry<String, ResourceMappingDelta.FlakeInstanceDelta>
+                        fd : addedflakeDeltas.entrySet()) {
+                    flakes.put(fd.getKey(), fd.getValue().getFlakeInstance());
+                }
+            } else {
+                LOGGER.warn("No new flakes for this container.");
+            }
+        }
+
+        //Create and wait for flakes to respond.
+        if (flakes != null) {
+            ContainerUtils.initializeFlakes(flakes);
+        }
+    }
+
+    /**
      * Function to create flakes within the container from the resource mapping.
      * @param mapping Current Resource mapping
      * @throws Exception if there is an error communicating with ZK or while

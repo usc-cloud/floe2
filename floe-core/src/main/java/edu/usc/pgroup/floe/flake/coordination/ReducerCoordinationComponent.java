@@ -43,7 +43,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
      * Logger.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(ZKUtils.class);
+            LoggerFactory.getLogger(ReducerCoordinationComponent.class);
 
     /**
      * level of tolerance. (i.e. number of flake
@@ -134,6 +134,8 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
             success = false;
         }
 
+        waitForAllNeighborsPing();
+
         notifyStarted(success);
 
         terminateSignalReceiver.recv();
@@ -168,6 +170,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
         Iterator<Integer> iterator = tail.keySet().iterator();
         iterator.next(); //ignore the self's token.
 
+
         int i = 0;
         for (; i < toleranceLevel && iterator.hasNext(); i++) {
             Integer neighborToken = iterator.next();
@@ -184,6 +187,13 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
 
         LOGGER.info("ME:{}, I WILL BACKUP MY STATE AT: {}", myToken,
                 stateBackupNeighbors);
+    }
+
+    /**
+     * Waits for all upstream neighbors to ping. i.e. those neighbors whose
+     * data and messages will be backed up on this flake.
+     */
+    private void waitForAllNeighborsPing() {
     }
 
     /**

@@ -94,6 +94,12 @@ public abstract class BaseAppTransition extends ClusterTransition {
         createFlakes(updatedMapping, barrier);
         LOGGER.info("All containers finished launching flakes.");
 
+        initializeFlakes(updatedMapping, barrier);
+        LOGGER.info("All containers finished initializing flakes.");
+
+//        if (1 == 1) {
+//            return;
+//        }
 
         //Step 3. Send connect signals to flakes so that they establish all
         // the appropriate channels.
@@ -231,6 +237,36 @@ public abstract class BaseAppTransition extends ClusterTransition {
         barrier.leave();
         ZKUtils.setAppStatus(appName,
                 AppStatus.UPDATING_PELLETS_COMPLETED);
+    }
+
+    /**
+     * Send INITIALIZE requests to all containers and waits for their response.
+     * @param updatedMapping the resource mapping to use.
+     * @param barrier The barrier used for synchronization.
+     * @throws Exception if an error occurs.
+     */
+    private void initializeFlakes(final ResourceMapping updatedMapping,
+                              final DistributedDoubleBarrier barrier)
+            throws Exception {
+
+        String appName = updatedMapping.getAppName();
+
+        SignalHandler.getInstance().signal(appName, "ALL-CONTAINERS",
+                ContainerSignal.ContainerSignalType.INITIALIZE_FLAKES,
+                Utils.serialize("dummy"));
+
+        ZKUtils.setAppStatus(appName,
+                AppStatus.UPDATING_FLAKES);
+
+        barrier.enter(); //wait for all containers to receive the new
+        // resource mapping and start processing.
+
+        LOGGER.info("Waiting for containers to finish flake deployment.");
+
+        barrier.leave(); //wait for all containers to deploy (or update)
+        // flakes and complete their execution.
+
+        ZKUtils.setAppStatus(appName, AppStatus.UPDATING_FLAKES_COMPLETED);
     }
 
     /**

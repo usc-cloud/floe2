@@ -120,13 +120,13 @@ public class BackChannelSenderComponent extends FlakeComponent {
                 done = true;
             }
 
-            byte[] data = dispersionStrategy.getCurrentBackchannelData();
+            /*byte[] data = dispersionStrategy.getCurrentBackchannelData();
             LOGGER.debug("Sending backchannel msg for {}, {}, {}, {}.",
                     srcPellet, getFid(), data, toContinue);
             backendBackChannel.sendMore(srcPellet);
             backendBackChannel.sendMore(getFid());
             backendBackChannel.sendMore(toContinue);
-            backendBackChannel.send(data, 0);
+            backendBackChannel.send(data, 0);*/
         }
 
         backendBackChannel.close();

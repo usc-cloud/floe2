@@ -17,11 +17,10 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
 
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.config.ConfigProperties;
-import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -87,10 +86,9 @@ public class ElasticReducerFlakeLocalDispersion
     private HashingFunction hashingFunction;
 
     /**
-     * Replication factor to be used.
+     * Path cache to monitor the tokens.
      */
-    private int replication;
-
+    private PathChildrenCache flakeCache;
 
     /**
      * Initializes the strategy.
@@ -98,14 +96,13 @@ public class ElasticReducerFlakeLocalDispersion
      *             interface.
      */
     @Override
-    public final void initialize(final String args) {
+    public final void initialize(
+            final String args) {
         this.targetPelletIds = new ArrayList<>();
         this.circle = new TreeMap<>(Collections.reverseOrder());
         this.reverseMap = new HashMap<>();
         this.keyFieldName = args;
         this.hashingFunction = new Murmur32();
-        this.replication = FloeConfig.getConfig().getInt(
-                ConfigProperties.FLAKE_TOLERANCE_LEVEL);
     }
 
     /**
@@ -145,27 +142,6 @@ public class ElasticReducerFlakeLocalDispersion
         targetPelletIds.clear();
 
         targetPelletIds.add(circle.get(hash));
-
-        /** NOT REQUIRED............... SINCE FLAKES KNOW ABOUT THEIR
-         * NEIGHBOURS. EACH NEIGHBOUR CAN JUST AD AN EXTRA SUBSCRIPTION.
-         * THAT WAY WE CAN TAKE ADVANTAGE OF THE MULTI CAST PROTOCOL EASILY.
-         */
-        //Add backups.. for PEER MESSAGE BACKUP
-        /*SortedMap<Integer, String> tail = circle.tailMap(hash);
-        Iterator<Integer> iterator = tail.keySet().iterator();
-        iterator.next(); //ignore the self's token.
-
-        int i = 0;
-        for (; i < replication && iterator.hasNext(); i++) {
-            Integer neighborToken = iterator.next();
-            targetPelletIds.add(circle.get(neighborToken));
-        }
-
-        Iterator<Integer> frontIterator = circle.keySet().iterator();
-        for (; i < replication && frontIterator.hasNext(); i++) {
-            Integer neighborToken = frontIterator.next();
-            targetPelletIds.add(circle.get(neighborToken));
-        }*/
 
         return targetPelletIds;
     }

@@ -52,6 +52,10 @@ public final class ContainerSignal extends Signal implements Serializable {
          */
         TERMINATE_FLAKES,
         /**
+         * Signal to initialize flakes.
+         */
+        INITIALIZE_FLAKES,
+        /**
          * Signal to start running pellets.
          */
         START_PELLETS

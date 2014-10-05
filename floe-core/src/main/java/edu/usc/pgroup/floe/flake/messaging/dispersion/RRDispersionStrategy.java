@@ -38,12 +38,15 @@ public class RRDispersionStrategy implements MessageDispersionStrategy {
 
     /**
      * Initializes the strategy.
-     *
+     * @param appName Application name.
+     * @param destPelletName dest pellet name to be used to get data from ZK.
      * @param args the arguments sent by the user. Fix Me: make this a better
      *             interface.
      */
     @Override
-    public final void initialize(final String args) {
+    public final void initialize(final String appName,
+                                  final String destPelletName,
+                                  final String args) {
         targetFlakeIds = new ArrayList<>();
         currentIndex = 0;
     }

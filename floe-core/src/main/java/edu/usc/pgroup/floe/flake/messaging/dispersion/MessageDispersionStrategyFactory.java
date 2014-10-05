@@ -37,6 +37,8 @@ public final class MessageDispersionStrategyFactory {
 
     /**
      * Factory function for creating the MessageDispersionStrategy.
+     * @param appName Application name.
+     * @param destPelletName dest pellet name to be used to get data from ZK.
      * @param channelType type of the channel (edge) in the application.
      * @param args Any arguments to be sent to the Strategy Class while
      *             initialization.
@@ -46,6 +48,8 @@ public final class MessageDispersionStrategyFactory {
      */
     public static MessageDispersionStrategy
             getMessageDispersionStrategy(
+                final String destPelletName,
+                final String appName,
                 final TChannelType channelType,
                 final String args) throws ClassNotFoundException {
 
@@ -64,7 +68,7 @@ public final class MessageDispersionStrategyFactory {
                 throw new ClassNotFoundException(channelType.toString());
         }
 
-        strategy.initialize(args);
+        strategy.initialize(appName, destPelletName, args);
         return strategy;
     }
 

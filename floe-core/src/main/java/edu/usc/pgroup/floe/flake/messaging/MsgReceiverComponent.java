@@ -369,8 +369,16 @@ public class MsgReceiverComponent extends FlakeComponent {
     private void forwardToPellet(final ZMQ.Socket from,
                                  final ZMQ.Socket to) {
         String fid = from.recvStr(0, Charset.defaultCharset());
+
         String src = from.recvStr(0, Charset.defaultCharset());
         byte[] message = from.recv();
+
+        if (!fid.equalsIgnoreCase(getFid())) {
+            LOGGER.info("THIS MESSAGE IS MEANT FOR BACKUP."
+                    + " SHOULD DO THAT HERE {} & {}", fid, getFid());
+            return;
+        }
+
 
         FlakeLocalDispersionStrategy strategy
                 = localDispersionStratMap.get(src);

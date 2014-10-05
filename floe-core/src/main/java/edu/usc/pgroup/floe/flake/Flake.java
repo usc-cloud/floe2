@@ -25,7 +25,10 @@ import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerFactory;
+import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.signals.SystemSignal;
+import edu.usc.pgroup.floe.thriftgen.TFloeApp;
+import edu.usc.pgroup.floe.thriftgen.TPellet;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.slf4j.Logger;
@@ -168,6 +171,20 @@ public class Flake {
      */
     private int myToken;
 
+    /**
+     * The user pellet object including all alternates.
+     */
+    private TPellet tPellet;
+
+    /**
+     * The flake's message sender component's frontend.
+     */
+    private SenderFEComponent flakeSenderComponent;
+
+    /**
+     * Flake's message receiver component.
+     */
+    private MsgReceiverComponent flakeReceiverComponent;
 
 
     /**
@@ -236,25 +253,89 @@ public class Flake {
      * Starts the server and the schedules the heartbeats.
      */
     public final void start() {
-        LOGGER.info("Initializing flake.");
-        initializeFlake();
-    }
-
-    /**
-     * Initializes the flake. Including:
-     * setup the flakeInfo object (for heartbeat)
-     */
-    private void initializeFlake() {
+        LOGGER.info("starting flake.");
         flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
 
         this.myToken = new Random(System.nanoTime()).nextInt();
-
         ZKUtils.updateToken(appName, pelletId, flakeId, myToken);
 
+        //start heartbeat
+        LOGGER.info("Scheduling flake heartbeat.");
+        flakeHeartbeatComponent = new FlakeHeartbeatComponent(flakeInfo,
+                flakeId, "HEAET-BEAT", sharedContext);
+        flakeHeartbeatComponent.startAndWait();
+
+        LOGGER.info("Flake started. Starting control channel.");
+        startControlChannel();
+
+        if (flakeReceiverComponent != null) {
+            flakeReceiverComponent.stopAndWait();
+        }
+
+        if (flakeSenderComponent != null) {
+            flakeSenderComponent.stopAndWait();
+        }
+
+        if (flakeHeartbeatComponent != null) {
+            flakeHeartbeatComponent.stopAndWait();
+        }
+        //initializeFlake();
+    }
+
+    /**
+     * Initializes the flake. SHOULD BE A SYNCHRONOUS FUNCTION. i.e. when the
+     * function returns, the flake should be fully initialized.
+     *
+     */
+    private void initializeFlake() {
+
+        //get the application configuration.
+        ResourceMapping resourceMapping
+                = ZKUtils.getResourceMapping(appName);
+
+        TFloeApp tfloeApp = resourceMapping.getFloeApp();
+
+        tPellet = tfloeApp.get_pellets().get(pelletId);
+
+        //FixeME: Change the way alternates are handled later. For now we
+        // just choose the active alternate.
+
+        byte[] activeAlternate = tPellet.get_alternates().get(
+                tPellet.get_activeAlternate()
+        ).get_serializedPellet();
+
+        //deserialize the active alternate and get the runnable pellet object
+        // out of it.
+        Pellet pellet = deserializePellet(activeAlternate);
+
+        //Start the state manager.
+        LOGGER.info("Starting state manager.");
+        stateManager = StateManagerFactory.getStateManager(pellet,
+                flakeId, "STATE-MANAGER", sharedContext);
+
+        if (stateManager != null) {
+            stateManager.startAndWait();
+        }
+
+        //Start the state manager.
+        LOGGER.info("Starting state manager.");
+        coordinationManager = CoordinationManagerFactory
+                .getCoordinationManager(appName,
+                        pelletId,
+                        pellet,
+                        flakeId, myToken,
+                        "COORDINATION-MANAGER", sharedContext);
+
+        if (coordinationManager != null) {
+            coordinationManager.startAndWait();
+        }
+
+
         LOGGER.info("Start the command receiver.");
-        SenderFEComponent flakeSenderComponent = new SenderFEComponent(
+        flakeSenderComponent = new SenderFEComponent(
                 sharedContext,
+                appName,
                 pelletId,
                 flakeId,
                 "FLAKE-SENDER",
@@ -266,24 +347,10 @@ public class Flake {
         flakeSenderComponent.startAndWait();
 
         LOGGER.info("Setting up Flake Receiver");
-        MsgReceiverComponent flakeReceiverComponent
+        flakeReceiverComponent
                 = new MsgReceiverComponent(flakeId, "MSG-RECEIVER",
                 sharedContext, predPelletChannelTypeMap, myToken);
         flakeReceiverComponent.startAndWait();
-
-        //start heartbeat
-        LOGGER.info("Scheduling flake heartbeat.");
-        flakeHeartbeatComponent = new FlakeHeartbeatComponent(flakeInfo,
-                flakeId, "HEAET-BEAT", sharedContext);
-        flakeHeartbeatComponent.startAndWait();
-
-
-        LOGGER.info("Flake started. Starting control channel.");
-        startControlChannel();
-
-        flakeReceiverComponent.stopAndWait();
-        flakeSenderComponent.stopAndWait();
-        flakeHeartbeatComponent.stopAndWait();
 
         LOGGER.info("Finished flake execution. {}", flakeId);
     }
@@ -304,32 +371,6 @@ public class Flake {
         }
 
         Pellet pellet = deserializePellet(p);
-
-        if (stateManager == null) {
-            //Start the state manager.
-            LOGGER.info("Starting state manager.");
-            stateManager = StateManagerFactory.getStateManager(pellet,
-                    flakeId, "STATE-MANAGER", sharedContext);
-
-            if (stateManager != null) {
-                stateManager.startAndWait();
-            }
-        }
-
-        if (coordinationManager == null) {
-            //Start the state manager.
-            LOGGER.info("Starting state manager.");
-            coordinationManager = CoordinationManagerFactory
-                    .getCoordinationManager(appName,
-                            pelletId,
-                            pellet,
-                            flakeId, myToken,
-                            "COORDINATION-MANAGER", sharedContext);
-
-            if (coordinationManager != null) {
-                coordinationManager.startAndWait();
-            }
-        }
 
         PelletExecutor pe = new PelletExecutor(nextPEIdx,
                 pellet, flakeId, sharedContext, stateManager);
@@ -369,6 +410,7 @@ public class Flake {
             e.printStackTrace();
             LOGGER.error("Invalid Jar URL Exception: {}", e);
         }
+
         return pellet;
     }
 
@@ -421,6 +463,9 @@ public class Flake {
 
             LOGGER.info("Received command: " + command);
             switch (command.getCommand()) {
+                case INITIALIZE:
+                    initializeFlake();
+                    break;
                 case CONNECT_PRED:
                 case DISCONNECT_PRED:
                     //Send to the receiver.

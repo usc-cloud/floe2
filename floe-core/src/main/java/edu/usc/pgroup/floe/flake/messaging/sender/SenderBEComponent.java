@@ -74,6 +74,21 @@ public class SenderBEComponent extends FlakeComponent {
      */
     private final TupleSerializer tupleSerializer;
 
+    /**
+     * Channel type for this backend.
+     */
+    private final String channelTypeStr;
+
+    /**
+     * Application name.
+     */
+    private final String appName;
+
+    /**
+     * Dest. pellet name for this BE component.
+     */
+    private final String destPelletName;
+
 
     /**
      * Message dispersion strategy to be used for the channel.
@@ -89,6 +104,8 @@ public class SenderBEComponent extends FlakeComponent {
      * @param p port on which the back end should listen for
      *             connections from downstream.
      * @param bp dispersion port.
+     * @param app Application name.
+     * @param destPellet dest pellet name to be used to get data from ZK.
      * @param channelType channel type (e.g. round robin, reduce,
      *                    load balanced, custom)
      * @param streams list of stream names to subscribe to.
@@ -99,6 +116,8 @@ public class SenderBEComponent extends FlakeComponent {
                              final ZMQ.Context ctx,
                              final int p,
                              final int bp,
+                             final String app,
+                             final String destPellet,
                              final String channelType,
                              final List<String> streams,
                              final String pelletName) {
@@ -108,28 +127,9 @@ public class SenderBEComponent extends FlakeComponent {
         this.streamNames = streams;
         this.myPelletName = pelletName;
         this.tupleSerializer = SerializerFactory.getSerializer();
-
-        String[] ctypesAndArgs = channelType.split("__");
-        String ctype = ctypesAndArgs[0];
-        String args = null;
-        if (ctypesAndArgs.length > 1) {
-            args = ctypesAndArgs[1];
-        }
-        LOGGER.info("type and args: {}, Channel type: {}", channelType,
-                ctype);
-
-        this.dispersionStrategy = null;
-
-        if (!ctype.startsWith("NONE")) {
-            TChannelType type = Enum.valueOf(TChannelType.class, ctype);
-            try {
-                this.dispersionStrategy = MessageDispersionStrategyFactory
-                        .getMessageDispersionStrategy(type, args);
-            } catch (Exception ex) {
-                LOGGER.error("Invalid dispersion strategy: {}. "
-                        + "Using default RR", type);
-            }
-        }
+        this.channelTypeStr = channelType;
+        this.appName = app;
+        this.destPelletName = destPellet;
     }
 
     /**
@@ -142,6 +142,29 @@ public class SenderBEComponent extends FlakeComponent {
     @Override
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
+
+        String[] ctypesAndArgs = channelTypeStr.split("__");
+        String ctype = ctypesAndArgs[0];
+        String args = null;
+        if (ctypesAndArgs.length > 1) {
+            args = ctypesAndArgs[1];
+        }
+        LOGGER.info("type and args: {}, Channel type: {}", channelTypeStr,
+                ctype);
+
+        this.dispersionStrategy = null;
+
+        if (!ctype.startsWith("NONE")) {
+            TChannelType type = Enum.valueOf(TChannelType.class, ctype);
+            try {
+                this.dispersionStrategy = MessageDispersionStrategyFactory
+                        .getMessageDispersionStrategy(destPelletName,
+                                appName, type, args);
+            } catch (Exception ex) {
+                LOGGER.error("Invalid dispersion strategy: {}. "
+                        + "Using default RR", type);
+            }
+        }
 
         final ZMQ.Socket middleendreceiver  = getContext().socket(ZMQ.SUB);
 

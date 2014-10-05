@@ -49,7 +49,7 @@ public final class FlakeService {
 
     /**
      * Flake instance (not singleton because if we run all flakes in single
-     * procress, that will not work. This way it works for both single proc
+     * process, that will not work. This way it works for both single proc
      * or multi-proc model).
      */
     private final Flake flake;

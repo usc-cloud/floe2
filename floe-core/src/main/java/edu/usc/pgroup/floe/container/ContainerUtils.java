@@ -271,6 +271,19 @@ public final class ContainerUtils {
     }
 
     /**
+     * sends initialize coomand to the flake.
+     * @param fid flake id which has to be initialized.
+     */
+    public static void sendInitializeFlakeCommand(final String fid) {
+        FlakeControlCommand command = new FlakeControlCommand(
+                FlakeControlCommand.Command.INITIALIZE,
+                null
+        );
+        FlakeControlSignalSender.getInstance().send(fid, command);
+    }
+
+
+    /**
      * Launches flakes and initializes pellets based on the list of flakes
      * given.
      * @param resourceMapping current resource mapping as determined by the
@@ -449,6 +462,41 @@ public final class ContainerUtils {
 
     }
 
+
+    /**
+     * Function to send initialize signal to the flakes.
+     * @param flakes newly created flakes to be initialized.
+     */
+    public static void initializeFlakes(
+            final Map<String, ResourceMapping.FlakeInstance> flakes) {
+        for (final ResourceMapping.FlakeInstance flake: flakes.values()) {
+            try {
+                FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory
+                                .getDefaultPolicy(),
+                        new Callable<FlakeInfo>() {
+                            @Override
+                            public FlakeInfo call() throws Exception {
+                                return FlakeMonitor.getInstance()
+                                    .getFlakeInfo(
+                                            flake.getCorrespondingPelletId());
+                            }
+                        });
+
+                LOGGER.info("Found Flake:{}. Sending Initialize signal",
+                        info.getFlakeId());
+
+                //Send Kill Signal.
+                ContainerUtils.sendInitializeFlakeCommand(info.getFlakeId());
+
+                LOGGER.info("Flake Initialized (at container):{}", flakeId);
+
+            } catch (Exception e) {
+                LOGGER.error("Could not kill flake.");
+                return;
+            }
+        }
+    }
+
     /**
      * Function to launch flakes within the container. This will launch
      * flakes and wait for a heartbeat from each of them.
@@ -465,6 +513,7 @@ public final class ContainerUtils {
             final Map<String, ResourceMapping.FlakeInstance> flakes) {
 
         Map<String, String> pidToFidMap = new HashMap<>();
+
 
 
 

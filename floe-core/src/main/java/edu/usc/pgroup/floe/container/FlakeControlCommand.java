@@ -66,6 +66,10 @@ public class FlakeControlCommand implements Serializable {
          */
         UPDATE_SUBSCRIPTION,
         /**
+         * Flake command to initialize all components.
+         */
+        INITIALIZE,
+        /**
          * Command to terminate self.
          */
         TERMINATE
