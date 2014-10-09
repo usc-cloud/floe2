@@ -59,6 +59,7 @@ public final class ContainerUtils {
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
      * @param cid container's id on which this flake resides.
+     * @param statePort       Port to be used for sending checkpoint data.
      * @param pelletPortMap map of pellet name to ports to listen on for
      *                      connections from the succeeding pellets.
      * @param backChannelPortMap map of port for the dispersion. One port
@@ -75,6 +76,7 @@ public final class ContainerUtils {
             final String appName,
             final String applicationJarPath,
             final String cid,
+            final Integer statePort,
             final Map<String, Integer> pelletPortMap,
             final Map<String, Integer> backChannelPortMap,
             final Map<String, String> successorChannelTypeMap,
@@ -98,6 +100,8 @@ public final class ContainerUtils {
         }
         args.add("-cid");
         args.add(cid);
+        args.add("-stateport");
+        args.add(statePort.toString());
         args.add("-ports");
         for (Map.Entry<String, Integer> p: pelletPortMap.entrySet()) {
             args.add(p.getKey() + ':' + p.getValue());
@@ -527,6 +531,7 @@ public final class ContainerUtils {
                     appName,
                     applicationJarPath,
                     containerId,
+                    flakeInstance.getStateCheckpointingPort(),
                     flakeInstance.getPelletPortMapping(),
                     flakeInstance.getPelletBackChannelPortMapping(),
                     flakeInstance.getTargetPelletChannelTypeMapping(),

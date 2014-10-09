@@ -57,6 +57,24 @@ public final class Utils {
     }
 
     /**
+     * returns the canonical host name or reads it from the config file.
+     * @return the hostname or ip read from the config file.
+     */
+    public static String getHostNameOrIpAddress() {
+        String hostnameOrIpAddr;
+        if (FloeConfig.getConfig().containsKey(
+                ConfigProperties.HOST_NAME
+        )) {
+            hostnameOrIpAddr = FloeConfig.getConfig().getString(
+                    ConfigProperties.HOST_NAME
+            );
+        } else {
+            hostnameOrIpAddr = Utils.getHostName();
+        }
+        return hostnameOrIpAddr;
+    }
+
+    /**
      * returns the canonical host name. This assumes a unique host name for
      * each machine in the cluster does not apply.
      * FixMe: In local cloud environment (local eucalyptus in system mode)
@@ -424,6 +442,32 @@ public final class Utils {
         public static final String FLAKE_COMPONENT_KILL_PREFIX
                 = "inproc://flake-comp-kill-";
 
+
+        /**
+         * the endpoint to be used by flakes to send their state checkpoints.
+         */
+        public static final String FLAKE_STATE_PUB_SOCK
+                = "tcp://*:";
+
+
+        /**
+         * the endpoint to be used by flakes to send their state checkpoints.
+         */
+        public static final String FLAKE_MSG_BACKUP_PREFIX
+                = "inproc://flake-msg-backup-";
+
+        /**
+         * the endpoint to be used by flakes to send their state checkpoints.
+         */
+        public static final String FLAKE_STATE_BACKUP_PREFIX
+                = "inproc://flake-state-backup-";
+
+        /**
+         * the endpoint to be used by flakes to send their state checkpoints.
+         */
+        public static final String FLAKE_STATE_SUB_SOCK_PREFIX
+                = "tcp://";
+
         /**
          * Number of i/o threads to be used by ZMQ for a single flake.
          */
@@ -449,5 +493,10 @@ public final class Utils {
          * Name of the default output stream.
          */
         public static final String DEFAULT_STREAM_NAME = "default_stream";
+
+        /**
+         * The field name associated with the system timestamp of the tuple.
+         */
+        public static final String SYSTEM_TS_FIELD_NAME = "SYSTEM_TS";
     }
 }

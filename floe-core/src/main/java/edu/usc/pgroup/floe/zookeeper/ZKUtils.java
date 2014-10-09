@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.zookeeper;
 
 import edu.usc.pgroup.floe.coordinator.Coordinator;
+import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.thriftgen.AppStatus;
 import edu.usc.pgroup.floe.utils.RetryLoop;
@@ -366,23 +367,31 @@ public final class ZKUtils {
      * @param pelletName pellet's name to which this flake belongs.
      * @param flakeId flake id.
      * @param myToken Flake's token.
+     * @param flakeDataPort flake's port for data checkpointing.
      */
     public static void updateToken(final String appName,
                                    final String pelletName,
                                    final String flakeId,
-                                   final Integer myToken) {
+                                   final Integer myToken,
+                                   final Integer flakeDataPort) {
         String flakeTokenPath = getApplicationFlakeTokenPath(
                 appName, pelletName, flakeId);
+
+        FlakeToken token = new FlakeToken(
+                myToken,
+                Utils.getHostNameOrIpAddress(),
+                flakeDataPort
+        );
 
         try {
             if (ZKClient.getInstance().getCuratorClient()
                     .checkExists().forPath(flakeTokenPath) != null) {
                 ZKClient.getInstance().getCuratorClient().setData()
-                    .forPath(flakeTokenPath, Utils.serialize(myToken));
+                    .forPath(flakeTokenPath, Utils.serialize(token));
             } else {
                 ZKClient.getInstance().getCuratorClient()
                         .create().creatingParentsIfNeeded()
-                        .forPath(flakeTokenPath, Utils.serialize(myToken));
+                        .forPath(flakeTokenPath, Utils.serialize(token));
             }
         } catch (Exception e) {
             LOGGER.error("Could not update flake's token.");

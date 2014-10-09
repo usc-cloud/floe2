@@ -280,6 +280,11 @@ public class PelletExecutor extends Thread {
                 //Run pellet.execute here.
                 PelletState state = getPelletState(tuple);
                 pellet.execute(tuple, emitter, state);
+                if (state != null) {
+                    state.setLatestTimeStampAtomic(
+                            (Long) tuple.get(
+                                    Utils.Constants.SYSTEM_TS_FIELD_NAME));
+                }
             } else if (pollerItems.pollin(1)) {
                 String envelope = signalReceiver
                         .recvStr(Charset.defaultCharset());

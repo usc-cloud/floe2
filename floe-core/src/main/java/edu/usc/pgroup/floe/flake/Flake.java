@@ -103,6 +103,11 @@ public class Flake {
      */
     private final Map<String, String> predPelletChannelTypeMap;
 
+    /**
+     * Port to be used for sending checkpoint data.
+     */
+    private final int stateChkptPort;
+
 
     /**
      * Recurring timer for sending heartbeats.
@@ -197,6 +202,7 @@ public class Flake {
      *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param app application's name to which this flake belongs.
      * @param jar the application's jar file name.
+     * @param statePort       Port to be used for sending checkpoint data.
      * @param portMap the map of ports on which this flake should
      *                       listen on. Note: This is fine here (and not as a
      *                       control signal) because this depends only on
@@ -215,6 +221,7 @@ public class Flake {
                  final String cid,
                  final String app,
                  final String jar,
+                 final int statePort,
                  final Map<String, Integer> portMap,
                  final Map<String, Integer> backChannelPortMap,
                  final Map<String, String> successorChannelTypeMap,
@@ -232,6 +239,7 @@ public class Flake {
         this.sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
         this.pelletId = pid;
         this.runningPelletInstances = new ArrayList<>();
+        this.stateChkptPort = statePort;
     }
 
     /**
@@ -251,6 +259,8 @@ public class Flake {
 
     /**
      * Starts the server and the schedules the heartbeats.
+     * This is called by the flake service on creating a new flake object.
+     * (before initialize)
      */
     public final void start() {
         LOGGER.info("starting flake.");
@@ -258,7 +268,11 @@ public class Flake {
         flakeInfo.setStartTime(new Date().getTime());
 
         this.myToken = new Random(System.nanoTime()).nextInt();
-        ZKUtils.updateToken(appName, pelletId, flakeId, myToken);
+        ZKUtils.updateToken(appName,
+                pelletId,
+                flakeId,
+                myToken,
+                stateChkptPort);
 
         //start heartbeat
         LOGGER.info("Scheduling flake heartbeat.");
@@ -286,7 +300,8 @@ public class Flake {
     /**
      * Initializes the flake. SHOULD BE A SYNCHRONOUS FUNCTION. i.e. when the
      * function returns, the flake should be fully initialized.
-     *
+     * This is called after receiving an initialize signal from the container.
+     * (After start)
      */
     private void initializeFlake() {
 
@@ -309,23 +324,25 @@ public class Flake {
         // out of it.
         Pellet pellet = deserializePellet(activeAlternate);
 
+
+
         //Start the state manager.
         LOGGER.info("Starting state manager.");
         stateManager = StateManagerFactory.getStateManager(pellet,
-                flakeId, "STATE-MANAGER", sharedContext);
+                flakeId, "STATE-MANAGER", sharedContext, stateChkptPort);
 
         if (stateManager != null) {
             stateManager.startAndWait();
         }
 
-        //Start the state manager.
-        LOGGER.info("Starting state manager.");
+        //Start the coordination manager.
+        LOGGER.info("Starting coordination manager.");
         coordinationManager = CoordinationManagerFactory
                 .getCoordinationManager(appName,
                         pelletId,
                         pellet,
                         flakeId, myToken,
-                        "COORDINATION-MANAGER", sharedContext);
+                        "COORDINATION-MANAGER", stateManager, sharedContext);
 
         if (coordinationManager != null) {
             coordinationManager.startAndWait();

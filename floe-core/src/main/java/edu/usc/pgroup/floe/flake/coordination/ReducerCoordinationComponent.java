@@ -16,6 +16,11 @@
 
 package edu.usc.pgroup.floe.flake.coordination;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import edu.usc.pgroup.floe.flake.FlakeToken;
+import edu.usc.pgroup.floe.flake.statemanager.PelletStateDelta;
+import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
@@ -27,10 +32,13 @@ import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -64,11 +72,21 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
      */
     private final SortedMap<Integer, String> neighborsToBackupMsgsFor;
 
+    /**
+     * Token and connect information for neighbors to backup for.
+     */
+    private final Map<String, FlakeToken> flakeToDataPortMap;
+
 
     /**
      * Flake's current token on the ring.
      */
     private final Integer myToken;
+
+    /**
+     * State manager instance.
+     */
+    private final StateManagerComponent stateManager;
 
     /**
      * Path cache to monitor the tokens.
@@ -86,6 +104,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
      * @param ctx           Shared zmq context.
      * @param tolerance level of tolerance. (i.e. number of flake
      *                       failures to tolerate).
+     * @param stManager State manager associated with this flake.
      */
     public ReducerCoordinationComponent(final String app,
                                         final String pellet,
@@ -93,12 +112,15 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                                         final Integer token,
                                         final String componentName,
                                         final ZMQ.Context ctx,
-                                        final Integer tolerance) {
+                                        final Integer tolerance,
+                                        final StateManagerComponent stManager) {
         super(app, pellet, flakeId, componentName, ctx);
         this.toleranceLevel = tolerance;
         this.stateBackupNeighbors = new TreeMap<>();
         this.neighborsToBackupMsgsFor = new TreeMap<>();
         this.myToken = token;
+        this.flakeToDataPortMap = new HashMap<>();
+        this.stateManager = stManager;
     }
 
     /**
@@ -118,6 +140,9 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                 .getCuratorClient(), pelletTokenPath, true);
 
         boolean success = true;
+
+        ZMQ.Socket stateSoc = getContext().socket(ZMQ.SUB);
+
         try {
             flakeCache.start();
             flakeCache.rebuild();
@@ -125,22 +150,73 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
 
             List<ChildData> childData = flakeCache.getCurrentData();
 
-            extractNeighboursToBackupState(childData);
+            //extractNeighboursToBackupState(childData);
             extractNeighboursToSubscribeForMessages(childData);
 
+
+            /**
+             * ZMQ socket connection publish the state to the backups.
+             */
+            if (flakeToDataPortMap != null) {
+                for (Map.Entry<String, FlakeToken> connctInfo
+                        : flakeToDataPortMap.entrySet()) {
+
+                    String ssConnetStr
+                            = Utils.Constants.FLAKE_STATE_SUB_SOCK_PREFIX
+                            + connctInfo.getValue().getIpOrHost() + ":"
+                            + connctInfo.getValue().getStateCheckptPort();
+
+                    stateSoc.subscribe(connctInfo.getKey().getBytes());
+
+                    LOGGER.info("connecting STATE CHECKPOINTER "
+                             + "to listen for state updates: {}", ssConnetStr);
+
+                    stateSoc.connect(ssConnetStr);
+                }
+            }
+
         } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.error("Could not start token monitor.");
+            LOGGER.error("Could not start token monitor.{}", e);
             success = false;
         }
 
-        waitForAllNeighborsPing();
+        success = true;
 
         notifyStarted(success);
 
-        terminateSignalReceiver.recv();
+        ZMQ.Poller pollerItems = new ZMQ.Poller(2);
+        pollerItems.register(terminateSignalReceiver, ZMQ.Poller.POLLIN);
+        pollerItems.register(stateSoc, ZMQ.Poller.POLLIN);
 
-        success = true;
+        final int checkpointDelay = 5000; //check the 'failure' detection
+        // logic here.
+
+        while (!Thread.currentThread().isInterrupted()) {
+            //LOGGER.info("Receiving checkpointed State");
+            int polled = pollerItems.poll(checkpointDelay);
+            if (pollerItems.pollin(0)) {
+                //terminate.
+                LOGGER.warn("Terminating state checkpointing");
+                terminateSignalReceiver.recv();
+                break;
+            } else if (pollerItems.pollin(1)) {
+                //Merge with the state manager.
+                String nfid = stateSoc.recvStr(Charset.defaultCharset());
+                LOGGER.info("State delta received from:{}", nfid);
+                byte[] serializedState = stateSoc.recv();
+
+                List<PelletStateDelta> deltas
+                        = extractPelletStateDeltas(serializedState);
+
+                stateManager.backupState(nfid, deltas);
+                //stateManager.backupState(nfid, deltas);
+            }
+
+            //Check for termination here..
+
+            //byte[] checkpointdata = stateManager.checkpointState();
+        }
+
         try {
             flakeCache.close();
         } catch (IOException e) {
@@ -148,6 +224,45 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
             success = false;
         }
         notifyStopped(success);
+    }
+
+    /**
+     * Deserializes the incoming state information and extracts a list of
+     * pelletstatedeltas from it.
+     * @param checkpointdata serialized checkpoint data recieved from
+     *                       neighbor flake.
+     * @return list of pellet state deltas.
+     */
+    private List<PelletStateDelta> extractPelletStateDeltas(
+            final byte[] checkpointdata) {
+
+        List<PelletStateDelta> deltas = new ArrayList<>();
+        if (checkpointdata != null && checkpointdata.length > 0) {
+            try {
+                Kryo kryo = new Kryo();
+                Input kryoIn = new Input(checkpointdata);
+
+                //stateSerializer.setBuffer(checkpointdata);
+                //PelletStateDelta pes = stateSerializer.getNextState();
+
+                while (!kryoIn.eof()) {
+                    PelletStateDelta pes
+                            = kryo.readObject(kryoIn,
+                                                PelletStateDelta.class);
+                    LOGGER.info("received:{}",
+                            pes.getDeltaState());
+                    deltas.add(pes);
+                }
+                LOGGER.info("Finished deserialization.");
+                kryoIn.close();
+            } catch (Exception e) {
+                LOGGER.warn("Exception: {}", e);
+            }
+        } else {
+            LOGGER.info("No new updates to checkpoint.");
+        }
+
+        return deltas;
     }
 
     /**
@@ -204,12 +319,16 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
             final List<ChildData> childData) {
 
         SortedMap<Integer, String> allFlakes = new TreeMap<>();
+        Map<String, FlakeToken> allFlakesConnectData = new HashMap<>();
 
         for (ChildData child: childData) {
             String path = child.getPath();
-            Integer data = (Integer) Utils.deserialize(child.getData());
-            allFlakes.put(data, path);
-            LOGGER.info("CHILDREN: {} , TOKEN: {}", path, data);
+            //Integer data = (Integer) Utils.deserialize(child.getData());
+            FlakeToken token = (FlakeToken) Utils.deserialize(child.getData());
+            String nfid = parseFlakeId(path);
+            allFlakes.put(token.getToken(), nfid);
+            allFlakesConnectData.put(nfid, token);
+            LOGGER.info("CHILDREN: {} , TOKEN: {}", path, token.getToken());
         }
 
         SortedMap<Integer, String> tail = allFlakes.tailMap(myToken);
@@ -219,15 +338,16 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
         int i = 0;
         for (; i < toleranceLevel && iterator.hasNext(); i++) {
             Integer neighborToken = iterator.next();
-            neighborsToBackupMsgsFor.put(neighborToken,
-                    parseFlakeId(allFlakes.get(neighborToken)));
+            String nfid = allFlakes.get(neighborToken);
+            neighborsToBackupMsgsFor.put(neighborToken, nfid);
+            flakeToDataPortMap.put(nfid, allFlakesConnectData.get(nfid));
         }
 
         Iterator<Integer> headIterator = allFlakes.keySet().iterator();
         for (; i < toleranceLevel && headIterator.hasNext(); i++) {
             Integer neighborToken = headIterator.next();
             neighborsToBackupMsgsFor.put(neighborToken,
-                    parseFlakeId(allFlakes.get(neighborToken)));
+                    allFlakes.get(neighborToken));
         }
 
         LOGGER.info("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,

@@ -20,6 +20,8 @@ import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import org.zeromq.ZMQ;
 
+import java.util.List;
+
 /**
  * @author kumbhare
  */
@@ -32,10 +34,12 @@ public abstract class StateManagerComponent extends FlakeComponent {
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
+     * @param port          Port to be used for sending checkpoint data.
      */
     public StateManagerComponent(final String flakeId,
                                  final String componentName,
-                                 final ZMQ.Context ctx) {
+                                 final ZMQ.Context ctx,
+                                 final int port) {
         super(flakeId, componentName, ctx);
     }
 
@@ -52,4 +56,20 @@ public abstract class StateManagerComponent extends FlakeComponent {
      */
     public abstract PelletState getState(final String peId,
                                          final Tuple tuple);
+
+    /**
+     * Checkpoint state and return the serialized delta to send to the backup
+     * nodes.
+     * @return serialized delta to send to the backup nodes.
+     */
+    public abstract byte[] checkpointState();
+
+    /**
+     * Used to backup the states received from the neighbor flakes.
+     * @param nfid flake id of the neighbor from which the state update is
+     *             received.
+     * @param deltas a list of pellet state deltas received from the flake.
+     */
+    public abstract void backupState(final String nfid,
+                                     final List<PelletStateDelta> deltas);
 }

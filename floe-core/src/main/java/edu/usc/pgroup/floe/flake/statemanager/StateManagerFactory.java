@@ -50,13 +50,15 @@ public final class StateManagerFactory {
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
+     * @param port          Port to be used for sending checkpoint data.
      * @return the instantiated (but not started) state manager object.
      */
     public static StateManagerComponent getStateManager(
             final Pellet pellet,
             final String flakeId,
             final String componentName,
-            final ZMQ.Context ctx) {
+            final ZMQ.Context ctx,
+            final int port) {
         StateManagerComponent manager = null;
         if (pellet instanceof StatelessPellet) {
             LOGGER.info("Stateless pellet. No state required.");
@@ -65,11 +67,12 @@ public final class StateManagerFactory {
             LOGGER.info("Reducer pellet. Creating reducer state manager.");
             String fieldName = ((ReducerPellet) pellet).getKeyFieldName();
             manager =  new ReducerStateManager(
-                    flakeId, componentName, ctx, fieldName);
+                    flakeId, componentName, ctx, fieldName, port);
         } else if (pellet instanceof StatefulPellet) {
             LOGGER.info("regular Statefull pellet. Creating pellet state "
                     + "manager.");
-            manager =  new PelletStateManager(flakeId, componentName, ctx);
+            manager =  new GenericPelletStateManager(
+                    flakeId, componentName, ctx, port);
         }
 
         return manager;

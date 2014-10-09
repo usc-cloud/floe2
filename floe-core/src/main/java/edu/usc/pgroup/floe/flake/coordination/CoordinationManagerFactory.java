@@ -20,6 +20,7 @@ import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.ReducerPellet;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -50,6 +51,7 @@ public final class CoordinationManagerFactory {
      * @param flakeId       Flake's id to which this component belongs.
      * @param myToken       This flake's current token value.
      * @param componentName Unique name of the component.
+     * @param stateManager the state manager associated with this flake.
      * @param ctx           Shared zmq context.
      * @return the instantiated (but not started) state manager object.
      */
@@ -60,16 +62,22 @@ public final class CoordinationManagerFactory {
             final String flakeId,
             final Integer myToken,
             final String componentName,
+            final StateManagerComponent stateManager,
             final ZMQ.Context ctx) {
         CoordinationComponent manager = null;
-
         if (pellet instanceof ReducerPellet) {
             LOGGER.info("Reducer pellet. Creating reducer state manager.");
             int tolerance = FloeConfig.getConfig().getInt(
                     ConfigProperties.FLAKE_TOLERANCE_LEVEL);
             manager =  new ReducerCoordinationComponent(
-                appName, pelletName, flakeId, myToken,
-                    componentName, ctx, tolerance);
+                            appName,
+                            pelletName,
+                            flakeId,
+                            myToken,
+                            componentName,
+                            ctx,
+                            tolerance,
+                            stateManager);
         } else  {
             manager = null;
         }

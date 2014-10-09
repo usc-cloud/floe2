@@ -16,12 +16,16 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Output;
 import edu.usc.pgroup.floe.app.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,25 +47,43 @@ public class ReducerStateManager extends StateManagerComponent
 
 
     /**
-     * The pellet instance id to pellet state map.
+     * The pellet instance id to pellet state map. PelletState map is a map
+     * from the custom key identifier to the pellet state.
      */
     private ConcurrentHashMap<String,
             HashMap<Object, PelletState>> pelletStateMap;
 
     /**
+     * State checkpointing component to periodically perform delta
+     * checkpointing.
+     */
+    private final StateCheckpointComponent checkpointer;
+
+    /**
+     * component to backup state as well as messages.
+     */
+    private final ReducerStateBackupComponent backupComponent;
+
+    /**
      * Constructor.
-     *  @param flakeId       Flake's id to which this component belongs.
+     * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      * @param fieldName     The fieldName used by the reducer for grouping.
+     * @param port          Port to be used for sending checkpoint data.
      */
     public ReducerStateManager(final String flakeId,
                                final String componentName,
                                final ZMQ.Context ctx,
-                               final String fieldName) {
-        super(flakeId, componentName, ctx);
+                               final String fieldName,
+                               final int port) {
+        super(flakeId, componentName, ctx, port);
         this.pelletStateMap = new ConcurrentHashMap<>(); //fixme. add size,
         this.keyFieldName = fieldName;
+        checkpointer = new StateCheckpointComponent(flakeId,
+                componentName + "-CHECKPOINTER", ctx, this, port);
+        backupComponent = new ReducerStateBackupComponent(flakeId,
+                componentName + "-STBACKUP", ctx, fieldName);
     }
 
     /**
@@ -83,19 +105,75 @@ public class ReducerStateManager extends StateManagerComponent
             return null;
         }
 
-        if (!pelletStateMap.containsKey(peId)) {
-            LOGGER.info("Creating new state for peid: {}", peId);
-            pelletStateMap.put(peId, new HashMap<Object, PelletState>());
+        synchronized (pelletStateMap) {
+            if (!pelletStateMap.containsKey(peId)) {
+                LOGGER.info("Creating new state for peid: {}", peId);
+                pelletStateMap.put(peId, new HashMap<Object, PelletState>());
+            }
         }
         HashMap<Object, PelletState> keyStateMap = pelletStateMap.get(peId);
 
-        Object value = tuple.get(keyFieldName);
+        String value = (String) tuple.get(keyFieldName);
         if (!keyStateMap.containsKey(value)) {
             LOGGER.info("Creating new state for value: {}", value);
             keyStateMap.put(value, new PelletState(peId, value, this));
         }
 
         return keyStateMap.get(value);
+    }
+
+    /**
+     * Checkpoint state and return the serialized delta to send to the backup
+     * nodes.
+     *
+     * @return serialized delta to send to the backup nodes.
+     */
+    @Override
+    public final byte[] checkpointState() {
+        //FIXME: MAKE THIS INTO A FACTORY.
+        //KryoStateSerializer serializer = new KryoStateSerializer();
+
+        Kryo kryo = new Kryo();
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        Output kryoOut = new Output(outStream);
+
+        synchronized (pelletStateMap) {
+            for (HashMap<Object, PelletState> keyToPstateMap
+                    : pelletStateMap.values()) {
+                for (PelletState pState: keyToPstateMap.values()) {
+                    LOGGER.debug("starting checkpointing:{}",
+                            pState.getCustomId());
+                    PelletStateDelta delta = pState.startDeltaCheckpointing();
+                    LOGGER.debug("to checkpoint this:{}",
+                            delta.getDeltaState());
+                    if (delta.getDeltaState().size() > 0) {
+                        //serializer.writeDeltaState(delta);
+                        kryo.writeObject(kryoOut, delta);
+                    }
+                    pState.finishDeltaCheckpointing();
+                }
+            }
+        }
+
+        kryoOut.flush();
+        kryoOut.close();
+        return outStream.toByteArray();
+        //byte[] serialized = serializer.getBuffer();
+        //LOGGER.info("Serialied size:{}", serialized.length);
+        //return serialized;
+    }
+
+    /**
+     * Used to backup the states received from the neighbor flakes.
+     *
+     * @param nfid   flake id of the neighbor from which the state update is
+     *               received.
+     * @param deltas a list of pellet state deltas received from the flake.
+     */
+    @Override
+    public final void backupState(final String nfid,
+                            final List<PelletStateDelta> deltas) {
+        backupComponent.backupState(nfid, deltas);
     }
 
     /**
@@ -108,8 +186,14 @@ public class ReducerStateManager extends StateManagerComponent
     @Override
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
+
+        checkpointer.startAndWait();
+        backupComponent.startAndWait();
         notifyStarted(true);
+
         terminateSignalReceiver.recv();
+        backupComponent.stopAndWait();
+        checkpointer.stopAndWait();
         notifyStopped(true);
     }
 
@@ -126,7 +210,9 @@ public class ReducerStateManager extends StateManagerComponent
                                    final Object customId,
                                    final String key,
                                    final Object value) {
-        LOGGER.info("State updated for: {}, reducer key:{} , state key:{}, "
-                        + "new value:{}", srcPeId, customId, key, value);
+        /*LOGGER.info("State updated for: {}, reducer key:{} , state key:{}, "
+                        + "new value:{}", srcPeId, customId, key, value);*/
     }
+
+
 }

@@ -122,6 +122,8 @@ public class MsgReceiverComponent extends FlakeComponent {
         // when a new pred. flake is created.
         final ZMQ.Socket backChannelPingger = getContext().socket(ZMQ.PUB);
 
+        final ZMQ.Socket msgBackupSender = getContext().socket(ZMQ.PUSH);
+
         boolean result = false;
         try {
             //Frontend socket to talk to other flakes. dont connect here.
@@ -170,7 +172,8 @@ public class MsgReceiverComponent extends FlakeComponent {
             //initialize per edge flake local strategies.
             initializeLocalDispersionStrategyMap();
 
-
+            msgBackupSender.connect(Utils.Constants.FLAKE_MSG_BACKUP_PREFIX
+                    + getFid());
 
             result = true;
         } catch (Exception ex) {
@@ -187,7 +190,8 @@ public class MsgReceiverComponent extends FlakeComponent {
                 xpubToPredSock,
                 msgReceivercontrolForwardSocket,
                 backChannelPingger,
-                terminateSignalReceiver
+                terminateSignalReceiver,
+                msgBackupSender
         );
 
         frontend.close();
@@ -216,6 +220,7 @@ public class MsgReceiverComponent extends FlakeComponent {
      * @param backChannelPingger socket to ping the backchannel whenever a
      *                           new pred. flake is added/removed.
      * @param terminateSignalReceiver terminate signal receiver.
+     * @param msgBackupSender socket to send the tuples meant for backup .
      */
     private void receiveAndProcess(
             final ZMQ.Socket frontend,
@@ -224,7 +229,8 @@ public class MsgReceiverComponent extends FlakeComponent {
             final ZMQ.Socket xpubToPredSock,
             final ZMQ.Socket msgReceivercontrolForwardSocket,
             final ZMQ.Socket backChannelPingger,
-            final ZMQ.Socket terminateSignalReceiver) {
+            final ZMQ.Socket terminateSignalReceiver,
+            final ZMQ.Socket msgBackupSender) {
 
         byte[] message;
 
@@ -244,7 +250,7 @@ public class MsgReceiverComponent extends FlakeComponent {
             pollerItems.poll(pollDelay);
 
             if (pollerItems.pollin(0)) { //frontend
-                forwardToPellet(frontend, backend);
+                forwardToPellet(frontend, backend, msgBackupSender);
             } else if (pollerItems.pollin(1)) { //backend
                 Utils.forwardCompleteMessage(backend, frontend);
             } else if (pollerItems.pollin(2)) { //from xsubFromPelletsSock
@@ -364,19 +370,23 @@ public class MsgReceiverComponent extends FlakeComponent {
      * Once the poller.poll returns, use this function as a component in the
      * proxy to forward messages from one socket to another.
      * @param from socket to read from.
-     * @param to socket to send messages to
+     * @param to socket to send messages to.
+     * @param backup socket to send to backup the messages. Using socket and
+     *               not backing up directly to minimize latencies.
      */
     private void forwardToPellet(final ZMQ.Socket from,
-                                 final ZMQ.Socket to) {
+                                 final ZMQ.Socket to,
+                                 final ZMQ.Socket backup) {
         String fid = from.recvStr(0, Charset.defaultCharset());
 
         String src = from.recvStr(0, Charset.defaultCharset());
         byte[] message = from.recv();
 
         if (!fid.equalsIgnoreCase(getFid())) {
-            LOGGER.info("THIS MESSAGE IS MEANT FOR BACKUP."
+            LOGGER.debug("THIS MESSAGE IS MEANT FOR BACKUP."
                     + " SHOULD DO THAT HERE {} & {}", fid, getFid());
-            return;
+            backup.sendMore(fid);
+            backup.send(message, 0);
         }
 
 

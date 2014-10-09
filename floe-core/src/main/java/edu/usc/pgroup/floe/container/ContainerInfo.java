@@ -83,15 +83,7 @@ public final class ContainerInfo implements Serializable {
         // be useful if a container is restarted). For now, generating a UUID.
         containerId = UUID.randomUUID().toString();
 
-        if (FloeConfig.getConfig().containsKey(
-                ConfigProperties.HOST_NAME
-        )) {
-            hostnameOrIpAddr = FloeConfig.getConfig().getString(
-                    ConfigProperties.HOST_NAME
-            );
-        } else {
-            hostnameOrIpAddr = Utils.getHostName();
-        }
+        hostnameOrIpAddr = Utils.getHostNameOrIpAddress();
 
         portRangeStart = FloeConfig.getConfig().getInt(
                 ConfigProperties.FLAKE_RECEIVER_PORT

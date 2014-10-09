@@ -21,19 +21,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author kumbhare
  */
-public class PelletStateManager extends StateManagerComponent
+public class GenericPelletStateManager extends StateManagerComponent
         implements PelletStateUpdateListener {
 
     /**
      * the global logger instance.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(PelletStateManager.class);
+            LoggerFactory.getLogger(GenericPelletStateManager.class);
 
     /**
      * The pellet instance id to pellet state map.
@@ -46,12 +47,15 @@ public class PelletStateManager extends StateManagerComponent
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
+     * @param port          Port to be used for sending checkpoint data.
      */
-    public PelletStateManager(final String flakeId,
-                               final String componentName,
-                               final ZMQ.Context ctx) {
-        super(flakeId, componentName, ctx);
-        pelletStateMap = new ConcurrentHashMap<>(); //fixme. add size,
+    public GenericPelletStateManager(final String flakeId,
+                                     final String componentName,
+                                     final ZMQ.Context ctx,
+                                     final int port) {
+        super(flakeId, componentName, ctx, port);
+        pelletStateMap = new ConcurrentHashMap<>(); //fixme. add size to
+        // optimize
         // loadfactor
     }
 
@@ -74,6 +78,30 @@ public class PelletStateManager extends StateManagerComponent
             pelletStateMap.put(peId, new PelletState(peId, this));
         }
         return pelletStateMap.get(peId);
+    }
+
+    /**
+     * Checkpoint state and return the serialized delta to send to the backup
+     * nodes.
+     *
+     * @return serialized delta to send to the backup nodes.
+     */
+    @Override
+    public final byte[] checkpointState() {
+        return new byte[0];
+    }
+
+    /**
+     * Used to backup the states received from the neighbor flakes.
+     *
+     * @param nfid   flake id of the neighbor from which the state update is
+     *               received.
+     * @param deltas a list of pellet state deltas received from the flake.
+     */
+    @Override
+    public final void backupState(final String nfid,
+                                  final List<PelletStateDelta> deltas) {
+        //FIXME.. later. not requrired for the paper.
     }
 
     /**

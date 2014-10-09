@@ -214,6 +214,12 @@ public class SenderBEComponent extends FlakeComponent {
                 List<String> flakeIds = dispersionStrategy
                         .getTargetFlakeIds(tuple);
 
+                //FIXME: CAN IMPROVE PERF. HERE BY NOT DOING MULTIPLE
+                //FIXME: SERIALIZE/DESERIALIZE operations.
+                tuple.put(Utils.Constants.SYSTEM_TS_FIELD_NAME,
+                        System.currentTimeMillis());
+
+                message = tupleSerializer.serialize(tuple);
                 if (flakeIds != null
                         && flakeIds.size() > 0) {
                     for (String flakeId : flakeIds) {

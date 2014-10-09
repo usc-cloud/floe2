@@ -64,6 +64,7 @@ public final class FlakeService {
      *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param appName application's name to which this flake belongs.
      * @param jar the application's jar file name.
+     * @param statePort       Port to be used for sending checkpoint data.
      * @param pelletPortMap the list of ports on which this flake should
      *                       listen on. Note: This is fine here (and not as a
      *                       control signal) because this depends only on
@@ -82,6 +83,7 @@ public final class FlakeService {
                          final String cid,
                          final String appName,
                          final String jar,
+                         final int statePort,
                          final Map<String, Integer> pelletPortMap,
                          final Map<String, Integer> backChannelPortMap,
                          final Map<String, String> successorChannelTypeMap,
@@ -91,6 +93,7 @@ public final class FlakeService {
                 cid,
                 appName,
                 jar,
+                statePort,
                 pelletPortMap,
                 backChannelPortMap,
                 successorChannelTypeMap,
@@ -172,6 +175,11 @@ public final class FlakeService {
                 .withDescription("App's jar file name containing the pellets")
                 .create("streams");
 
+        Option statePortOption = OptionBuilder.withArgName("stateport:<num>")
+                .hasArgs().isRequired()
+                .withDescription("Port number to use for state checkpointing")
+                .create("stateport");
+
         options.addOption(pidOption);
         options.addOption(idOption);
         options.addOption(cidOption);
@@ -182,6 +190,7 @@ public final class FlakeService {
         options.addOption(streamsOption);
         options.addOption(channelTypeOption);
         options.addOption(predChannelTypeOption);
+        options.addOption(statePortOption);
 
         return options;
     }
@@ -265,6 +274,8 @@ public final class FlakeService {
             pelletStreamsMap.put(pellet, streamNames);
         }
 
+        Integer statePort = Integer.parseInt(line.getOptionValue("stateport"));
+
         LOGGER.info("pid: {}, id:{}, cid:{}, app:{}, jar:{}, ports:{}, "
             + "backports:{}, stream:{}, channeltype:{}, predChanneltype:{}",
             pid, id,
@@ -278,6 +289,7 @@ public final class FlakeService {
                     cid,
                     appName,
                     jar,
+                    statePort,
                     pelletPortMap,
                     pelletBackChannelPortMap,
                     pelletChannelTypeMap,

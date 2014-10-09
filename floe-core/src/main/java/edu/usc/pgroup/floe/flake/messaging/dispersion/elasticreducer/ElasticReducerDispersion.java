@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
@@ -107,15 +108,19 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy {
             for (ChildData child: childData) {
                 String destFid = ZKPaths.getNodeFromPath(child.getPath());
                 LOGGER.info("Dest FID: {}", destFid);
-                Integer newPosition = (Integer) Utils.deserialize(
-                                                    child.getData());
-                updateCircle(destFid, newPosition, true);
+
+                /*Integer newPosition = (Integer) Utils.deserialize(
+                                                    child.getData());*/
+                FlakeToken token = (FlakeToken) Utils.deserialize(
+                                                        child.getData());
+
+                updateCircle(destFid, token.getToken(), true);
                 //targetFlakeIds.add(destFid);
             }
         } catch (Exception e) {
             e.printStackTrace();
             LOGGER.warn("Error occured while retreving flake information for "
-                    + "destination pellet,");
+                    + "destination pellet: {}", e);
         }
     }
 

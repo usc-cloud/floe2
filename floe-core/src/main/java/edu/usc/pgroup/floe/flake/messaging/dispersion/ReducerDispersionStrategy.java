@@ -79,12 +79,13 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
             flakeCache.rebuild();
             List<ChildData> childData = flakeCache.getCurrentData();
             for (ChildData child: childData) {
+
                 targetFlakeIds.add(ZKPaths.getNodeFromPath(child.getPath()));
             }
         } catch (Exception e) {
             e.printStackTrace();
             LOGGER.warn("Error occured while retreving flake information for "
-                    + "destination pellet,");
+                    + "destination pellet {}", e);
         }
     }
 

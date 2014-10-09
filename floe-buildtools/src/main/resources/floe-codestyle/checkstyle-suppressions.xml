@@ -121,8 +121,17 @@
 
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
               files="SenderMEComponent.java"/>
-
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
+              files="CoordinationManagerFactory.java"/>
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
+              files="ReducerCoordinationComponent.java"/>
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
+              files="MsgReceiverComponent.java"/>
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.AvoidInlineConditionalsCheck"
               files="FlakeMessageReceiver.java"/>
 
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocMethodCheck"
+              files="KryoStateSerializer.java"/>
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocMethodCheck"
+              files="StateSerializer.java"/>
 </suppressions>

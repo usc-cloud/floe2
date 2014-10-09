@@ -105,6 +105,13 @@ public final class ConfigProperties {
     public static final String FLAKE_HEARTBEAT_PERIOD = "floe.flake.heartbeat"
             + ".period";
 
+
+    /**
+     * Flake state checkpoint period.
+     */
+    public static final String FLAKE_STATE_CHECKPOINT_PERIOD
+            = "floe.flake.statecheckpoint.period";
+
     /**
      * FLAKE (re)launch delay.
      */

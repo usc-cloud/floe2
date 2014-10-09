@@ -408,7 +408,7 @@ public class ResourceMapping implements Serializable {
 
             LOGGER.info("{} listening for {} count ports", pid, numPorts);
 
-            numPorts = Math.max(2, numPorts);
+            numPorts = Math.max(2, numPorts) + 1; //one extra for state.
             int[] flPorts = new int[numPorts];
 
             for (int i = 0; i < numPorts; i++) {
@@ -498,6 +498,11 @@ public class ResourceMapping implements Serializable {
         private final Map<String, Integer> listeningPorts;
 
         /**
+         * Port used by the socket for state checkpointing.
+         */
+        private final int stateChekpointingPort;
+
+        /**
          * The ports on which this flake should listen for dispersion
          * connections from succeeding pellets.
          * Map from pellet name to the port number.
@@ -553,10 +558,13 @@ public class ResourceMapping implements Serializable {
 
             this.numPelletInstances = 0;
 
+            this.stateChekpointingPort = flPorts[0];
+
             TPellet tPellet = floeApp.get_pellets().get(pid);
             LOGGER.info("Adding out edeges for:{}", pid);
             if (tPellet.get_outgoingEdgesWithSubscribedStreams().size() > 0) {
-                int i = 0;
+
+                int i = 1;
 
                 for (Map.Entry<TEdge, List<String>> oe
                         : tPellet
@@ -585,9 +593,9 @@ public class ResourceMapping implements Serializable {
             } else {
                 LOGGER.info("No OUTPUT PELLETS for: {}", tPellet.get_id());
                 listeningPorts.put("OUT_PELLET"
-                        , flPorts[0]);
-                pelletBackChannelPortMapping.put("OUT_PELLET"
                         , flPorts[1]);
+                pelletBackChannelPortMapping.put("OUT_PELLET"
+                        , flPorts[2]);
                 targetPelletChannelTypeMapping.put("OUT_PELLET", "NONE");
                 streamNames.put("OUT_PELLET",
                         new ArrayList<String>());
@@ -739,6 +747,13 @@ public class ResourceMapping implements Serializable {
          */
         public final Map<String, String> getSrcPelletChannelTypeMapping() {
             return srcPelletChannelTypeMapping;
+        }
+
+        /**
+         * @return the port to be used state checkpointing
+         */
+        public final int getStateCheckpointingPort() {
+            return stateChekpointingPort;
         }
     }
 }
