@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -81,6 +82,23 @@ public class GenericPelletStateManager extends StateManagerComponent
     }
 
     /**
+     * Returns the object (state) associated with the given local pe instance.
+     * The tuple may be used to further divide the state (e.g. in case of
+     * reducer pellet, the tuple's key will be used to divide the state).
+     *
+     * @param peId Pellet's instance id.
+     * @param key  The value associated with the correspnding field name (this
+     *             is used during recovery since we do not have access to the
+     *             entire tuple, but just the key).
+     * @return pellet state corresponding to the given peId and key value
+     * combination.
+     */
+    @Override
+    public final PelletState getState(final String peId, final String key) {
+        return null;
+    }
+
+    /**
      * Checkpoint state and return the serialized delta to send to the backup
      * nodes.
      *
@@ -93,8 +111,7 @@ public class GenericPelletStateManager extends StateManagerComponent
 
     /**
      * Used to backup the states received from the neighbor flakes.
-     *
-     * @param nfid   flake id of the neighbor from which the state update is
+     *  @param nfid   flake id of the neighbor from which the state update is
      *               received.
      * @param deltas a list of pellet state deltas received from the flake.
      */
@@ -102,6 +119,30 @@ public class GenericPelletStateManager extends StateManagerComponent
     public final void backupState(final String nfid,
                                   final List<PelletStateDelta> deltas) {
         //FIXME.. later. not requrired for the paper.
+    }
+
+    /**
+     * Get the state backed up for the given neighbor flake id.
+     *
+     * @param neighborFid neighbor's flake id.
+     * @return the backedup state assocuated with the given fid
+     */
+    @Override
+    public final Map<String, PelletStateDelta>
+                        getBackupState(final String neighborFid) {
+        //FIXME.. later. not required for the paper.
+        return null;
+    }
+
+    /**
+     * Starts the msg recovery process for the given neighbor.
+     *
+     * @param nfid flake id of the neighbor for which the msg recovery is to
+     *             start.
+     */
+    @Override
+    public void startMsgRecovery(final String nfid) {
+        //FIXEME.. later.. not required for the paper.
     }
 
     /**

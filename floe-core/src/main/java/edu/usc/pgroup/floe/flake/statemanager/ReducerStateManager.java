@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -49,9 +49,21 @@ public class ReducerStateManager extends StateManagerComponent
     /**
      * The pellet instance id to pellet state map. PelletState map is a map
      * from the custom key identifier to the pellet state.
-     */
+     *
     private ConcurrentHashMap<String,
-            HashMap<Object, PelletState>> pelletStateMap;
+            HashMap<Object, PelletState>> pelletStateMap;*/
+
+    //To Fix #39. Since we do not know the pellet instance id during
+    // recovery, we cannot associate state with a given pellet instance.
+    // Further, we dont really use pe instance id since a state object is
+    // associated with each key anyways. That was used only for perf. i guess.
+
+    /**
+     * PelletState map is a map from the reducer key identifier to the pellet
+     * state.
+     */
+     private ConcurrentHashMap<Object, PelletState> pelletStateMap;
+
 
     /**
      * State checkpointing component to periodically perform delta
@@ -101,25 +113,41 @@ public class ReducerStateManager extends StateManagerComponent
     @Override
     public final PelletState getState(final String peId, final Tuple tuple) {
 
+        //ignoring peId.
+
         if (tuple == null) {
             return null;
         }
 
+        String value = (String) tuple.get(keyFieldName);
+
+        return getState(peId, value);
+    }
+
+    /**
+     * Returns the object (state) associated with the given local pe instance.
+     * The tuple may be used to further divide the state (e.g. in case of
+     * reducer pellet, the tuple's key will be used to divide the state).
+     *
+     * @param peId Pellet's instance id.
+     * @param keyValue  The value associated with the correspnding field name
+     *                  (this is used during recovery since we
+     *                  do not have access to the
+     *             entire tuple, but just the key).
+     * @return pellet state corresponding to the given peId and key value
+     * combination.
+     */
+    @Override
+    public final PelletState getState(final String peId,
+                                      final String keyValue) {
         synchronized (pelletStateMap) {
-            if (!pelletStateMap.containsKey(peId)) {
-                LOGGER.info("Creating new state for peid: {}", peId);
-                pelletStateMap.put(peId, new HashMap<Object, PelletState>());
+            if (!pelletStateMap.containsKey(keyValue)) {
+                LOGGER.info("Creating new state for key: {}", keyValue);
+                pelletStateMap.put(keyValue, new PelletState(keyValue, this));
             }
         }
-        HashMap<Object, PelletState> keyStateMap = pelletStateMap.get(peId);
 
-        String value = (String) tuple.get(keyFieldName);
-        if (!keyStateMap.containsKey(value)) {
-            LOGGER.info("Creating new state for value: {}", value);
-            keyStateMap.put(value, new PelletState(peId, value, this));
-        }
-
-        return keyStateMap.get(value);
+        return pelletStateMap.get(keyValue);
     }
 
     /**
@@ -138,20 +166,22 @@ public class ReducerStateManager extends StateManagerComponent
         Output kryoOut = new Output(outStream);
 
         synchronized (pelletStateMap) {
-            for (HashMap<Object, PelletState> keyToPstateMap
-                    : pelletStateMap.values()) {
-                for (PelletState pState: keyToPstateMap.values()) {
-                    LOGGER.debug("starting checkpointing:{}",
-                            pState.getCustomId());
-                    PelletStateDelta delta = pState.startDeltaCheckpointing();
-                    LOGGER.debug("to checkpoint this:{}",
-                            delta.getDeltaState());
-                    if (delta.getDeltaState().size() > 0) {
-                        //serializer.writeDeltaState(delta);
-                        kryo.writeObject(kryoOut, delta);
-                    }
-                    pState.finishDeltaCheckpointing();
+            for (PelletState pState: pelletStateMap.values()) {
+                LOGGER.debug("starting checkpointing:{}",
+                        pState.getCustomId());
+
+                if (pState.getLatestTimeStampAtomic() == -1) {
+                    continue; //do not checkpoint this state yet.
                 }
+
+                PelletStateDelta delta = pState.startDeltaCheckpointing();
+                LOGGER.debug("to checkpoint this:{}",
+                        delta.getDeltaState());
+                if (delta.getDeltaState().size() > 0) {
+                    //serializer.writeDeltaState(delta);
+                    kryo.writeObject(kryoOut, delta);
+                }
+                pState.finishDeltaCheckpointing();
             }
         }
 
@@ -165,15 +195,27 @@ public class ReducerStateManager extends StateManagerComponent
 
     /**
      * Used to backup the states received from the neighbor flakes.
-     *
-     * @param nfid   flake id of the neighbor from which the state update is
+     *  @param nfid   flake id of the neighbor from which the state update is
      *               received.
      * @param deltas a list of pellet state deltas received from the flake.
      */
     @Override
     public final void backupState(final String nfid,
-                            final List<PelletStateDelta> deltas) {
+                                  final List<PelletStateDelta> deltas) {
         backupComponent.backupState(nfid, deltas);
+    }
+
+    /**
+     * Get the state backed up for the given neighbor flake id.
+     *
+     * @param neighborFid neighbor's flake id.
+     * @return the backed up state associated with the given fid
+     *
+     */
+    @Override
+    public final Map<String, PelletStateDelta> getBackupState(
+                                                  final String neighborFid) {
+        return backupComponent.getBackupState(neighborFid);
     }
 
     /**
@@ -195,6 +237,17 @@ public class ReducerStateManager extends StateManagerComponent
         backupComponent.stopAndWait();
         checkpointer.stopAndWait();
         notifyStopped(true);
+    }
+
+    /**
+     * Starts the msg recovery process for the given neighbor.
+     *
+     * @param nfid flake id of the neighbor for which the msg recovery is to
+     *             start.
+     */
+    @Override
+    public final void startMsgRecovery(final String nfid) {
+        backupComponent.startMsgRecovery(nfid);
     }
 
     /**

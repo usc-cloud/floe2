@@ -30,7 +30,7 @@ public class PelletState {
     /**
      * pellet instance id to which this pellet state belongs.
      */
-    private final String peId;
+    //private final String peId;
 
     /**
      * A custom identifier that can be used to further identify this state's
@@ -81,19 +81,19 @@ public class PelletState {
 
     /**
      * Constructor.
-     * @param peInstanceId pellet instance id to which this pellet state
+     * xparam peInstanceId pellet instance id to which this pellet state
      *                     belongs.
      * @param customSubId A custom identifier that can be used to further
      *                 identify this state's owner. (e.g. the reducer key)
      * @param listener The listener object which receives notification when a
      *                 state is updated.
      */
-    PelletState(final String peInstanceId,
+    PelletState(//final String peInstanceId,
                 final String customSubId,
                 final PelletStateUpdateListener listener) {
         this.pelletState = new HashMap<>();
         this.updateListener = listener;
-        this.peId = peInstanceId;
+        //this.peId = peInstanceId;
         this.customId = customSubId;
 
         this.currentDelta = new AtomicReference<>(
@@ -105,19 +105,20 @@ public class PelletState {
         this.swapLock = new ReentrantLock();
         this.mergeLock = new ReentrantLock();
         this.latestTimeStampAtomic = new AtomicLong();
+        this.latestTimeStampAtomic.set(-1);
     }
 
     /**
      * Constructor.
-     * @param peInstanceId pellet instance id to which this pellet state
+     * xparam peInstanceId pellet instance id to which this pellet state
      *                     belongs.
-     * @param listener The listener object which receives notification when a
+     * xparam listener The listener object which receives notification when a
      *                 state is updated.
-     */
+     *
     PelletState(final String peInstanceId,
                 final PelletStateUpdateListener listener) {
         this(peInstanceId, null, listener);
-    }
+    }/
 
     /**
      * sets the state for the pellet.
@@ -134,9 +135,9 @@ public class PelletState {
             swapLock.unlock();
         }
 
-        if (updateListener != null) {
+        /*if (updateListener != null) {
             updateListener.stateUpdated(peId, customId, key, state);
-        }
+        }*/
     }
 
     /**
@@ -145,6 +146,15 @@ public class PelletState {
      */
     public final void setLatestTimeStampAtomic(final long ts) {
         latestTimeStampAtomic.set(ts);
+    }
+
+    /**
+     * @return the latest timestamp associated with the state. -1 indicates
+     * that the state has been generated as a result of backup restore or is
+     * in an inconsistent state.
+     */
+    public final Long getLatestTimeStampAtomic() {
+        return latestTimeStampAtomic.get();
     }
 
     /**

@@ -18,17 +18,18 @@ package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
 
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeToken;
+import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
-import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
+import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
 import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SortedMap;
@@ -37,7 +38,9 @@ import java.util.TreeMap;
 /**
  * @author kumbhare
  */
-public class ElasticReducerDispersion implements MessageDispersionStrategy {
+public class ElasticReducerDispersion implements MessageDispersionStrategy,
+        PathChildrenUpdateListener {
+
     /**
      * the global logger instance.
      */
@@ -53,7 +56,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy {
      * Reverse map which stores the mapping from the flakeid to its current
      * value.
      */
-    private HashMap<String, Integer> reverseMap;
+    private HashMap<String, Integer> flakeIdToTokenMap;
 
     /**
      * Key field name to be used for grouping.
@@ -74,7 +77,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy {
     /**
      * Path cache to monitor the tokens.
      */
-    private PathChildrenCache flakeCache;
+    private ZKFlakeTokenCache flakeCache;
 
     /**
      * Initializes the strategy.
@@ -90,24 +93,28 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy {
             final String args) {
         this.targetFlakeIds = new ArrayList<>();
         this.circle = new TreeMap<>();
-        this.reverseMap = new HashMap<>();
+        this.flakeIdToTokenMap = new HashMap<>();
         this.keyFieldName = args;
         this.hashingFunction = new Murmur32();
 
         String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
                 appName, destPelletName);
-        LOGGER.info("Listening for flake tokens for dest pellet: {} at {}",
+        LOGGER.debug("Listening for flake tokens for dest pellet: {} at {}",
                 destPelletName, pelletTokenPath);
-        this.flakeCache = new PathChildrenCache(ZKClient.getInstance()
-                .getCuratorClient(), pelletTokenPath, true);
+        this.flakeCache = new ZKFlakeTokenCache(pelletTokenPath, this);
+
+                //new PathChildrenCache(ZKClient.getInstance()
+                //.getCuratorClient(), pelletTokenPath, true);
+
 
         try {
-            flakeCache.start();
+            //flakeCache.start();
+            //flakeCache.rebuild();
             flakeCache.rebuild();
-            List<ChildData> childData = flakeCache.getCurrentData();
+            List<ChildData> childData = flakeCache.getCurrentCachedData();
             for (ChildData child: childData) {
                 String destFid = ZKPaths.getNodeFromPath(child.getPath());
-                LOGGER.info("Dest FID: {}", destFid);
+                LOGGER.warn("Dest FID: {}", destFid);
 
                 /*Integer newPosition = (Integer) Utils.deserialize(
                                                     child.getData());*/
@@ -199,10 +206,10 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy {
     public final void backChannelMessageReceived(final String targetFlakeId,
                                                  final byte[] message,
                                                  final Boolean toContinue) {
-        Integer newPosition = (Integer) Utils.deserialize(message);
-        updateCircle(targetFlakeId, newPosition, toContinue);
+        //Integer newPosition = (Integer) Utils.deserialize(message);
+        //updateCircle(targetFlakeId, newPosition, toContinue);
 
-        LOGGER.debug("Circle: {}", circle);
+        //LOGGER.debug("Circle: {}", circle);
     }
 
     /**
@@ -216,18 +223,81 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy {
     public final void updateCircle(final String targetFlakeId,
                                    final Integer newPosition,
                                    final boolean toContinue) {
-        Integer current = reverseMap.get(targetFlakeId);
+        Integer current = flakeIdToTokenMap.get(targetFlakeId);
         if (current != null) {
             circle.remove(current);
         }
 
         if (toContinue) {
-
-
             LOGGER.debug("received Token: {}", newPosition);
 
-            reverseMap.put(targetFlakeId, newPosition);
+            flakeIdToTokenMap.put(targetFlakeId, newPosition);
             circle.put(newPosition, targetFlakeId);
         }
+    }
+
+    /**
+     * Triggered when initial list of children is cached.
+     * This is retrieved synchronously.
+     *
+     * @param initialChildren initial list of children.
+     */
+    @Override
+    public final void childrenListInitialized(
+            final Collection<ChildData> initialChildren) {
+
+    }
+
+    /**
+     * Triggered when a new child is added.
+     * Note: this is not recursive.
+     *
+     * @param addedChild newly added child's data.
+     */
+    @Override
+    public final void childAdded(final ChildData addedChild) {
+
+        String destFid = ZKPaths.getNodeFromPath(addedChild.getPath());
+        LOGGER.info("Adding Dest FID: {}", destFid);
+
+        FlakeToken token = (FlakeToken) Utils.deserialize(
+                addedChild.getData());
+
+        updateCircle(destFid, token.getToken(), true);
+    }
+
+    /**
+     * Triggered when an existing child is removed.
+     * Note: this is not recursive.
+     *
+     * @param removedChild removed child's data.
+     */
+    @Override
+    public final void childRemoved(final ChildData removedChild) {
+        String destFid = ZKPaths.getNodeFromPath(removedChild.getPath());
+        LOGGER.info("Removing dest FID: {}", destFid);
+
+        FlakeToken token = (FlakeToken) Utils.deserialize(
+                removedChild.getData());
+
+        updateCircle(destFid, token.getToken(), false);
+    }
+
+    /**
+     * Triggered when a child is updated.
+     * Note: This is called only when Children data is also cached in
+     * addition to stat information.
+     *
+     * @param updatedChild update child's data.
+     */
+    @Override
+    public final void childUpdated(final ChildData updatedChild) {
+        String destFid = ZKPaths.getNodeFromPath(updatedChild.getPath());
+        LOGGER.info("Updating dest FID: {}", destFid);
+
+        FlakeToken token = (FlakeToken) Utils.deserialize(
+                updatedChild.getData());
+
+        updateCircle(destFid, token.getToken(), true);
     }
 }

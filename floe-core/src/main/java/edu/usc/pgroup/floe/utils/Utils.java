@@ -457,6 +457,20 @@ public final class Utils {
                 = "inproc://flake-msg-backup-";
 
         /**
+         * the endpoint to be used by backup component to start/stop recovery
+         * process (like a control channel).
+         */
+        public static final String FLAKE_MSG_BACKUP_CONTROL_PREFIX
+                = "inproc://flake-msg-backup-control-";
+
+        /**
+         * the endpoint to be used during recovery. Backup component binds to
+         * it, flake receiver connects to it.
+         */
+        public static final String FLAKE_MSG_RECOVERY_PREFIX
+                = "inproc://flake-msg-backup-recovery-";
+
+        /**
          * the endpoint to be used by flakes to send their state checkpoints.
          */
         public static final String FLAKE_STATE_BACKUP_PREFIX
@@ -498,5 +512,9 @@ public final class Utils {
          * The field name associated with the system timestamp of the tuple.
          */
         public static final String SYSTEM_TS_FIELD_NAME = "SYSTEM_TS";
+        /**
+         * The field name associated with the SRC pellet of the tuple.
+         */
+        public static final String SYSTEM_SRC_PELLET_NAME = "SYSTEM_SRC_PELLET";
     }
 }

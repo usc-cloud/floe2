@@ -219,13 +219,17 @@ public class SenderBEComponent extends FlakeComponent {
                 tuple.put(Utils.Constants.SYSTEM_TS_FIELD_NAME,
                         System.currentTimeMillis());
 
+                tuple.put(Utils.Constants.SYSTEM_SRC_PELLET_NAME,
+                        myPelletName);
+
                 message = tupleSerializer.serialize(tuple);
                 if (flakeIds != null
                         && flakeIds.size() > 0) {
                     for (String flakeId : flakeIds) {
                         LOGGER.debug("Sending to:" + flakeId);
                         backend.sendMore(flakeId);
-                        backend.sendMore(myPelletName);
+                        //backend.sendMore(myPelletName); Dont add pellet as
+                        // envelope, instead add it to the tuple.
                         backend.send(message, 0);
                     }
                 } else { //should queue up messages.

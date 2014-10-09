@@ -96,45 +96,26 @@ public class StateCheckpointComponent extends FlakeComponent {
         stateSoc.bind(ssConnetStr);
 
         notifyStarted(true);
-
-        while (!Thread.currentThread().isInterrupted()) {
+        Boolean done = false;
+        while (!done && !Thread.currentThread().isInterrupted()) {
 
             int polled = pollerItems.poll(checkpointPeriod);
             if (pollerItems.pollin(0)) {
                 //terminate.
                 LOGGER.warn("Terminating state checkpointing");
                 terminateSignalReceiver.recv();
-                break;
+                done = true;
             }
 
             LOGGER.debug("Checkpointing State");
             byte[] checkpointdata = stateManager.checkpointState();
 
-            /*if (checkpointdata != null && checkpointdata.length > 0) {
-                try {
-                    Kryo kryo = new Kryo();
-                    Input kryoIn = new Input(checkpointdata);
-
-                    //stateSerializer.setBuffer(checkpointdata);
-                    //PelletStateDelta pes = stateSerializer.getNextState();
-
-                    while (!kryoIn.eof()) {
-                        PelletStateDelta pes
-                                = kryo.readObject(kryoIn,
-                                                    PelletStateDelta.class);
-
-                        LOGGER.info("Sample deserialization:{}",
-                                pes.getDeltaState());
-                    }
-                    kryoIn.close();
-                } catch (Exception e) {
-                    LOGGER.warn("Exception: {}", e);
-                }
-            }*/
             stateSoc.sendMore(getFid());
+            stateSoc.sendMore(done.toString());
             stateSoc.send(checkpointdata, 0);
         }
 
+        stateSoc.close();
         notifyStopped(true);
     }
 }

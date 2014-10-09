@@ -283,17 +283,27 @@ public class Flake {
         LOGGER.info("Flake started. Starting control channel.");
         startControlChannel();
 
+
+        if (flakeHeartbeatComponent != null) {
+            flakeHeartbeatComponent.stopAndWait();
+        }
+
         if (flakeReceiverComponent != null) {
             flakeReceiverComponent.stopAndWait();
+        }
+
+        if (stateManager != null) {
+            stateManager.stopAndWait();
+        }
+
+        if (coordinationManager != null) {
+            coordinationManager.stopAndWait();
         }
 
         if (flakeSenderComponent != null) {
             flakeSenderComponent.stopAndWait();
         }
 
-        if (flakeHeartbeatComponent != null) {
-            flakeHeartbeatComponent.stopAndWait();
-        }
         //initializeFlake();
     }
 

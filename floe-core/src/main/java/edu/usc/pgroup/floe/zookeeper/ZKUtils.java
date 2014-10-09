@@ -397,4 +397,29 @@ public final class ZKUtils {
             LOGGER.error("Could not update flake's token.");
         }
     }
+
+    /**
+     * removes the flake from the token ring in Zookeeper.
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @param flakeId flake id.
+     */
+    public static void removeToken(final String appName,
+                                   final String pelletName,
+                                   final String flakeId) {
+
+        String flakeTokenPath = getApplicationFlakeTokenPath(
+                appName, pelletName, flakeId);
+
+        try {
+            if (ZKClient.getInstance().getCuratorClient()
+                    .checkExists().forPath(flakeTokenPath) != null) {
+                ZKClient.getInstance().getCuratorClient().delete()
+                        .deletingChildrenIfNeeded()
+                        .forPath(flakeTokenPath);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Could not update flake's token.");
+        }
+    }
 }

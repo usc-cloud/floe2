@@ -234,6 +234,9 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         byte[] message;
 
+        //Connect to the message backup socket.
+        frontend.connect(Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX + getFid());
+
         ZMQ.Poller pollerItems = new ZMQ.Poller(6);
         pollerItems.register(frontend, ZMQ.Poller.POLLIN);
         pollerItems.register(backend, ZMQ.Poller.POLLIN);
@@ -336,6 +339,9 @@ public class MsgReceiverComponent extends FlakeComponent {
         List<String> toAdd = new ArrayList<>();
         List<String> toRemove = new ArrayList<>();
 
+
+        LOGGER.info("UPDATING frontend subscriptions.");
+
         if (this.neighborsSubscribedFor == null) {
             this.neighborsSubscribedFor = newNeighborsToSubscribe;
             toAdd.addAll(this.neighborsSubscribedFor);
@@ -354,12 +360,14 @@ public class MsgReceiverComponent extends FlakeComponent {
             }
         }
 
-        for (String token: toAdd) {
-            frontend.subscribe(token.getBytes());
+        for (String nfid: toAdd) {
+            LOGGER.info("ME:{} subscribing for:{}.", getFid(), nfid);
+            frontend.subscribe(nfid.getBytes());
         }
 
-        for (String token: toRemove) {
-            frontend.unsubscribe(token.getBytes());
+        for (String nfid: toRemove) {
+            LOGGER.info("ME:{} UNsubscribing for:{}.", getFid(), nfid);
+            frontend.unsubscribe(nfid.getBytes());
         }
 
         neighborsSubscribedFor.removeAll(toRemove);
@@ -379,16 +387,19 @@ public class MsgReceiverComponent extends FlakeComponent {
                                  final ZMQ.Socket backup) {
         String fid = from.recvStr(0, Charset.defaultCharset());
 
-        String src = from.recvStr(0, Charset.defaultCharset());
         byte[] message = from.recv();
 
+        Tuple t = tupleSerializer.deserialize(message);
+
         if (!fid.equalsIgnoreCase(getFid())) {
-            LOGGER.debug("THIS MESSAGE IS MEANT FOR BACKUP."
+            LOGGER.info("THIS MESSAGE IS MEANT FOR BACKUP."
                     + " SHOULD DO THAT HERE {} & {}", fid, getFid());
             backup.sendMore(fid);
             backup.send(message, 0);
+            return;
         }
 
+        String src = (String) t.get(Utils.Constants.SYSTEM_SRC_PELLET_NAME);
 
         FlakeLocalDispersionStrategy strategy
                 = localDispersionStratMap.get(src);
@@ -398,8 +409,6 @@ public class MsgReceiverComponent extends FlakeComponent {
             return;
         }
 
-
-        Tuple t = tupleSerializer.deserialize(message);
         List<String> pelletInstancesIds =
                 strategy.getTargetPelletInstances(t);
 

@@ -82,7 +82,19 @@ public class ZKChildrenCache {
     /**
      * @return the current cached data, including children data.
      */
-    protected final List<ChildData> getCurrentCachedData() {
+    public final List<ChildData> getCurrentCachedData() {
         return pathCache.getCurrentData();
+    }
+
+    /**
+     * Rebuild the cache.
+     */
+    public final void rebuild() {
+        try {
+            pathCache.rebuild();
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOGGER.warn("Could not retrieve path cache. {}", e);
+        }
     }
 }

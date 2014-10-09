@@ -56,6 +56,12 @@ public class ReducerStateBackupComponent extends FlakeComponent {
 
 
     /**
+     * Map from fid to true/false. If the fid is not in the map,
+     * implicitly implies it is not recovering.
+     */
+    private final Map<String, Boolean> recoveringFlakes;
+
+    /**
      * State backup.
      * Neighbor Fid -> Reducer Key -> Merged State.
      */
@@ -89,6 +95,7 @@ public class ReducerStateBackupComponent extends FlakeComponent {
         this.tupleSerializer = SerializerFactory.getSerializer();
         this.keyFieldName = fieldName;
         this.stateBackup = new HashMap<>();
+        this.recoveringFlakes = new HashMap<>();
     }
 
 
@@ -102,12 +109,25 @@ public class ReducerStateBackupComponent extends FlakeComponent {
     @Override
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
+
         ZMQ.Socket backupListener = getContext().socket(ZMQ.PULL);
         backupListener.bind(Utils.Constants.FLAKE_MSG_BACKUP_PREFIX + getFid());
 
-        ZMQ.Poller pollerItems = new ZMQ.Poller(2);
+
+        ZMQ.Socket backupMsgControl = getContext().socket(ZMQ.PULL);
+        backupMsgControl.bind(Utils.Constants.FLAKE_MSG_BACKUP_CONTROL_PREFIX
+                + getFid());
+
+
+        ZMQ.Socket msgRecoverySock = getContext().socket(ZMQ.PUSH);
+        msgRecoverySock.bind(Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX
+                + getFid());
+
+        final int numPollItems = 3;
+        ZMQ.Poller pollerItems = new ZMQ.Poller(numPollItems);
         pollerItems.register(terminateSignalReceiver, ZMQ.Poller.POLLIN);
         pollerItems.register(backupListener, ZMQ.Poller.POLLIN);
+        pollerItems.register(backupMsgControl, ZMQ.Poller.POLLIN);
 
         notifyStarted(true);
 
@@ -118,15 +138,43 @@ public class ReducerStateBackupComponent extends FlakeComponent {
                 LOGGER.warn("Terminating state backup component");
                 terminateSignalReceiver.recv();
                 break;
-            } else {
+            } else if (pollerItems.pollin(1)) {
                 String nfid = backupListener.recvStr(Charset.defaultCharset());
                 byte[] btuple = backupListener.recv();
 
-                Tuple t = tupleSerializer.deserialize(btuple);
+                if (!recoveringFlakes.containsKey(nfid)) {
+                    Tuple t = tupleSerializer.deserialize(btuple);
+                    addTupleToBackup(nfid, t);
+                } else {
+                    msgRecoverySock.sendMore(getFid());
+                    msgRecoverySock.send(btuple, 0);
+                }
+            } else if (pollerItems.pollin(2)) {
+                String nfid = backupMsgControl.recvStr(
+                        Charset.defaultCharset());
 
-                addTupleToBackup(nfid, t);
+                Map<String, SortedMap<Long, Tuple>> keyMap
+                                        = messageBackup.get(nfid);
 
+                if (keyMap != null) {
+                    for (Map.Entry<String, SortedMap<Long, Tuple>> keyTupleEntry
+                            : keyMap.entrySet()) {
+                        String key = keyTupleEntry.getKey();
+                        SortedMap<Long, Tuple> tuples
+                                    = keyTupleEntry.getValue();
+                        while (tuples != null && tuples.size() > 0) {
+                            //send the msgs.
+                            Long ts = tuples.firstKey();
+                            Tuple tuple = tuples.remove(ts);
 
+                            byte[] btuple = tupleSerializer.serialize(tuple);
+                            LOGGER.info("RECOVERING NOW.");
+                            msgRecoverySock.sendMore(getFid());
+                            msgRecoverySock.send(btuple, 0);
+                        }
+                    }
+                }
+                recoveringFlakes.put(nfid, Boolean.TRUE);
             }
         }
         backupListener.close();
@@ -163,7 +211,7 @@ public class ReducerStateBackupComponent extends FlakeComponent {
 
 
         Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
-        LOGGER.info("Backing up msg: {}", t);
+        LOGGER.debug("Backing up msg: {}", t);
         synchronized (messages) {
             messages.put(ts, t);
         }
@@ -176,7 +224,7 @@ public class ReducerStateBackupComponent extends FlakeComponent {
      * @param deltas a list of pellet state deltas received from the flake.
      */
     public final void backupState(final String nfid,
-                            final List<PelletStateDelta> deltas) {
+                                  final List<PelletStateDelta> deltas) {
 
         //Merge with the currently backed up state.
         Map<String, PelletStateDelta> keyStateMap = stateBackup.get(nfid);
@@ -213,7 +261,7 @@ public class ReducerStateBackupComponent extends FlakeComponent {
                     synchronized (messages) {
                         SortedMap<Long, Tuple> msgsToRemove
                                 = messages.tailMap(ts);
-                        LOGGER.info("Clearing msgs {} from backup for "
+                        LOGGER.debug("Clearing msgs {} from backup for "
                                         + "fid/key: {}.{} before ts: {}",
                                           msgsToRemove, nfid, key, ts);
                         msgsToRemove.clear();
@@ -221,5 +269,30 @@ public class ReducerStateBackupComponent extends FlakeComponent {
                 }
             }
         }
+    }
+
+    /**
+     *
+     * @param neighborFid neighbor's flake id.
+     * @return the state backed up for the given neighbor flake id.
+     */
+    public final Map<String, PelletStateDelta> getBackupState(
+                                                    final String neighborFid) {
+        return stateBackup.get(neighborFid);
+    }
+
+    /**
+     * Starts message recovery for the given neighbor flake by sending a
+     * control signal to the msgBackupControl sock.
+     * @param nfid neighbor's flake id.
+     */
+    public final void startMsgRecovery(final String nfid) {
+        ZMQ.Socket backupMsgControl = getContext().socket(ZMQ.PUSH);
+        backupMsgControl.connect(Utils.Constants.FLAKE_MSG_BACKUP_CONTROL_PREFIX
+                + getFid());
+
+        backupMsgControl.send(nfid, 0);
+
+        backupMsgControl.close();
     }
 }
