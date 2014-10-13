@@ -39,7 +39,7 @@ Download and install jzmq from [JZMQ Download Page](http://zeromq.org/bindings:j
 
 ```bash
     #pre-reqs for installing jzmq.
-    sudo apt-get install autoconf automake libtool gcc g++ make libuuid-dev git openjdk-7-jdk pkg-config
+    sudo apt-get install autoconf automake libtool gcc g++ make uuid-dev git openjdk-7-jdk pkg-config
    
 
 
