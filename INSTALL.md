@@ -165,7 +165,7 @@ floe-examples is compiled along with floe-core during the previous step.
     bin/floe.py container -Dfloe.flake.port=9000 &        
     
     #to run the sample HelloWorld Application. (go to the floe2 home directory)
-    bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.HelloWorldApp
+    bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.floe.examples.WordCountApp
     
     #all logs are appended to the file alllogs.log, use tail to see the ouput of the above command.
     tail -f alllogs.log
@@ -175,4 +175,40 @@ floe-examples is compiled along with floe-core during the previous step.
 ---
 ###_Distributed Mode_
 ---
-Coming soon.
+In this mode different components, includig Zookeeper, are run on different machine. 
+
+**Download and Build Floe2 on EACH machine that hosts Floe components**   
+Follow same instructions as ***Local Mode***
+
+**Download and Run Zookeeper ensamble**
+
+
+**Configure Floe2 and run distributed mode**
+
+Edit conf/floe.properties (change it on the Coodinator node and COPY it all container nodes whenever a change id made)
+* Change ***floe.execution.mode***  to **distributed**  
+* Change **floe.zk.servers** to comma separated list of ZK server ensamble.
+* Change **floe.coordinator.host** etc. set to **<coordinator ip>**
+
+Known Issue: After changing a config value, you have to run ``mvn install'' again. This will be fixed in the coming version.
+
+**Compile and Run Sample**  
+(Use floe-examples project as a template for creating your project)   
+floe-examples is compiled along with floe-core during the previous step.
+
+```bash
+    chmod a+x bin/floe.py
+    
+    #On the coordinator node Start coordinator
+    bin/floe.py coordinator &    
+    
+    #Start multiple containers, ONE per Machine
+    #You may use any number of -Dconfig.property=value options to override properties mentioned in the config file.
+    bin/floe.py container
+    
+    #to run the sample Application (from the coordinator node or a client node), run:
+    bin/floe.py jar floe-examples/target/floe-examples-0.1-SNAPSHOT.jar edu.usc.pgroup.floe.examples.WordCountApp
+    
+    #For different components, all logs are appended to the file alllogs.log locally, log in to individual machine and use tail to see the ouput of the above command.
+    tail -f alllogs.log
+```
