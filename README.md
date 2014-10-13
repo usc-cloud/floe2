@@ -2,7 +2,7 @@ Dynamic Continuous Dataflow framework.
 
 
 ###Installation Guide
-Available [here](INSTALL.md)
+Available [here](http://usc-cloud.github.io/floe2/INSTALL/)
 
 
 ###Project Website
