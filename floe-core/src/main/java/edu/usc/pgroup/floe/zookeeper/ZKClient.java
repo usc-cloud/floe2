@@ -153,6 +153,7 @@ public final class ZKClient {
         } else {
 
         }*/
+        LOGGER.info("Zookeeper connection string: " + zkConnectionString);
 
         CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory
                 .builder()
