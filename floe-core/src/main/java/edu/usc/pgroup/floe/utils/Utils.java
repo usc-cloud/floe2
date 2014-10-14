@@ -74,6 +74,7 @@ public final class Utils {
         } else {
             hostnameOrIpAddr = Utils.getIpAddress();
         }
+        //hostnameOrIpAddr = Utils.getIpAddress();
         return hostnameOrIpAddr;
     }
 
@@ -109,8 +110,11 @@ public final class Utils {
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface
                     .getNetworkInterfaces();
-            NetworkInterface current = interfaces.nextElement();
+            LOGGER.error("Getting ip");
+
             while (interfaces.hasMoreElements()) {
+                LOGGER.error("Next iface");
+                NetworkInterface current = interfaces.nextElement();
                 if (!current.isUp()
                         || current.isLoopback()
                         || current.isVirtual()) {

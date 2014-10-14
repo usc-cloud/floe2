@@ -56,7 +56,7 @@ public final class WordCountApp {
      * @param args commandline args.
      */
     public static void main(final String[] args) {
-        System.out.println("Hello World!");
+        System.out.println("Hello World!" + Utils.getHostNameOrIpAddress());
         ApplicationBuilder builder = new ApplicationBuilder();
 
         final int numWords = 10;
