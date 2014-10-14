@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.ReducerPellet;
 import edu.usc.pgroup.floe.app.StatefulPellet;
@@ -44,7 +45,7 @@ public final class StateManagerFactory {
 
     /**
      * Constructs the state manager based on the pellet type.
-     *
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param pellet The pellet object, used to figure out type of state
      *               manager to create.
      * @param flakeId       Flake's id to which this component belongs.
@@ -54,6 +55,7 @@ public final class StateManagerFactory {
      * @return the instantiated (but not started) state manager object.
      */
     public static StateManagerComponent getStateManager(
+            final MetricRegistry metricRegistry,
             final Pellet pellet,
             final String flakeId,
             final String componentName,
@@ -66,12 +68,12 @@ public final class StateManagerFactory {
         } else if (pellet instanceof ReducerPellet) {
             LOGGER.info("Reducer pellet. Creating reducer state manager.");
             String fieldName = ((ReducerPellet) pellet).getKeyFieldName();
-            manager =  new ReducerStateManager(
+            manager =  new ReducerStateManager(metricRegistry,
                     flakeId, componentName, ctx, fieldName, port);
         } else if (pellet instanceof StatefulPellet) {
             LOGGER.info("regular Statefull pellet. Creating pellet state "
                     + "manager.");
-            manager =  new GenericPelletStateManager(
+            manager =  new GenericPelletStateManager(metricRegistry,
                     flakeId, componentName, ctx, port);
         }
 

@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging.sender;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +72,7 @@ public class SenderFEComponent extends FlakeComponent {
 
     /**
      * constructor.
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param ctx Shared ZMQ context.
      * @param app Application name.
      * @param pelletName Pellet's name to be sent with each message.
@@ -85,7 +87,8 @@ public class SenderFEComponent extends FlakeComponent {
      * @param streamsMap map from successor pellets to subscribed
      *                         streams.
      */
-    public SenderFEComponent(final ZMQ.Context ctx,
+    public SenderFEComponent(final MetricRegistry metricRegistry,
+                             final ZMQ.Context ctx,
                                final String app,
                                final String pelletName,
                                final String flakeId,
@@ -94,7 +97,7 @@ public class SenderFEComponent extends FlakeComponent {
                                final Map<String, Integer> backChannelPortMap,
                                final Map<String, String> channelTypeMap,
                                final Map<String, List<String>> streamsMap) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
         this.appName = app;
         this.myPelletName = pelletName;
         this.pelletPortMap = portMap;
@@ -114,7 +117,7 @@ public class SenderFEComponent extends FlakeComponent {
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
         //new SenderMEComponent().start
-        SenderMEComponent me = new SenderMEComponent(
+        SenderMEComponent me = new SenderMEComponent(getMetricRegistry(),
                 getFid(), "ME", getContext());
 
         me.startAndWait();
@@ -128,7 +131,8 @@ public class SenderFEComponent extends FlakeComponent {
             List<String> streams = pelletStreamsMap.get(pellet);
 
             SenderBEComponent be
-                    = new SenderBEComponent(getFid(), "BE", getContext(),
+                    = new SenderBEComponent(getMetricRegistry(),
+                    getFid(), "BE", getContext(),
                     port, bpPort, appName, pellet,
                     channelType, streams, myPelletName);
 

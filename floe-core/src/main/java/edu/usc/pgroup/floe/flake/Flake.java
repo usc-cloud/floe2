@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.flake;
 
+import com.codahale.metrics.CsvReporter;
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.coordination.CoordinationComponent;
@@ -45,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -191,6 +194,15 @@ public class Flake {
      */
     private MsgReceiverComponent flakeReceiverComponent;
 
+    /**
+     * Metric registry for this flake.
+     */
+    private MetricRegistry metricRegistry;
+
+    /**
+     * Metrics Reporter.
+     */
+    private CsvReporter reporter;
 
     /**
      * Constructor.
@@ -240,6 +252,23 @@ public class Flake {
         this.pelletId = pid;
         this.runningPelletInstances = new ArrayList<>();
         this.stateChkptPort = statePort;
+
+        this.metricRegistry = new MetricRegistry();
+
+        final int reporterPeriod = 5;
+
+
+        File metricDir = new File("./metrics/" + flakeId);
+        if (!metricDir.exists()) {
+            metricDir.mkdirs();
+        }
+
+
+        this.reporter = CsvReporter.forRegistry(metricRegistry)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build(metricDir);
+        reporter.start(reporterPeriod, TimeUnit.SECONDS);
     }
 
     /**
@@ -276,7 +305,8 @@ public class Flake {
 
         //start heartbeat
         LOGGER.info("Scheduling flake heartbeat.");
-        flakeHeartbeatComponent = new FlakeHeartbeatComponent(flakeInfo,
+        flakeHeartbeatComponent = new FlakeHeartbeatComponent(
+                metricRegistry, flakeInfo,
                 flakeId, "HEAET-BEAT", sharedContext);
         flakeHeartbeatComponent.startAndWait();
 
@@ -338,7 +368,8 @@ public class Flake {
 
         //Start the state manager.
         LOGGER.info("Starting state manager.");
-        stateManager = StateManagerFactory.getStateManager(pellet,
+        stateManager = StateManagerFactory.getStateManager(metricRegistry,
+                pellet,
                 flakeId, "STATE-MANAGER", sharedContext, stateChkptPort);
 
         if (stateManager != null) {
@@ -348,7 +379,7 @@ public class Flake {
         //Start the coordination manager.
         LOGGER.info("Starting coordination manager.");
         coordinationManager = CoordinationManagerFactory
-                .getCoordinationManager(appName,
+                .getCoordinationManager(metricRegistry, appName,
                         pelletId,
                         pellet,
                         flakeId, myToken,
@@ -361,6 +392,7 @@ public class Flake {
 
         LOGGER.info("Start the command receiver.");
         flakeSenderComponent = new SenderFEComponent(
+                metricRegistry,
                 sharedContext,
                 appName,
                 pelletId,
@@ -375,7 +407,8 @@ public class Flake {
 
         LOGGER.info("Setting up Flake Receiver");
         flakeReceiverComponent
-                = new MsgReceiverComponent(flakeId, "MSG-RECEIVER",
+                = new MsgReceiverComponent(
+                metricRegistry, flakeId, "MSG-RECEIVER",
                 sharedContext, predPelletChannelTypeMap, myToken);
         flakeReceiverComponent.startAndWait();
 
@@ -399,7 +432,7 @@ public class Flake {
 
         Pellet pellet = deserializePellet(p);
 
-        PelletExecutor pe = new PelletExecutor(nextPEIdx,
+        PelletExecutor pe = new PelletExecutor(metricRegistry, nextPEIdx,
                 pellet, flakeId, sharedContext, stateManager);
 
         /*PelletExecutor pe = new PelletExecutor(nextPEIdx, p, appName, appJar,

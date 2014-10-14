@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,17 +61,25 @@ public abstract class FlakeComponent {
     private final ZMQ.Socket killSignalSender;
 
     /**
+     * Metric registry.
+     */
+    private final MetricRegistry metricRegistry;
+
+    /**
      * Constructor.
+     * @param registry Metrics registry used to log various metrics.
      * @param flakeId Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx Shared zmq context.
      */
-    public FlakeComponent(final String flakeId,
+    public FlakeComponent(final MetricRegistry registry,
+                          final String flakeId,
                           final String componentName,
                           final ZMQ.Context ctx) {
         this.fid = flakeId;
         this.name = componentName;
         this.context = ctx;
+        this.metricRegistry = registry;
 
         this.notifyListenerSock = context.socket(ZMQ.PULL);
         this.notifyListenerSock.bind(Utils.Constants.
@@ -189,5 +198,12 @@ public abstract class FlakeComponent {
      */
     protected final String getFid() {
         return fid;
+    }
+
+    /**
+     * @return Metric registry.
+     */
+    protected final MetricRegistry getMetricRegistry() {
+        return metricRegistry;
     }
 }

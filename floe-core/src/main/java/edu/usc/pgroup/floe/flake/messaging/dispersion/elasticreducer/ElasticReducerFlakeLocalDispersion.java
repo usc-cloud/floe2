@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
@@ -46,17 +47,19 @@ public class ElasticReducerFlakeLocalDispersion
 
     /**
      * Constructor.
-     *
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param srcPelletName The name of the src pellet on this edge.
      * @param context       shared ZMQ context.
      * @param flakeId       Current flake id.
      * @param token Flake's token on the ring.
      */
-    public ElasticReducerFlakeLocalDispersion(final String srcPelletName,
+    public ElasticReducerFlakeLocalDispersion(final MetricRegistry
+                                                      metricRegistry,
+                                              final String srcPelletName,
                                               final ZMQ.Context context,
                                               final String flakeId,
                                               final Integer token) {
-        super(srcPelletName, context, flakeId, token);
+        super(metricRegistry, srcPelletName, context, flakeId, token);
     }
 
     /**

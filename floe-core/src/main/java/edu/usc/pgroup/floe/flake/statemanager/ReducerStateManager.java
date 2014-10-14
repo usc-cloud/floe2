@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.MetricRegistry;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -78,23 +79,26 @@ public class ReducerStateManager extends StateManagerComponent
 
     /**
      * Constructor.
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      * @param fieldName     The fieldName used by the reducer for grouping.
      * @param port          Port to be used for sending checkpoint data.
      */
-    public ReducerStateManager(final String flakeId,
+    public ReducerStateManager(final MetricRegistry metricRegistry,
+                               final String flakeId,
                                final String componentName,
                                final ZMQ.Context ctx,
                                final String fieldName,
                                final int port) {
-        super(flakeId, componentName, ctx, port);
+        super(metricRegistry, flakeId, componentName, ctx, port);
         this.pelletStateMap = new ConcurrentHashMap<>(); //fixme. add size,
         this.keyFieldName = fieldName;
-        checkpointer = new StateCheckpointComponent(flakeId,
+        checkpointer = new StateCheckpointComponent(metricRegistry, flakeId,
                 componentName + "-CHECKPOINTER", ctx, this, port);
-        backupComponent = new ReducerStateBackupComponent(flakeId,
+        backupComponent = new ReducerStateBackupComponent(metricRegistry,
+                flakeId,
                 componentName + "-STBACKUP", ctx, fieldName);
     }
 

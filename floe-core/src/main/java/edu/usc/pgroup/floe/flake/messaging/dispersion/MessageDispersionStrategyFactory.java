@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.elasticreducer.ElasticReducerDispersion;
 import edu.usc.pgroup.floe.flake.messaging
@@ -74,6 +75,7 @@ public final class MessageDispersionStrategyFactory {
 
     /**
      * Factory function for creating the MessageDispersionStrategy.
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param channelType type of the channel (edge) in the application.
      * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
@@ -87,6 +89,7 @@ public final class MessageDispersionStrategyFactory {
      */
     public static FlakeLocalDispersionStrategy
     getFlakeLocalDispersionStrategy(
+            final MetricRegistry metricRegistry,
             final TChannelType channelType,
             final String srcPelletName,
             final ZMQ.Context context,
@@ -98,12 +101,14 @@ public final class MessageDispersionStrategyFactory {
 
         switch (channelType) {
             case ROUND_ROBIN:
-                strategy = new RRFlakeLocalDispersionStrategy(srcPelletName,
+                strategy = new RRFlakeLocalDispersionStrategy(
+                        metricRegistry, srcPelletName,
                         context, flakeId, token);
                 break;
             case REDUCE:
                 strategy = new ElasticReducerFlakeLocalDispersion(
-                        srcPelletName, context, flakeId, token);
+                        metricRegistry, srcPelletName,
+                        context, flakeId, token);
                 break;
             case LOAD_BALANCED:
             case CUSTOM:

@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
@@ -48,6 +49,7 @@ public class BackChannelSenderComponent extends FlakeComponent {
 
     /**
      * Constructor.
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeLocalDispersionStrategy flake local strategy associated
      *                                     with this back channel.
      * @param flakeId       Flake's id to which this component belongs.
@@ -56,13 +58,13 @@ public class BackChannelSenderComponent extends FlakeComponent {
      * @param srcPelletName the pred. pellet name which is the src for this
      *                      edge.
      */
-    public BackChannelSenderComponent(
+    public BackChannelSenderComponent(final MetricRegistry metricRegistry,
               final FlakeLocalDispersionStrategy flakeLocalDispersionStrategy,
               final String flakeId,
               final String componentName,
               final ZMQ.Context ctx,
               final String srcPelletName) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
         this.dispersionStrategy = flakeLocalDispersionStrategy;
         this.srcPellet = srcPelletName;
     }

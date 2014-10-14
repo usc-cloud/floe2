@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.flake.messaging.sender;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.messaging
@@ -97,7 +99,7 @@ public class SenderBEComponent extends FlakeComponent {
 
     /**
      * Constructor.
-     *
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
@@ -111,7 +113,8 @@ public class SenderBEComponent extends FlakeComponent {
      * @param streams list of stream names to subscribe to.
      * @param pelletName Pellet's id/name.
      */
-    public SenderBEComponent(final String flakeId,
+    public SenderBEComponent(final MetricRegistry metricRegistry,
+                             final String flakeId,
                              final String componentName,
                              final ZMQ.Context ctx,
                              final int p,
@@ -121,7 +124,7 @@ public class SenderBEComponent extends FlakeComponent {
                              final String channelType,
                              final List<String> streams,
                              final String pelletName) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
         this.port = p;
         this.backChannelPort = bp;
         this.streamNames = streams;
@@ -196,6 +199,11 @@ public class SenderBEComponent extends FlakeComponent {
         pollerItems.register(terminateSignalReceiver, ZMQ.Poller.POLLIN);
         pollerItems.register(backendBackChannel, ZMQ.Poller.POLLIN);
 
+        Meter msgSendMeter =  getMetricRegistry().meter(
+                MetricRegistry.name(SenderBEComponent.class, "sent")
+        );
+
+
         notifyStarted(true);
 
         int i = 0;
@@ -237,6 +245,7 @@ public class SenderBEComponent extends FlakeComponent {
                             + "received");
                     //TODO: FIX THIS..
                 }
+                msgSendMeter.mark();
             } else if (pollerItems.pollin(1)) { //kill signal
                 LOGGER.warn("Terminating flake sender ME: {}", getFid());
                 terminateSignalReceiver.recv();

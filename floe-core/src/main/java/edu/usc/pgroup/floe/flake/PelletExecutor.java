@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.flake;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -76,6 +78,11 @@ public class PelletExecutor extends Thread {
      */
     private final StateManagerComponent pelletStateManager;
 
+    /**
+     * Metric registyr.
+     */
+    private final MetricRegistry metricRegistry;
+
 
     /**
      * The fully qualified pellet class name.
@@ -112,6 +119,7 @@ public class PelletExecutor extends Thread {
 
     /**
      * hiding default constructor.
+     * @param registry Metrics registry used to log various metrics.
      * @param pelletIndex flake-unique pellet index (need not be contiguous)
      * flake as the pellet id.
      * @param sharedContext shared ZMQ context to be used in inproc comm. for
@@ -122,6 +130,7 @@ public class PelletExecutor extends Thread {
      *                     be thread safe.
      */
     private PelletExecutor(
+            final MetricRegistry registry,
             final int pelletIndex,
             final ZMQ.Context sharedContext,
             final String fid,
@@ -133,10 +142,12 @@ public class PelletExecutor extends Thread {
         this.pelletInstanceIndex = pelletIndex;
         this.killSignalReceived = false;
         this.pelletStateManager = stateManager;
+        this.metricRegistry = registry;
     }
 
     /**
      * Construct pellet instance from fqdn.
+     * @param registry Metrics registry used to log various metrics.
      * @param pelletIndex flake-unique pellet index (need not be contiguous)
      * flake as the pellet id.
      * @param fqdnClass the fully qualified class name for the pellet.
@@ -147,11 +158,12 @@ public class PelletExecutor extends Thread {
      *                     flake and common fro all pellet instances. Should
      *                     be thread safe.
      */
-    public PelletExecutor(final int pelletIndex,
+    public PelletExecutor(final MetricRegistry registry,
+                          final int pelletIndex,
                     final String fqdnClass, final String fid,
                     final ZMQ.Context sharedContext,
                     final StateManagerComponent stateManager) {
-        this(pelletIndex, sharedContext, fid, stateManager);
+        this(registry, pelletIndex, sharedContext, fid, stateManager);
         this.pelletClass = fqdnClass;
         this.pellet = (Pellet) Utils.instantiateObject(pelletClass);
         this.pellet.setup(null, new PelletContext(pelletInstanceId));
@@ -161,6 +173,7 @@ public class PelletExecutor extends Thread {
 
     /**
      * Construct pellet instance from de-serialized version.
+     * @param registry Metrics registry used to log various metrics.
      * @param pelletIndex flake-unique pellet index (need not be contiguous)
      * flake as the pellet id.
      * @param p pellet instance from the user.
@@ -171,12 +184,13 @@ public class PelletExecutor extends Thread {
      *                     flake and common fro all pellet instances. Should
      *                     be thread safe.
      */
-    public PelletExecutor(final int pelletIndex,
+    public PelletExecutor(final MetricRegistry registry,
+                          final int pelletIndex,
                           final Pellet p,
                           final String fid,
                           final ZMQ.Context sharedContext,
                           final StateManagerComponent stateManager) {
-        this(pelletIndex, sharedContext, fid, stateManager);
+        this(registry, pelletIndex, sharedContext, fid, stateManager);
         this.pellet = p;
         this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
@@ -267,6 +281,14 @@ public class PelletExecutor extends Thread {
         pollerItems.register(dataReceiver, ZMQ.Poller.POLLIN);
         pollerItems.register(signalReceiver, ZMQ.Poller.POLLIN);
 
+        Meter msgDequeuedMeter =  metricRegistry.meter(
+                MetricRegistry.name(PelletExecutor.class, "dequed")
+        );
+
+        Meter msgProcessedMeter =  metricRegistry.meter(
+                MetricRegistry.name(PelletExecutor.class, "processed")
+        );
+
         boolean disconnected = false;
         String key;
         while (!Thread.currentThread().isInterrupted()) {
@@ -276,15 +298,22 @@ public class PelletExecutor extends Thread {
             if (pollerItems.pollin(0)) {
                 key = dataReceiver.recvStr(Charset.defaultCharset());
                 byte[] serializedTuple = dataReceiver.recv();
+
+                msgDequeuedMeter.mark();
+
                 Tuple tuple = tupleSerializer.deserialize(serializedTuple);
                 //Run pellet.execute here.
                 PelletState state = getPelletState(tuple);
+
+
                 pellet.execute(tuple, emitter, state);
                 if (state != null) {
                     state.setLatestTimeStampAtomic(
                             (Long) tuple.get(
                                     Utils.Constants.SYSTEM_TS_FIELD_NAME));
                 }
+                msgProcessedMeter.mark();
+
             } else if (pollerItems.pollin(1)) {
                 String envelope = signalReceiver
                         .recvStr(Charset.defaultCharset());

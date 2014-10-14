@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -46,16 +47,18 @@ public class FlakeHeartbeatComponent extends FlakeComponent {
 
     /**
      * Constructor.
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param info the flake info object associated with this flake.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      */
-    public FlakeHeartbeatComponent(final FlakeInfo info,
+    public FlakeHeartbeatComponent(final MetricRegistry metricRegistry,
+                                   final FlakeInfo info,
                                    final String flakeId,
                                    final String componentName,
                                    final ZMQ.Context ctx) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
         this.containerId = info.getContainerId();
         this.finfo = info;
     }

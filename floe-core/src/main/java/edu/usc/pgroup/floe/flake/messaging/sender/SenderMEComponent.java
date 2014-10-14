@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging.sender;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -38,15 +39,16 @@ public class SenderMEComponent extends FlakeComponent {
 
     /**
      * Constructor.
-     *
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      */
-    public SenderMEComponent(final String flakeId,
+    public SenderMEComponent(final MetricRegistry metricRegistry,
+                             final String flakeId,
                              final String componentName,
                              final ZMQ.Context ctx) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
     }
 
     /**

@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import org.zeromq.ZMQ;
@@ -30,17 +31,18 @@ public abstract class StateManagerComponent extends FlakeComponent {
 
     /**
      * Constructor.
-     *
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      * @param port          Port to be used for sending checkpoint data.
      */
-    public StateManagerComponent(final String flakeId,
+    public StateManagerComponent(final MetricRegistry metricRegistry,
+                                 final String flakeId,
                                  final String componentName,
                                  final ZMQ.Context ctx,
                                  final int port) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
     }
 
     /**

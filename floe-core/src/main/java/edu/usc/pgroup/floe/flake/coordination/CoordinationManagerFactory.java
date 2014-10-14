@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.coordination;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.ReducerPellet;
 import edu.usc.pgroup.floe.config.ConfigProperties;
@@ -44,6 +45,7 @@ public final class CoordinationManagerFactory {
 
     /**
      * Constructs the state manager based on the pellet type.
+     * @param metricRegistry Metric registry.
      * @param appName           the application name.
      * @param pelletName        pellet's name to which this flake belongs.
      * @param pellet The pellet object, used to figure out type of state
@@ -56,6 +58,7 @@ public final class CoordinationManagerFactory {
      * @return the instantiated (but not started) state manager object.
      */
     public static CoordinationComponent getCoordinationManager(
+            final MetricRegistry metricRegistry,
             final String appName,
             final String pelletName,
             final Pellet pellet,
@@ -70,6 +73,7 @@ public final class CoordinationManagerFactory {
             int tolerance = FloeConfig.getConfig().getInt(
                     ConfigProperties.FLAKE_TOLERANCE_LEVEL);
             manager =  new ReducerCoordinationComponent(
+                            metricRegistry,
                             appName,
                             pelletName,
                             flakeId,

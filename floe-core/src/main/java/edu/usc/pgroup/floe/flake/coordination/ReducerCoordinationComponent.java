@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.coordination;
 
+import com.codahale.metrics.MetricRegistry;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
@@ -105,7 +106,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
 
     /**
      * Constructor.
-     *
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param app           the application name.
      * @param pellet        pellet's name to which this flake belongs.
      * @param flakeId       Flake's id to which this component belongs.
@@ -116,7 +117,8 @@ public class ReducerCoordinationComponent extends CoordinationComponent
      *                       failures to tolerate).
      * @param stManager State manager associated with this flake.
      */
-    public ReducerCoordinationComponent(final String app,
+    public ReducerCoordinationComponent(final MetricRegistry metricRegistry,
+                                        final String app,
                                         final String pellet,
                                         final String flakeId,
                                         final Integer token,
@@ -124,7 +126,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                                         final ZMQ.Context ctx,
                                         final Integer tolerance,
                                         final StateManagerComponent stManager) {
-        super(app, pellet, flakeId, componentName, ctx);
+        super(metricRegistry, app, pellet, flakeId, componentName, ctx);
         this.toleranceLevel = tolerance;
         //this.stateBackupNeighbors = new TreeMap<>();
         this.neighborsToBackupMsgsFor = new TreeMap<>(

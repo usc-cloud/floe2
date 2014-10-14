@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
@@ -52,19 +53,20 @@ public class StateCheckpointComponent extends FlakeComponent {
 
     /**
      * Constructor.
-     *
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      * @param stateMgr State manager component.
      * @param stateChkptPort port to use for connections to checkpoint state.
      */
-    public StateCheckpointComponent(final String flakeId,
+    public StateCheckpointComponent(final MetricRegistry metricRegistry,
+                                    final String flakeId,
                                     final String componentName,
                                     final ZMQ.Context ctx,
                                     final StateManagerComponent stateMgr,
                                     final int stateChkptPort) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
         this.stateManager = stateMgr;
         this.port = stateChkptPort;
         this.checkpointPeriod = FloeConfig.getConfig().getInt(ConfigProperties

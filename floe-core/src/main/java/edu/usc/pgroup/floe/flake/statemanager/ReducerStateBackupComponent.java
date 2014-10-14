@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
@@ -81,16 +82,18 @@ public class ReducerStateBackupComponent extends FlakeComponent {
 
     /**
      * Constructor.
-     *  @param flakeId       Flake's id to which this component belongs.
+     * @param metricRegistry Metrics registry used to log various metrics.
+     * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      * @param fieldName     The fieldName used by the reducer for grouping.
      */
-    public ReducerStateBackupComponent(final String flakeId,
+    public ReducerStateBackupComponent(final MetricRegistry metricRegistry,
+                                       final String flakeId,
                                        final String componentName,
                                        final ZMQ.Context ctx,
                                        final String fieldName) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
         this.messageBackup = new HashMap<>();
         this.tupleSerializer = SerializerFactory.getSerializer();
         this.keyFieldName = fieldName;

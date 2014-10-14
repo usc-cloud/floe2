@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.coordination;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import org.zeromq.ZMQ;
 
@@ -36,18 +37,20 @@ public abstract class CoordinationComponent extends FlakeComponent {
 
     /**
      * Constructor.
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param app the application name.
      * @param pellet pellet's name to which this flake belongs.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      */
-    public CoordinationComponent(final String app,
+    public CoordinationComponent(final MetricRegistry metricRegistry,
+                                 final String app,
                                  final String pellet,
                                  final String flakeId,
                                  final String componentName,
                                  final ZMQ.Context ctx) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
         this.appName = app;
         this.pelletName = pellet;
     }

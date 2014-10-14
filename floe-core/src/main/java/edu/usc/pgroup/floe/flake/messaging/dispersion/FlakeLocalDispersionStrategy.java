@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import org.slf4j.Logger;
@@ -76,23 +77,27 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
 
     /**
      * Constructor.
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
      * @param token Flake's random 32bit token on the ring.
      */
-    public FlakeLocalDispersionStrategy(final String srcPelletName,
+    public FlakeLocalDispersionStrategy(
+            final MetricRegistry metricRegistry,
+            final String srcPelletName,
                                         final ZMQ.Context context,
                                         final String flakeId,
                                         final Integer token) {
 
-        super(flakeId, "FL-LOCAL-STRATEGY", context);
+        super(metricRegistry, flakeId, "FL-LOCAL-STRATEGY", context);
         this.srcPellet = srcPelletName;
 
         this.myToken = token;
 
         LOGGER.info("Initializing flake local strategy.");
-        backChannelSenderComponent = new BackChannelSenderComponent(this,
+        backChannelSenderComponent = new BackChannelSenderComponent(
+                metricRegistry, this,
                 getFid(), "BACK-CHANNEL-SENDER", context, srcPelletName);
     }
 

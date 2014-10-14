@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.flake.messaging;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
@@ -77,19 +79,20 @@ public class MsgReceiverComponent extends FlakeComponent {
 
     /**
      * Constructor.
-     *
+     * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      * @param predChannelTypeMap the pred. to channel type map.
      * @param token Flake's token on the ring.
      */
-    public MsgReceiverComponent(final String flakeId,
+    public MsgReceiverComponent(final MetricRegistry metricRegistry,
+                                final String flakeId,
                                 final String componentName,
                                 final ZMQ.Context ctx,
                                 final Map<String, String> predChannelTypeMap,
                                 final Integer token) {
-        super(flakeId, componentName, ctx);
+        super(metricRegistry, flakeId, componentName, ctx);
         this.predChannelMap = predChannelTypeMap;
         this.localDispersionStratMap = new HashMap<>();
         this.tupleSerializer = SerializerFactory.getSerializer();
@@ -125,6 +128,11 @@ public class MsgReceiverComponent extends FlakeComponent {
         final ZMQ.Socket msgBackupSender = getContext().socket(ZMQ.PUSH);
 
         boolean result = false;
+
+        Meter msgRecvMeter =  getMetricRegistry().meter(
+                MetricRegistry.name(MsgReceiverComponent.class, "received")
+        );
+
         try {
             //Frontend socket to talk to other flakes. dont connect here.
             // Connect only when the signal for connect is received.
@@ -184,6 +192,7 @@ public class MsgReceiverComponent extends FlakeComponent {
         }
 
         receiveAndProcess(
+                msgRecvMeter,
                 frontend,
                 backend,
                 xsubFromPelletsSock,
@@ -206,24 +215,25 @@ public class MsgReceiverComponent extends FlakeComponent {
 
     /**
      * Receives and forwards/routes the incoming messages.
+     * @param msgRecvMeter Meter to measure the rate of incoming messages.
      * @param frontend The frontend socket to receive all messagess from all
      *                 pred. flakes.
      * @param backend backend socket to forward messages to appropriate
-     *                pellet instances.
+ *                pellet instances.
      * @param xsubFromPelletsSock a raw xsub socket to to forward messages
-     *                            from backchannel (per edge) to the pred.
-     *                            flakes.
+*                            from backchannel (per edge) to the pred.
+*                            flakes.
      * @param xpubToPredSock a raw xpub component for forwarding backchannel
-     *                       messages.
+*                       messages.
      * @param msgReceivercontrolForwardSocket to receive control signals from
-     *                                        the flake.
+*                                        the flake.
      * @param backChannelPingger socket to ping the backchannel whenever a
-     *                           new pred. flake is added/removed.
+*                           new pred. flake is added/removed.
      * @param terminateSignalReceiver terminate signal receiver.
      * @param msgBackupSender socket to send the tuples meant for backup .
      */
     private void receiveAndProcess(
-            final ZMQ.Socket frontend,
+            final Meter msgRecvMeter, final ZMQ.Socket frontend,
             final ZMQ.Socket backend,
             final ZMQ.Socket xsubFromPelletsSock,
             final ZMQ.Socket xpubToPredSock,
@@ -253,7 +263,8 @@ public class MsgReceiverComponent extends FlakeComponent {
             pollerItems.poll(pollDelay);
 
             if (pollerItems.pollin(0)) { //frontend
-                forwardToPellet(frontend, backend, msgBackupSender);
+                forwardToPellet(msgRecvMeter, frontend, backend,
+                        msgBackupSender);
             } else if (pollerItems.pollin(1)) { //backend
                 Utils.forwardCompleteMessage(backend, frontend);
             } else if (pollerItems.pollin(2)) { //from xsubFromPelletsSock
@@ -377,12 +388,15 @@ public class MsgReceiverComponent extends FlakeComponent {
     /**
      * Once the poller.poll returns, use this function as a component in the
      * proxy to forward messages from one socket to another.
+     * @param msgRecvMeter Meter to measure the rate of incoming messages.
+     *                     NOTE: Only the ones to be forwarded to pellets.
+     *                     NOT the ones to be backedup.
      * @param from socket to read from.
      * @param to socket to send messages to.
      * @param backup socket to send to backup the messages. Using socket and
-     *               not backing up directly to minimize latencies.
      */
-    private void forwardToPellet(final ZMQ.Socket from,
+    private void forwardToPellet(final Meter msgRecvMeter,
+                                 final ZMQ.Socket from,
                                  final ZMQ.Socket to,
                                  final ZMQ.Socket backup) {
         String fid = from.recvStr(0, Charset.defaultCharset());
@@ -398,6 +412,8 @@ public class MsgReceiverComponent extends FlakeComponent {
             backup.send(message, 0);
             return;
         }
+
+        msgRecvMeter.mark();
 
         String src = (String) t.get(Utils.Constants.SYSTEM_SRC_PELLET_NAME);
 
@@ -452,6 +468,7 @@ public class MsgReceiverComponent extends FlakeComponent {
                 try {
                     strat = MessageDispersionStrategyFactory
                                 .getFlakeLocalDispersionStrategy(
+                                        getMetricRegistry(),
                                     type,
                                     src,
                                     getContext(),
