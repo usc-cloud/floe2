@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake;
 
 import com.codahale.metrics.CsvReporter;
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
@@ -33,6 +34,8 @@ import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -269,6 +272,33 @@ public class Flake {
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .build(metricDir);
         reporter.start(reporterPeriod, TimeUnit.SECONDS);
+
+        metricRegistry.register(
+                MetricRegistry.name(Flake.class, "CPU"),
+                new Gauge<Double>() {
+
+                    /**
+                     * Sigar object used to retrieve cpu usage.
+                     */
+                    private final Sigar sigar = new Sigar();
+
+                    /**
+                     * @return the instantaneous CPU usage.
+                     */
+                    @Override
+                    public Double getValue() {
+                        double cpuUsage = 0;
+
+                        try {
+                            cpuUsage = sigar.getCpuPerc().getCombined();
+                        } catch (SigarException e) {
+                            LOGGER.warn("Could not retrieve cpu usage. {}", e);
+                        }
+
+                        return cpuUsage;
+                    }
+                }
+        );
     }
 
     /**

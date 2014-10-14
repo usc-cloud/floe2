@@ -403,6 +403,8 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         byte[] message = from.recv();
 
+        Long currentNano = System.nanoTime();
+
         Tuple t = tupleSerializer.deserialize(message);
 
         if (!fid.equalsIgnoreCase(getFid())) {
@@ -433,6 +435,7 @@ public class MsgReceiverComponent extends FlakeComponent {
             for (String pelletInstanceId : pelletInstancesIds) {
                 LOGGER.debug("Sending to:" + pelletInstanceId);
                 to.sendMore(pelletInstanceId);
+                to.sendMore(currentNano.toString());
                 to.send(message, 0);
             }
         } else { //should queue up messages.
