@@ -181,6 +181,7 @@ In this mode different components, includig Zookeeper, are run on different mach
 Follow same instructions as ***Local Mode***
 
 **Download and Run Zookeeper ensemble**
+
 Note: This is a quick start guide to run zookeeper in a **standalone** mode. For production it is suggested that you create an ensemble of atleast three dedicated zookeeper machines. For details see: [Zookeer Getting Started](http://zookeeper.apache.org/doc/trunk/zookeeperStarted.html)
 
 * Download a stable version of ZK from [http://zookeeper.apache.org/releases.html](http://zookeeper.apache.org/releases.html)
