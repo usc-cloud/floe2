@@ -30,10 +30,13 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Enumeration;
 
 /**
  * Common Utility Class.
@@ -69,7 +72,7 @@ public final class Utils {
                     ConfigProperties.HOST_NAME
             );
         } else {
-            hostnameOrIpAddr = Utils.getHostName();
+            hostnameOrIpAddr = Utils.getIpAddress();
         }
         return hostnameOrIpAddr;
     }
@@ -81,7 +84,7 @@ public final class Utils {
      * where the DNS server is not running, this might be an issue.
      *
      * @return the canonical hostname.
-     */
+     *
     public static String getHostName() {
         try {
             return InetAddress.getLocalHost().getCanonicalHostName();
@@ -91,6 +94,45 @@ public final class Utils {
             throw new RuntimeException("Error occurred while "
                     + "retrieving hostname" + e.getMessage());
         }
+    }*/
+
+    /**
+     * returns the canonical host name. This assumes a unique host name for
+     * each machine in the cluster does not apply.
+     * FixMe: In local cloud environment (local eucalyptus in system mode)
+     * where the DNS server is not running, this might be an issue.
+     * @return The first IPv4 address found for any interface that is up and
+     * running.
+     */
+     public static String getIpAddress() {
+        String ip = null;
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface
+                    .getNetworkInterfaces();
+            NetworkInterface current = interfaces.nextElement();
+            while (interfaces.hasMoreElements()) {
+                if (!current.isUp()
+                        || current.isLoopback()
+                        || current.isVirtual()) {
+                    continue;
+                }
+                Enumeration<InetAddress> addresses = current.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress currentAddr = addresses.nextElement();
+                    if (currentAddr.isLoopbackAddress()
+                            || (currentAddr instanceof Inet6Address)) {
+                        continue;
+                    }
+                    ip = currentAddr.getHostAddress();
+                }
+            }
+        } catch (SocketException e) {
+            LOGGER.error("Error occurred while retrieving hostname"
+                    + e.getMessage());
+            throw new RuntimeException("Error occurred while "
+                    + "retrieving hostname" + e.getMessage());
+        }
+        return ip;
     }
 
     /**
