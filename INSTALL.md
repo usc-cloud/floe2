@@ -180,15 +180,34 @@ In this mode different components, includig Zookeeper, are run on different mach
 **Download and Build Floe2 on EACH machine that hosts Floe components**   
 Follow same instructions as ***Local Mode***
 
-**Download and Run Zookeeper ensamble**
+**Download and Run Zookeeper ensemble**
+Note: This is a quick start guide to run zookeeper in a **standalone** mode. For production it is suggested that you create an ensemble of atleast three dedicated zookeeper machines. For details see: [Zookeer Getting Started](http://zookeeper.apache.org/doc/trunk/zookeeperStarted.html)
 
+* Download a stable version of ZK from [http://zookeeper.apache.org/releases.html](http://zookeeper.apache.org/releases.html)
+
+```
+    tar xvzf zookeeper-3.4.6.tar.gz 
+    cd zookeeper-3.4.6
+    
+    #Create a file conf/zoo.cfg and add the following contents:
+    tickTime=2000
+    dataDir=/var/lib/zookeeper
+    clientPort=2181
+   
+   
+    #start zookeeper
+    bin/zkServer.sh start
+```
+
+Note 2: Zookeeper can quickly consume your disk space. For long running jobs Zookeeper storage must be managed externally (for data dirctory and logs). See maintenance instructions on the [Getting started page](http://zookeeper.apache.org/doc/trunk/zookeeperStarted.html)
 
 **Configure Floe2 and run distributed mode**
 
 Edit conf/floe.properties (change it on the Coodinator node and COPY it all container nodes whenever a change id made)
+
 * Change ***floe.execution.mode***  to **distributed**  
-* Change **floe.zk.servers** to comma separated list of ZK server ensamble.
-* Change **floe.coordinator.host** etc. set to **<coordinator ip>**
+* Change **floe.zk.servers** to **comma separated list of ZK server ensamble.**
+* Change **floe.coordinator.host** set to **[coordinator ip]**
 
 Known Issue: After changing a config value, you have to run ``mvn install'' again. This will be fixed in the coming version.
 
