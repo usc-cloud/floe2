@@ -123,7 +123,7 @@ public abstract class BaseAppTransition extends ClusterTransition {
         if (!postTransition(currentMapping)) {
             LOGGER.error("Post-Transition failed.");
             throw new Exception("Transition may have been executed partially. "
-                    + "Pre-transition failed.");
+                    + "Post-transition failed.");
         }
     }
 

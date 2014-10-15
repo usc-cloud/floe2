@@ -234,7 +234,7 @@ public class SenderBEComponent extends FlakeComponent {
                 if (flakeIds != null
                         && flakeIds.size() > 0) {
                     for (String flakeId : flakeIds) {
-                        LOGGER.debug("Sending to:" + flakeId);
+                        LOGGER.debug("Sending {} to: {}", tuple, flakeId);
                         backend.sendMore(flakeId);
                         //backend.sendMore(myPelletName); Dont add pellet as
                         // envelope, instead add it to the tuple.

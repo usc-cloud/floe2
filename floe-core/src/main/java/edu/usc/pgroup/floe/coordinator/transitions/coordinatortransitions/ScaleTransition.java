@@ -87,7 +87,7 @@ public class ScaleTransition extends BaseAppTransition {
     @Override
     public final boolean postTransition(final ResourceMapping mapping) {
         //No Post transition required.
-        return false;
+        return true;
     }
 
     /**

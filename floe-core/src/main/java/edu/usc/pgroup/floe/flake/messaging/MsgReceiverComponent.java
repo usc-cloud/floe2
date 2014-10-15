@@ -137,6 +137,7 @@ public class MsgReceiverComponent extends FlakeComponent {
             //Frontend socket to talk to other flakes. dont connect here.
             // Connect only when the signal for connect is received.
             LOGGER.info("Starting front end receiver socket");
+            LOGGER.info("FE subscribing for: {}", getFid());
             frontend.subscribe(getFid().getBytes());
 
             //SUBSCRIBE HERE FOR THE FLAKES FOR WHICH THIS GUY WILL BE THE
@@ -245,6 +246,8 @@ public class MsgReceiverComponent extends FlakeComponent {
         byte[] message;
 
         //Connect to the message backup socket.
+        LOGGER.info("FE connecting for: {}",
+                Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX + getFid());
         frontend.connect(Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX + getFid());
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(6);
@@ -293,6 +296,8 @@ public class MsgReceiverComponent extends FlakeComponent {
 
                         LOGGER.info("data channel: " + dataChannel);
                         LOGGER.info("back channel: " + backChannel);
+                        LOGGER.info("FE connecting for: {}",
+                              dataChannel);
                         frontend.connect(dataChannel);
                         xpubToPredSock.connect(backChannel);
                         result[0] = 1;
@@ -373,6 +378,7 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         for (String nfid: toAdd) {
             LOGGER.info("ME:{} subscribing for:{}.", getFid(), nfid);
+            LOGGER.info("FE subscribing for: {}", nfid);
             frontend.subscribe(nfid.getBytes());
         }
 
@@ -403,6 +409,9 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         byte[] message = from.recv();
 
+
+        LOGGER.info("has more:{}", from.hasReceiveMore());
+
         Long currentNano = System.nanoTime();
 
         Tuple t = tupleSerializer.deserialize(message);
@@ -427,6 +436,7 @@ public class MsgReceiverComponent extends FlakeComponent {
             return;
         }
 
+        LOGGER.debug("Forwarding to pellet: {}", t);
         List<String> pelletInstancesIds =
                 strategy.getTargetPelletInstances(t);
 

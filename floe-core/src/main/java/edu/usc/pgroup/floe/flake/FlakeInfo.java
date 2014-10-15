@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The Container info object which is sent with each heartbeat.
@@ -74,6 +75,10 @@ public final class FlakeInfo implements Serializable {
      */
     private boolean terminated;
 
+    /**
+     * Number of pellets on this flake.
+     */
+    private AtomicInteger numPellets;
 
     /**
      * private constructor that sets the constant or default values. Hidden
@@ -90,6 +95,7 @@ public final class FlakeInfo implements Serializable {
         this.containerId = cid;
         this.appName = app;
         this.terminated = false;
+        this.numPellets = new AtomicInteger();
     }
 
     /**
@@ -153,4 +159,25 @@ public final class FlakeInfo implements Serializable {
      * cleanup.
      */
     public void setTerminated() { this.terminated = true; }
+
+    /**
+     * increment the number of pellets.
+     */
+    public void incrementPellets() {
+        numPellets.incrementAndGet();
+    }
+
+    /**
+     * decrement the number of pellets.
+     */
+    public void decrementPellets() {
+        numPellets.decrementAndGet();
+    }
+
+    /**
+     * @return the current number of pellets running in this flake.
+     */
+    public int getNumPellets() {
+        return numPellets.get();
+    }
 }

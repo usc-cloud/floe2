@@ -18,12 +18,15 @@ package edu.usc.pgroup.floe.container;
 
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.flake.FlakeInfo;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -46,6 +49,16 @@ public final class ContainerInfo implements Serializable {
      * singleton container info instance.
      */
     private static ContainerInfo instance;
+
+    /**
+     * Number of processors on the machine hosting this container.
+     */
+    private final int numCores;
+
+    /**
+     * Number of cores currently being used (we assume 1 pellet = 1 core).
+     */
+    private int usedCores;
 
     /**
      * A unique container id.
@@ -74,6 +87,13 @@ public final class ContainerInfo implements Serializable {
      */
     private int portRangeStart;
 
+
+    /**
+     * List of flakes running on this container. Pelletid to flakeInfo map.
+     */
+    private final Map<String, FlakeInfo> currentFlakes;
+
+
     /**
      * private constructor that sets the constant or default values. Hidden
      * from others since this is a singleton class.
@@ -89,7 +109,10 @@ public final class ContainerInfo implements Serializable {
                 ConfigProperties.FLAKE_RECEIVER_PORT
         );
 
+        this.numCores = Runtime.getRuntime().availableProcessors();
+
         this.uptime = 0;
+        this.currentFlakes = new HashMap<>();
     }
 
     /**
@@ -147,4 +170,49 @@ public final class ContainerInfo implements Serializable {
      * creating bind sockets for different flakes on this container.
      */
     public int getPortRangeStart() { return portRangeStart; }
+
+    /**
+     * Updates the list of flakes with current data.
+     * @param flakes list of flakes from the flake monitor. Pelletid to flake
+     *               info map.
+     */
+    public void updateFlakes(final Map<String, FlakeInfo> flakes) {
+        if (flakes != null) {
+            currentFlakes.clear();
+            currentFlakes.putAll(flakes);
+            usedCores = 0;
+            for (FlakeInfo fl : flakes.values()) {
+                usedCores += fl.getNumPellets();
+            }
+        }
+    }
+
+    /**
+     * @return a map from pelletid to Flakeinfo for all flakes running on
+     * this container.
+     */
+    public Map<String, FlakeInfo> getCurrentFlakes() {
+        return currentFlakes;
+    }
+
+    /**
+     * @return number of cores on the machine hosting this container.
+     */
+    public int getNumCores() {
+        return numCores;
+    }
+
+    /**
+     * @return return the number of currently used cores.
+     */
+    public int getUsedCores() {
+        return usedCores;
+    }
+
+    /**
+     * @return number of currently available cores.
+     */
+    public int getAvailableCores() {
+        return getNumCores() - getUsedCores();
+    }
 }

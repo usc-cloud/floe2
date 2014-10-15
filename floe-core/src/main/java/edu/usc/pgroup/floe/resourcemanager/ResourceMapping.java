@@ -117,28 +117,31 @@ public class ResourceMapping implements Serializable {
         }
 
         FlakeInstance fl = containerInstance.getFlake(pelletId);
+        LOGGER.info("FL for pid:{} = {}", pelletId, fl);
         if (fl == null) {
+            LOGGER.error("Creating flake");
             fl = containerInstance.createFlake(pelletId);
             if (mappingDelta != null) {
                 mappingDelta.flakeAdded(fl);
             }
+
+
+            List<FlakeInstance> pidFlakes = null;
+            if (pidFlakeMap.containsKey(pelletId)) {
+                pidFlakes = pidFlakeMap.get(pelletId);
+            } else {
+                pidFlakes = new ArrayList<>();
+                pidFlakeMap.put(pelletId, pidFlakes);
+            }
+
+            pidFlakes.add(fl);
         }
-
-        List<FlakeInstance> pidFlakes = null;
-        if (pidFlakeMap.containsKey(pelletId)) {
-            pidFlakes = pidFlakeMap.get(pelletId);
-        } else {
-            pidFlakes = new ArrayList<>();
-            pidFlakeMap.put(pelletId, pidFlakes);
-        }
-
-        pidFlakes.add(fl);
-
         fl.createPelletInstance();
         if (mappingDelta != null) {
             mappingDelta.flakeUpdated(fl,
                     ResourceMappingDelta.UpdateType.InstanceAdded);
         }
+        LOGGER.info("Pid flake map:{}", pidFlakeMap);
     }
 
 
@@ -347,6 +350,24 @@ public class ResourceMapping implements Serializable {
      */
     public final java.util.Set<String> getAllContainers() {
         return containerMap.keySet();
+    }
+
+    /**
+     * @param containerId container id (as received from the heart beat)
+     * @return the sum of used pellets by all flakes on this container.
+     */
+    public final int getUsedCores(final String containerId) {
+        if (!containerMap.containsKey(containerId)) {
+            return 0;
+        }
+
+        int used = 0;
+        ContainerInstance containerInstance = containerMap.get(containerId);
+        for (FlakeInstance fl: containerInstance.getFlakes().values()) {
+            used += fl.getNumPelletInstances();
+        }
+
+        return used;
     }
 
     /**

@@ -521,16 +521,20 @@ public class ReducerCoordinationComponent extends CoordinationComponent
         for (; i < toleranceLevel && iterator.hasNext(); i++) {
             Integer neighborToken = iterator.next();
             String nfid = allFlakes.get(neighborToken);
-            result.put(neighborToken, nfid);
-            flakeToDataPortMap.put(nfid, allFlakesConnectData.get(nfid));
+            if (!nfid.equalsIgnoreCase(getFid())) {
+                result.put(neighborToken, nfid);
+                flakeToDataPortMap.put(nfid, allFlakesConnectData.get(nfid));
+            }
         }
 
         Iterator<Integer> headIterator = allFlakes.keySet().iterator();
         for (; i < toleranceLevel && headIterator.hasNext(); i++) {
             Integer neighborToken = headIterator.next();
             String nfid = allFlakes.get(neighborToken);
-            result.put(neighborToken, nfid);
-            flakeToDataPortMap.put(nfid, allFlakesConnectData.get(nfid));
+            if (!nfid.equalsIgnoreCase(getFid())) {
+                result.put(neighborToken, nfid);
+                flakeToDataPortMap.put(nfid, allFlakesConnectData.get(nfid));
+            }
         }
 
         LOGGER.info("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,

@@ -99,7 +99,7 @@ public abstract class ResourceManager {
                     + "retry have failed. Exception: {} ", e);
             return null;
         }
-
+        LOGGER.info("Containers:{}" + containers);
         return  containers;
     }
 

@@ -384,11 +384,12 @@ public final class ContainerActions {
                 List<ResourceMapping.FlakeInstance> preds
                         = mapping
                         .getPrecedingFlakes(pid);
-
+                LOGGER.info("ALL PREDS: {}", preds);
                 for (ResourceMapping.FlakeInstance pred : preds) {
                     int assignedPort = pred.getAssignedPort(pid);
                     int backPort = pred.getAssignedBackPort(pid);
                     String host = pred.getHost();
+                    LOGGER.info("Connecting to pred: {}", pred.getHost());
                     ContainerUtils.sendConnectCommand(
                             pidToFidMap.get(pid).getFlakeId(),
                             host, assignedPort, backPort);

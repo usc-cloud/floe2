@@ -471,6 +471,7 @@ public class Flake {
 
         runningPelletInstances.add(pe);
         pe.start();
+        flakeInfo.incrementPellets();
         return pe.getPelletInstanceId();
     }
 
@@ -652,6 +653,7 @@ public class Flake {
                 String dpid = (String) command.getData();
                 LOGGER.info("REMOVING PELLET: " + dpid + " on "
                         + getFlakeId());
+
                 if (runningPelletInstances.size() > 0) {
                     //NEED TO DO ERROR HANDLING HERE.
                     PelletExecutor insToRemove
@@ -663,6 +665,8 @@ public class Flake {
                             null);
                     signal.send(Utils.serialize(systemSignal), 0);
                     //notifyPelletRemoved(insToRemove.getPelletInstanceId());
+
+                    flakeInfo.decrementPellets();
 
                     newCommand = new FlakeControlCommand(
                             FlakeControlCommand.Command.DECREMENT_PELLET,

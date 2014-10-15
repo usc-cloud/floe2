@@ -24,6 +24,7 @@ import edu.usc.pgroup.floe.thriftgen.TPellet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -68,7 +69,6 @@ public class ClusterResourceManager extends ResourceManager {
             return null;
         }
 
-        int i = 0;
         for (Map.Entry<String, TPellet> pelletEntry
                 : app.get_pellets().entrySet()) {
 
@@ -79,16 +79,104 @@ public class ClusterResourceManager extends ResourceManager {
             }
 
             for (int cnt = 0; cnt < numInstances; cnt++) {
+
+                ContainerInfo container = getFreeContainer(
+                        pelletEntry.getKey(),
+                        containers,
+                        mapping);
+
                 mapping.createNewInstance(pelletEntry.getKey(),
-                        containers.get(i++));
-                if (i == containers.size()) {
-                    i = 0;
-                }
+                        container);
             }
         }
         return  mapping;
     }
 
+    /**
+     * This tries to isolate pellets on different containers. So if a
+     * container already contains a certain type of pellet,
+     * it is preferred to keep the same type of pellet on that container.
+     * @param pelletId pelletid.
+     * @param mapping Current resource mapping.
+     * @param containers list of available containers (from ZK).
+     * @return free container for the given Pellet.
+     */
+    public final ContainerInfo getFreeContainer(
+            final String pelletId, final List<ContainerInfo> containers,
+            final ResourceMapping mapping) {
+
+        List<ContainerInfo> feasible = new ArrayList<>();
+        for (ContainerInfo container : containers) {
+            //If there are no cores available, move to next container.
+            if (container.getAvailableCores() == 0) {
+                LOGGER.info("No availalbe cores: {}",
+                        container.getContainerId());
+                continue;
+            }
+
+            //If the container has a different pellet running,
+            // move to next container.
+            LOGGER.info("Flakes on {} : {}", container.getContainerId(),
+                    container.getCurrentFlakes());
+            if (container.getCurrentFlakes() != null
+                    && container.getCurrentFlakes().size() > 0) {
+
+                /*for (String cpid: container.getCurrentFlakes().keySet()) {
+                    LOGGER.info("Container hosts: {}, will put {}",
+                            cpid, pelletId);
+                    if (!cpid.equalsIgnoreCase(pelletId)) {
+                        LOGGER.info("Other pellet running: {}, expected {}",
+                                container.getContainerId(), pelletId);
+                        continue; //bug
+                    }
+                }*/
+                if (!container.getCurrentFlakes().keySet().contains(pelletId)) {
+                    LOGGER.info("Other pellet running: {}, expected {}",
+                            container.getContainerId(), pelletId);
+                    continue;
+                }
+            }
+
+            //If here, it means the container has free cores.
+            //Now check if during the current mapping, all cores have been used.
+            //If so, move to the next container.
+            int usedCores = mapping.getUsedCores(container.getContainerId());
+            if (usedCores >= container.getNumCores()) {
+                LOGGER.info("Resource full: {}",
+                        container.getContainerId());
+                continue;
+            }
+
+            //Also check if the current mapping's container's flake has the
+            // given pellet id.
+            ResourceMapping.ContainerInstance cmapping
+                    = mapping.getContainer(container.getContainerId());
+            if (cmapping != null) {
+                LOGGER.info("Resource mapping, but not deployed flakes {} on "
+                        + "container {}", cmapping.getFlakes(),
+                        container.getContainerId());
+                if (!cmapping.getFlakes().containsKey(pelletId)) {
+                    continue;
+                }
+            }
+
+            LOGGER.info("Feasible: {}", container.getContainerId());
+            feasible.add(container);
+        }
+
+        //Find the container Most cores used.
+        int min = -1;
+        ContainerInfo best = null;
+        for (ContainerInfo c: feasible) {
+            int usedCores = mapping.getUsedCores(c.getContainerId());
+            if (usedCores > min) {
+                LOGGER.info("best: {}", c.getContainerId());
+                best = c;
+                min = usedCores;
+            }
+        }
+        return best;
+    }
 
     /**
      * Updates the resource mapping based on the current floe application
@@ -135,14 +223,17 @@ public class ClusterResourceManager extends ResourceManager {
 
             //TODO: Order containers w.r.t availability.
 
-            int cindex = new Random().nextInt(containers.size());
+
+
+            //int cindex = new Random().nextInt(containers.size());
 
             //Add to containers in round robin fashion.
             for (int i = 0; i < count; i++) {
-                current.createNewInstance(pelletName, containers.get(cindex++));
-                if (cindex == containers.size()) {
-                    cindex = 0;
-                }
+                ContainerInfo container = getFreeContainer(
+                                                pelletName,
+                                                containers,
+                                                current);
+                current.createNewInstance(pelletName, container);
             }
         } else if (direction == ScaleDirection.down) {
 

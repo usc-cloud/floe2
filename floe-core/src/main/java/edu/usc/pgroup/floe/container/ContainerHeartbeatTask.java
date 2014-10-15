@@ -16,10 +16,12 @@
 
 package edu.usc.pgroup.floe.container;
 
+import edu.usc.pgroup.floe.flake.FlakeInfo;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.TimerTask;
 
 /**
@@ -43,6 +45,16 @@ public class ContainerHeartbeatTask extends TimerTask {
     public final void run() {
         ContainerInfo cinfo = ContainerInfo.getInstance();
         cinfo.updateUptime();
+
+        LOGGER.debug("Getting flakes: ");
+
+        Map<String, FlakeInfo> currentFlakes
+                = FlakeMonitor.getInstance().getFlakes();
+        if (currentFlakes != null) {
+            cinfo.updateFlakes(currentFlakes);
+        }
+
+        LOGGER.debug("Sending heartbeat {}", cinfo);
 
         //TODO: Update other container information here.
         ZKClient.getInstance().sendContainerHeartBeat(cinfo);
