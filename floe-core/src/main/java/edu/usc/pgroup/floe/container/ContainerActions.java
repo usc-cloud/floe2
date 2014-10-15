@@ -270,55 +270,56 @@ public final class ContainerActions {
         }
 
         try {
+            if (flakes != null) {
+                for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
+                        : flakes.entrySet()) {
 
-            for (Map.Entry<String, ResourceMapping.FlakeInstance> flakeEntry
-                    : flakes.entrySet()) {
+                    final String pid = flakeEntry.getKey();
 
-                final String pid = flakeEntry.getKey();
+                    FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory
+                                    .getDefaultPolicy(),
+                            new Callable<FlakeInfo>() {
+                                @Override
+                                public FlakeInfo call() throws Exception {
+                                    return FlakeMonitor.getInstance()
+                                            .getFlakeInfo(pid);
+                                }
+                            });
+                    LOGGER.info("Found Flake:{}", info.getFlakeId());
 
-                FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory
-                                .getDefaultPolicy(),
-                        new Callable<FlakeInfo>() {
-                            @Override
-                            public FlakeInfo call() throws Exception {
-                                return FlakeMonitor.getInstance()
-                                        .getFlakeInfo(pid);
-                            }
-                        });
-                LOGGER.info("Found Flake:{}", info.getFlakeId());
+                    ResourceMapping.FlakeInstance flakeInstance
+                            = flakeEntry.getValue();
 
-                ResourceMapping.FlakeInstance flakeInstance
-                        = flakeEntry.getValue();
+                    TPellet pellet = mapping.getFloeApp().get_pellets()
+                            .get(flakeInstance.getCorrespondingPelletId());
 
-                TPellet pellet = mapping.getFloeApp().get_pellets()
-                        .get(flakeInstance.getCorrespondingPelletId());
+                    byte[] activeAlternate = pellet.get_alternates().get(
+                            pellet.get_activeAlternate()
+                    ).get_serializedPellet();
 
-                byte[] activeAlternate = pellet.get_alternates().get(
-                        pellet.get_activeAlternate()
-                ).get_serializedPellet();
+                    int diffPellets = pelletsToIncrOrDecr.get(pid);
+                    LOGGER.info("Creating {} instances.", diffPellets);
 
-                int diffPellets = pelletsToIncrOrDecr.get(pid);
-                LOGGER.info("Creating {} instances.", diffPellets);
-
-                if (diffPellets > 0) {
-                    //TO INCREMENT.
-                    LOGGER.info("Incrementing pellet instances for flake: "
-                            + "{} by {}", info.getFlakeId(), diffPellets);
-                    for (int i = 0; i < diffPellets; i++) {
-                        ContainerUtils.sendIncrementPelletCommand(
-                                info.getFlakeId(),
-                                activeAlternate
-                        );
-                    }
-                } else if (diffPellets < 0) {
-                    //TO Decrement.
-                    diffPellets = Math.abs(diffPellets);
-                    LOGGER.info("Decrementing pellet instances for flake: "
-                            + "{} by {}", info.getFlakeId(), diffPellets);
-                    for (int i = 0; i < diffPellets; i++) {
-                        ContainerUtils.sendDecrementPelletCommand(
-                                info.getFlakeId()
-                        );
+                    if (diffPellets > 0) {
+                        //TO INCREMENT.
+                        LOGGER.info("Incrementing pellet instances for flake: "
+                                + "{} by {}", info.getFlakeId(), diffPellets);
+                        for (int i = 0; i < diffPellets; i++) {
+                            ContainerUtils.sendIncrementPelletCommand(
+                                    info.getFlakeId(),
+                                    activeAlternate
+                            );
+                        }
+                    } else if (diffPellets < 0) {
+                        //TO Decrement.
+                        diffPellets = Math.abs(diffPellets);
+                        LOGGER.info("Decrementing pellet instances for flake: "
+                                + "{} by {}", info.getFlakeId(), diffPellets);
+                        for (int i = 0; i < diffPellets; i++) {
+                            ContainerUtils.sendDecrementPelletCommand(
+                                    info.getFlakeId()
+                            );
+                        }
                     }
                 }
             }
