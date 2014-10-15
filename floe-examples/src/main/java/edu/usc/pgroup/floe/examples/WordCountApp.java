@@ -57,12 +57,31 @@ public final class WordCountApp {
      */
     public static void main(final String[] args) {
         System.out.println("Hello World!" + Utils.getHostNameOrIpAddress());
+
+        for (int i = 0; i < args.length; i++) {
+            LOGGER.info("arg: {} {}", i, args[i]);
+        }
+
         ApplicationBuilder builder = new ApplicationBuilder();
 
         final int numWords = 10;
         final int maxWordLength = 3;
-        final int numReducers = 2;
-        final int numChars = 26;
+
+        int numReducers = 2;
+        if (args.length >= 1) {
+            numReducers = Integer.parseInt(args[0]);
+        }
+
+        int numMappers = 1;
+        if (args.length >= 2) {
+            numMappers = Integer.parseInt(args[1]);
+        }
+
+        long wordInterval = Utils.Constants.MILLI;
+        if (args.length > 2) {
+            wordInterval = Long.parseLong(args[2]);
+        }
+
         String[] words = new String[numWords];
 
 
@@ -73,7 +92,8 @@ public final class WordCountApp {
         }
         //String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
-        builder.addPellet("words", new WordPellet(words)).setParallelism(1);
+        builder.addPellet("words", new WordPellet(words, wordInterval))
+                                    .setParallelism(numMappers);
 
         builder.addPellet("count", new WordCountReducer("word"))
                 .setParallelism(numReducers).reduce("words");

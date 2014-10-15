@@ -43,11 +43,27 @@ public class WordPellet extends StatelessPellet {
     private final String[] words;
 
     /**
+     * Interval between emitting words.
+     */
+    private final long interval;
+
+    /**
+     * Constructor.
+     * @param w List of words to emmit in a loop.
+     * @param sleepTime sleeptime interval between two words.
+     */
+    public WordPellet(final String[] w,
+                      final long sleepTime) {
+        this.words = w;
+        this.interval = sleepTime;
+    }
+
+    /**
      * Constructor.
      * @param w List of words to emmit in a loop.
      */
     public WordPellet(final String[] w) {
-        this.words = w;
+        this(w, Utils.Constants.MILLI);
     }
 
     /**
@@ -95,7 +111,7 @@ public class WordPellet extends StatelessPellet {
             ot.put("word", words[i]);
             emitter.emit(ot);
             try {
-                Thread.sleep(Utils.Constants.MILLI);
+                Thread.sleep(interval);
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;

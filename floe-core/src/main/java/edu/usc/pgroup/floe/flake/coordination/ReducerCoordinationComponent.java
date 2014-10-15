@@ -19,6 +19,8 @@ package edu.usc.pgroup.floe.flake.coordination;
 import com.codahale.metrics.MetricRegistry;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
@@ -195,7 +197,10 @@ public class ReducerCoordinationComponent extends CoordinationComponent
         pollerItems.register(stateSoc, ZMQ.Poller.POLLIN);
         pollerItems.register(controlSoc, ZMQ.Poller.POLLIN);
 
-        final int checkpointDelay = 5000; //check the 'failure' detection
+        //THis is for checkpoint receiver. MAX delay.
+        final int checkpointDelay = FloeConfig.getConfig().getInt(
+                ConfigProperties.FLAKE_STATE_CHECKPOINT_PERIOD);
+
         // logic here.
 
         while (!Thread.currentThread().isInterrupted()) {
@@ -269,8 +274,6 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                             newFlakes, removedFlakes);
 
 
-
-
                     List<String> neighbors = new ArrayList<String>(
                             neighborsToBackupMsgsFor.values());
 
@@ -289,8 +292,6 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                 }
             }
         }
-
-
         stateSoc.close();
         controlSoc.close();
         msgReceivercontrolForwardSocket.close();
