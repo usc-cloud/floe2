@@ -419,6 +419,13 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         byte[] message = from.recv();
 
+        msgRecvMeter.mark();
+
+        int dummy = 0;
+
+        if (dummy == 0) {
+            return;
+        }
 
         LOGGER.info("has more:{}", from.hasReceiveMore());
 
