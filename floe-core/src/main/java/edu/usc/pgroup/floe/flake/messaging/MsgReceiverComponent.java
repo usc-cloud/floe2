@@ -428,7 +428,7 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
 
-        Long approxNwLat  = ts - currentNano;
+        Long approxNwLat  = currentNano - ts;
         if (approxNwLat > 0) {
             nwLatTimer.update(approxNwLat, TimeUnit.NANOSECONDS);
         }
