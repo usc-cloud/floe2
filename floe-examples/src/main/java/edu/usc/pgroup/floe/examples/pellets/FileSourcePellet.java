@@ -25,16 +25,12 @@ import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.List;
-import java.util.Random;
 import java.util.StringTokenizer;
 
 /**
@@ -108,35 +104,16 @@ public class FileSourcePellet extends StatelessPellet {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(new ByteArrayInputStream(bytebuffer)));
 
-        Random r = new Random(System.nanoTime());
+        /*Random r = new Random(bytebuffer.length);
+        int offset = r.nextInt();
+        LOGGER.info("len:{}, off:{}, rest:{}", bytebuffer.length, offset);*/
+        String fullText = new String(bytebuffer);
 
-        assert bytebuffer != null;
-
-        int startpos = r.nextInt(bytebuffer.length);
-
-        try {
-            in.skip(startpos);
-            in.mark(bytebuffer.length - startpos);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        StringTokenizer tokenizer = new StringTokenizer(fullText);
         while (true) {
 
             try {
-                String line = in.readLine();
-
-                if (line == null) {
-                    in.reset();
-                }
-
-
-
-                StringTokenizer tokenizer = new StringTokenizer(line);
-
                 while (tokenizer.hasMoreElements()) {
                     String token = tokenizer.nextToken();
 
@@ -144,15 +121,14 @@ public class FileSourcePellet extends StatelessPellet {
                     ot.put("word", token);
                     LOGGER.debug("Emmitting: {}", ot);
                     emitter.emit(ot);
+                    Thread.sleep(interval);
                 }
 
-                Thread.sleep(interval);
+                tokenizer = new StringTokenizer(fullText);
 
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }

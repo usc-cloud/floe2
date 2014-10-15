@@ -142,8 +142,9 @@ public class ClusterResourceManager extends ResourceManager {
             //If so, move to the next container.
             int usedCores = mapping.getUsedCores(container.getContainerId());
             if (usedCores >= container.getNumCores()) {
-                LOGGER.info("Resource full: {}",
-                        container.getContainerId());
+                LOGGER.info("Resource full: {}, used:{}, available:{}",
+                        container.getContainerId(), usedCores,
+                        container.getNumCores());
                 continue;
             }
 
