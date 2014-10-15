@@ -323,7 +323,7 @@ public final class ContainerActions {
                 }
             }
         } catch (Exception ex) {
-            LOGGER.error("Could not update flake.");
+            LOGGER.error("Could not update flake. {}", ex);
         }
     }
 
