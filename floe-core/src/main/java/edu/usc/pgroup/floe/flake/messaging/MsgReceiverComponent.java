@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.flake.messaging;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -78,6 +80,11 @@ public class MsgReceiverComponent extends FlakeComponent {
     private List<String> neighborsSubscribedFor;
 
     /**
+     * Timer to measure approx. nw. latency.
+     */
+    private Timer nwLatTimer;
+
+    /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
@@ -97,6 +104,9 @@ public class MsgReceiverComponent extends FlakeComponent {
         this.localDispersionStratMap = new HashMap<>();
         this.tupleSerializer = SerializerFactory.getSerializer();
         this.myToken = token;
+        nwLatTimer = metricRegistry.timer(
+                MetricRegistry.name(MsgReceiverComponent.class, "nw.latency")
+        );
     }
 
     /**
@@ -297,7 +307,7 @@ public class MsgReceiverComponent extends FlakeComponent {
                         LOGGER.info("data channel: " + dataChannel);
                         LOGGER.info("back channel: " + backChannel);
                         LOGGER.info("FE connecting for: {}",
-                              dataChannel);
+                                dataChannel);
                         frontend.connect(dataChannel);
                         xpubToPredSock.connect(backChannel);
                         result[0] = 1;
@@ -415,6 +425,13 @@ public class MsgReceiverComponent extends FlakeComponent {
         Long currentNano = System.nanoTime();
 
         Tuple t = tupleSerializer.deserialize(message);
+
+        Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
+
+        Long approxNwLat  = ts - currentNano;
+        if (approxNwLat > 0) {
+            nwLatTimer.update(approxNwLat, TimeUnit.NANOSECONDS);
+        }
 
         if (!fid.equalsIgnoreCase(getFid())) {
             LOGGER.info("THIS MESSAGE IS MEANT FOR BACKUP."

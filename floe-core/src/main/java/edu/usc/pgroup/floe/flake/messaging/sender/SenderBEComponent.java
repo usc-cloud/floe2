@@ -225,7 +225,7 @@ public class SenderBEComponent extends FlakeComponent {
                 //FIXME: CAN IMPROVE PERF. HERE BY NOT DOING MULTIPLE
                 //FIXME: SERIALIZE/DESERIALIZE operations.
                 tuple.put(Utils.Constants.SYSTEM_TS_FIELD_NAME,
-                        System.currentTimeMillis());
+                        System.nanoTime());
 
                 tuple.put(Utils.Constants.SYSTEM_SRC_PELLET_NAME,
                         myPelletName);
