@@ -31,7 +31,6 @@ import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * @author kumbhare
@@ -110,12 +109,12 @@ public class FileSourcePellet extends StatelessPellet {
         LOGGER.info("len:{}, off:{}, rest:{}", bytebuffer.length, offset);*/
         String fullText = new String(bytebuffer);
 
-        StringTokenizer tokenizer = new StringTokenizer(fullText);
+        String[] words = fullText.split("\\s+");
         while (true) {
 
             try {
-                while (tokenizer.hasMoreElements()) {
-                    String token = tokenizer.nextToken();
+                for (int i = 0; i < words.length; i++) {
+                    String token = words[i];
 
                     Tuple ot = new Tuple();
                     ot.put("word", token);
@@ -123,9 +122,6 @@ public class FileSourcePellet extends StatelessPellet {
                     emitter.emit(ot);
                     Thread.sleep(interval);
                 }
-
-                tokenizer = new StringTokenizer(fullText);
-
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;
