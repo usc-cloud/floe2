@@ -109,7 +109,7 @@ public class FileSourcePellet extends StatelessPellet {
                     while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
                         Tuple ot = new Tuple();
                         ot.put("word", tokenizer.sval);
-                        LOGGER.debug("Emmitting: {}", ot);
+                        LOGGER.info("Emmitting: {}", ot);
                         emitter.emit(ot);
                         if (interval > 0) {
                             Thread.sleep(interval);
@@ -119,8 +119,8 @@ public class FileSourcePellet extends StatelessPellet {
                 } else {
                     for (int cnt = 0; cnt < list.size(); cnt++) {
                         Tuple ot = new Tuple();
-                        ot.put("word", tokenizer.sval);
-                        LOGGER.debug("Emmitting: {}", ot);
+                        ot.put("word", list.get(cnt));
+                        LOGGER.info("Emmitting: {}", ot);
                         emitter.emit(ot);
                         if (interval > 0) {
                             Thread.sleep(interval);
