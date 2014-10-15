@@ -25,11 +25,12 @@ import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.StreamTokenizer;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -82,49 +83,56 @@ public class FileSourcePellet extends StatelessPellet {
     public final void execute(final Tuple t, final Emitter emitter) {
         LOGGER.info("Executing file source pellet.");
 
-        RandomAccessFile aFile = null;
-        MappedByteBuffer buffer = null;
-        byte[] bytebuffer = null;
+        BufferedReader reader = null;
         try {
-            LOGGER.info("Reading file.");
-            aFile = new RandomAccessFile(path, "r");
-
-            FileChannel inChannel = aFile.getChannel();
-            buffer = inChannel.map(
-                    FileChannel.MapMode.READ_ONLY,
-                    0,
-                    inChannel.size());
-            //buffer.load();
-            bytebuffer = new byte[(int) inChannel.size()];
-            buffer.get(bytebuffer);
-            aFile.close();
+            reader = new BufferedReader(new FileReader(path));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+        StreamTokenizer tokenizer = new StreamTokenizer(reader);
+        tokenizer.resetSyntax();
+        final int wcs = 0x23;
+        final int wce = 0xFF;
+        final int wcss = 0x00;
+        final int wcse = 0x20;
+        tokenizer.wordChars(wcs, wce);
+        tokenizer.whitespaceChars(wcss, wcse);
+        tokenizer.quoteChar('"');
 
-        /*Random r = new Random(bytebuffer.length);
-        int offset = r.nextInt();
-        LOGGER.info("len:{}, off:{}, rest:{}", bytebuffer.length, offset);*/
-        String fullText = new String(bytebuffer);
-
-        String[] words = fullText.split("\\s+");
+        List<String> list = new ArrayList<>();
         while (true) {
 
             try {
-                for (int i = 0; i < words.length; i++) {
-                    String token = words[i];
 
-                    Tuple ot = new Tuple();
-                    ot.put("word", token);
-                    LOGGER.debug("Emmitting: {}", ot);
-                    emitter.emit(ot);
-                    Thread.sleep(interval);
+
+                if (list.size() == 0) {
+                    while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
+                        Tuple ot = new Tuple();
+                        ot.put("word", tokenizer.sval);
+                        LOGGER.debug("Emmitting: {}", ot);
+                        emitter.emit(ot);
+                        if (interval > 0) {
+                            Thread.sleep(interval);
+                        }
+                        list.add(tokenizer.sval);
+                    }
+                } else {
+                    for (int cnt = 0; cnt < list.size(); cnt++) {
+                        Tuple ot = new Tuple();
+                        ot.put("word", tokenizer.sval);
+                        LOGGER.debug("Emmitting: {}", ot);
+                        emitter.emit(ot);
+                        if (interval > 0) {
+                            Thread.sleep(interval);
+                        }
+                    }
                 }
+
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;
+            } catch (IOException e) {
+                LOGGER.error("Exception: {}", e);
             }
         }
     }
