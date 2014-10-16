@@ -108,14 +108,19 @@ public class FileSourcePellet extends StatelessPellet {
 
                 if (list.size() == 0) {
                     while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
+                        String w = tokenizer.sval;
+                        if (w == null) {
+                            continue;
+                        }
+
                         Tuple ot = new Tuple();
-                        ot.put("word", tokenizer.sval);
+                        ot.put("word", w);
                         LOGGER.info("Emmitting: {}", ot);
                         emitter.emit(ot);
                         if (interval > 0) {
                             Thread.sleep(interval);
                         }
-                        list.add(tokenizer.sval);
+                        list.add(w);
                     }
                 } else {
                     Iterator<String> iterator = list.iterator();

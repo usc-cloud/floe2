@@ -303,77 +303,88 @@ public class PelletExecutor extends Thread {
         String key;
         while (!Thread.currentThread().isInterrupted()) {
             LOGGER.debug("POLLING: ");
-
-            pollerItems.poll();
-            if (pollerItems.pollin(0)) {
-                key = dataReceiver.recvStr(Charset.defaultCharset());
-                String queueAddedTime
+            //try {
+                pollerItems.poll();
+                if (pollerItems.pollin(0)) {
+                    key = dataReceiver.recvStr(Charset.defaultCharset());
+                    String queueAddedTime
                             = dataReceiver.recvStr(Charset.defaultCharset());
-                byte[] serializedTuple = dataReceiver.recv();
+                    byte[] serializedTuple = dataReceiver.recv();
 
-                long queueAddedTimeL = Long.parseLong(queueAddedTime);
-                long queueRemovedTime = System.nanoTime();
-                queueTimer.update(queueRemovedTime - queueAddedTimeL
-                        , TimeUnit.NANOSECONDS);
+                    long queueAddedTimeL = Long.parseLong(queueAddedTime);
+                    long queueRemovedTime = System.nanoTime();
+                    queueTimer.update(queueRemovedTime - queueAddedTimeL
+                            , TimeUnit.NANOSECONDS);
 
-                msgDequeuedMeter.mark();
+                    msgDequeuedMeter.mark();
 
-                Tuple tuple = tupleSerializer.deserialize(serializedTuple);
-                //Run pellet.execute here.
-                PelletState state = getPelletState(tuple);
+                    Tuple tuple = tupleSerializer.deserialize(serializedTuple);
 
 
-                pellet.execute(tuple, emitter, state);
-                if (state != null) {
-                    state.setLatestTimeStampAtomic(
-                            (Long) tuple.get(
-                                    Utils.Constants.SYSTEM_TS_FIELD_NAME));
-                }
+                    //Run pellet.execute here.
+                    PelletState state = null;
+                    try {
+                        state = getPelletState(tuple);
+                    } catch (Exception ex) {
+                        LOGGER.error("Exception on T:{}", tuple);
+                    }
 
 
-                long processedTime = System.nanoTime();
-                processTimer.update(processedTime - queueRemovedTime,
-                        TimeUnit.NANOSECONDS);
-                msgProcessedMeter.mark();
 
-            } else if (pollerItems.pollin(1)) {
-                String envelope = signalReceiver
-                        .recvStr(Charset.defaultCharset());
-                byte[] serializedSignal = signalReceiver.recv();
-                PelletSignal signal = (PelletSignal) Utils.deserialize(
-                        serializedSignal);
+                    pellet.execute(tuple, emitter, state);
+                    if (state != null) {
+                        state.setLatestTimeStampAtomic(
+                                (Long) tuple.get(
+                                        Utils.Constants.SYSTEM_TS_FIELD_NAME));
+                    }
 
-                if (signal instanceof SystemSignal) {
-                    processSystemSignal((SystemSignal) signal);
-                } else {
-                    if (pellet instanceof Signallable) {
-                        ((Signallable) pellet).onSignal(signal);
+
+                    long processedTime = System.nanoTime();
+                    processTimer.update(processedTime - queueRemovedTime,
+                            TimeUnit.NANOSECONDS);
+                    msgProcessedMeter.mark();
+
+                } else if (pollerItems.pollin(1)) {
+                    String envelope = signalReceiver
+                            .recvStr(Charset.defaultCharset());
+                    byte[] serializedSignal = signalReceiver.recv();
+                    PelletSignal signal = (PelletSignal) Utils.deserialize(
+                            serializedSignal);
+
+                    if (signal instanceof SystemSignal) {
+                        processSystemSignal((SystemSignal) signal);
                     } else {
-                        LOGGER.warn("Pellet is not signallable.");
+                        if (pellet instanceof Signallable) {
+                            ((Signallable) pellet).onSignal(signal);
+                        } else {
+                            LOGGER.warn("Pellet is not signallable.");
+                        }
                     }
                 }
-            }
 
-            if (killSignalReceived && !disconnected) {
-                LOGGER.info("backlog: {}", dataReceiver.getBacklog());
-                //Stop receiving new data messages.
-                dataReceiver.disconnect(
-                        Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
-                        + flakeId);
-                //stop receiving new control messages?
-                signalReceiver.disconnect(
-                        Utils.Constants
-                                .FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
-                        + flakeId);
-                disconnected = true;
-            }
+                if (killSignalReceived && !disconnected) {
+                    LOGGER.info("backlog: {}", dataReceiver.getBacklog());
+                    //Stop receiving new data messages.
+                    dataReceiver.disconnect(
+                            Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
+                                    + flakeId);
+                    //stop receiving new control messages?
+                    signalReceiver.disconnect(
+                            Utils.Constants
+                                    .FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
+                                    + flakeId);
+                    disconnected = true;
+                }
 
-            //CURRENTLY NO CHECK IS DONE TO VERIFY IF ALL MESSAGES IN THE
-            // QUEUE ARE PROCESSED AND SENT. THIS SHOULD BE DONE TO ENSURE NO
-            // MESSAGE LOSS DURING SCALE IN.
-            if (killSignalReceived && disconnected) {
-                break;
-            }
+                //CURRENTLY NO CHECK IS DONE TO VERIFY IF ALL MESSAGES IN THE
+                // QUEUE ARE PROCESSED AND SENT. THIS SHOULD BE DONE TO ENSURE
+                // NO MESSAGE LOSS DURING SCALE IN.
+                if (killSignalReceived && disconnected) {
+                    break;
+                }
+           // } catch (Exception ex) {
+           //     LOGGER.error("Error occured while executing pellet: {}", ex);
+           // }
         }
 
         LOGGER.warn("Pellet executor stopped.");
