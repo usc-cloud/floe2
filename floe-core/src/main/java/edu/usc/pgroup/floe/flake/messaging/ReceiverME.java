@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -76,6 +77,11 @@ public class ReceiverME extends FlakeComponent {
     private final Timer nwLatTimer;
 
     /**
+     * Counter for queue length.
+     */
+    private Counter queLen;
+
+    /**
      * Constructor.
      *
      * @param registry      Metrics registry used to log various metrics.
@@ -99,6 +105,8 @@ public class ReceiverME extends FlakeComponent {
         nwLatTimer = registry.timer(
                 MetricRegistry.name(MsgReceiverComponent.class, "nw.latency")
         );
+        this.queLen = registry.counter(
+                MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
     }
 
     /**
@@ -250,6 +258,7 @@ public class ReceiverME extends FlakeComponent {
                     + " SHOULD DO THAT HERE {} & {}", fid, getFid());
             backup.sendMore(fid);
             backup.send(message, 0);
+            queLen.dec();
             return;
         }
 
