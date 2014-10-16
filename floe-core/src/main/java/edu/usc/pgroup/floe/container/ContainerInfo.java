@@ -109,7 +109,7 @@ public final class ContainerInfo implements Serializable {
                 ConfigProperties.FLAKE_RECEIVER_PORT
         );
 
-        this.numCores = Runtime.getRuntime().availableProcessors();
+        this.numCores = Runtime.getRuntime().availableProcessors() / 2;
 
         this.uptime = 0;
         this.currentFlakes = new HashMap<>();
