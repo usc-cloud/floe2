@@ -125,15 +125,15 @@ public class MsgReceiverComponent extends FlakeComponent {
         final ZMQ.Socket backend = getContext().socket(ZMQ.PUB);
 
         //xpub, xsub for backchannels (per edge).
-        final ZMQ.Socket xpubToPredSock = getContext().socket(ZMQ.XPUB);
-        final ZMQ.Socket xsubFromPelletsSock = getContext().socket(ZMQ.XSUB);
+        //final ZMQ.Socket xpubToPredSock = getContext().socket(ZMQ.XPUB);
+        //final ZMQ.Socket xsubFromPelletsSock = getContext().socket(ZMQ.XSUB);
 
         final ZMQ.Socket msgReceivercontrolForwardSocket
                 = getContext().socket(ZMQ.REP);
 
         //back channel pinger to initiate out of bound backchannel message
         // when a new pred. flake is created.
-        final ZMQ.Socket backChannelPingger = getContext().socket(ZMQ.PUB);
+        //final ZMQ.Socket backChannelPingger = getContext().socket(ZMQ.PUB);
 
         final ZMQ.Socket msgBackupSender = getContext().socket(ZMQ.PUSH);
 
@@ -167,18 +167,18 @@ public class MsgReceiverComponent extends FlakeComponent {
 
 
             //XPUB XSUB sockets for the backchannels.
-            LOGGER.info("WAITING FOR BACKCHANNEL CONNECTINON "
-                    + "FROM back channel sender. {}", getFid());
-            xsubFromPelletsSock.bind(
-                    Utils.Constants.FLAKE_BACKCHANNEL_SENDER_PREFIX
-                            + getFid());
+            //LOGGER.info("WAITING FOR BACKCHANNEL CONNECTINON "
+            //        + "FROM back channel sender. {}", getFid());
+            //xsubFromPelletsSock.bind(
+            //       Utils.Constants.FLAKE_BACKCHANNEL_SENDER_PREFIX
+            //               + getFid());
 
             //connect to the predecessor's back channel on connect signal.
 
             //Start the backchannelsender.
-            backChannelPingger.bind(
-                    Utils.Constants.FLAKE_BACKCHANNEL_CONTROL_PREFIX
-                            + getFid());
+            //backChannelPingger.bind(
+            //        Utils.Constants.FLAKE_BACKCHANNEL_CONTROL_PREFIX
+            //                + getFid());
 
             LOGGER.info("Starting backend ipc socket for control channel at: "
                     + Utils.Constants.FLAKE_RECEIVER_CONTROL_FWD_PREFIX
@@ -206,20 +206,20 @@ public class MsgReceiverComponent extends FlakeComponent {
                 msgRecvMeter,
                 frontend,
                 backend,
-                xsubFromPelletsSock,
-                xpubToPredSock,
+                //xsubFromPelletsSock,
+                //xpubToPredSock,
                 msgReceivercontrolForwardSocket,
-                backChannelPingger,
+                //backChannelPingger,
                 terminateSignalReceiver,
                 msgBackupSender
         );
 
         frontend.close();
         backend.close();
-        xpubToPredSock.close();
-        xsubFromPelletsSock.close();
+        //xpubToPredSock.close();
+        //xsubFromPelletsSock.close();
         msgReceivercontrolForwardSocket.close();
-        backChannelPingger.close();
+        //backChannelPingger.close();
 
         notifyStopped(result);
     }
@@ -230,26 +230,26 @@ public class MsgReceiverComponent extends FlakeComponent {
      * @param frontend The frontend socket to receive all messagess from all
      *                 pred. flakes.
      * @param backend backend socket to forward messages to appropriate
- *                pellet instances.
-     * @param xsubFromPelletsSock a raw xsub socket to to forward messages
-*                            from backchannel (per edge) to the pred.
-*                            flakes.
-     * @param xpubToPredSock a raw xpub component for forwarding backchannel
-*                       messages.
+     *                pellet instances.
+     * @aram xsubFromPelletsSock a raw xsub socket to to forward messages
+     *                            from backchannel (per edge) to the pred.
+     *                            flakes.
+     * @aram xpubToPredSock a raw xpub component for forwarding backchannel
+     *                       messages.
      * @param msgReceivercontrolForwardSocket to receive control signals from
-*                                        the flake.
-     * @param backChannelPingger socket to ping the backchannel whenever a
-*                           new pred. flake is added/removed.
+     *                                        the flake.
+     * @aram backChannelPingger socket to ping the backchannel whenever a
+     *                           new pred. flake is added/removed.
      * @param terminateSignalReceiver terminate signal receiver.
      * @param msgBackupSender socket to send the tuples meant for backup .
      */
     private void receiveAndProcess(
             final Meter msgRecvMeter, final ZMQ.Socket frontend,
             final ZMQ.Socket backend,
-            final ZMQ.Socket xsubFromPelletsSock,
-            final ZMQ.Socket xpubToPredSock,
+            //final ZMQ.Socket xsubFromPelletsSock,
+            //final ZMQ.Socket xpubToPredSock,
             final ZMQ.Socket msgReceivercontrolForwardSocket,
-            final ZMQ.Socket backChannelPingger,
+            //final ZMQ.Socket backChannelPingger,
             final ZMQ.Socket terminateSignalReceiver,
             final ZMQ.Socket msgBackupSender) {
 
@@ -260,11 +260,11 @@ public class MsgReceiverComponent extends FlakeComponent {
                 Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX + getFid());
         frontend.connect(Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX + getFid());
 
-        ZMQ.Poller pollerItems = new ZMQ.Poller(6);
+        ZMQ.Poller pollerItems = new ZMQ.Poller(3);
         pollerItems.register(frontend, ZMQ.Poller.POLLIN);
-        pollerItems.register(backend, ZMQ.Poller.POLLIN);
-        pollerItems.register(xsubFromPelletsSock, ZMQ.Poller.POLLIN);
-        pollerItems.register(xpubToPredSock, ZMQ.Poller.POLLIN);
+        //pollerItems.register(backend, ZMQ.Poller.POLLIN);
+        //pollerItems.register(xsubFromPelletsSock, ZMQ.Poller.POLLIN);
+        //pollerItems.register(xpubToPredSock, ZMQ.Poller.POLLIN);
         pollerItems.register(msgReceivercontrolForwardSocket
                                                 , ZMQ.Poller.POLLIN);
         pollerItems.register(terminateSignalReceiver, ZMQ.Poller.POLLIN);
@@ -278,15 +278,15 @@ public class MsgReceiverComponent extends FlakeComponent {
             if (pollerItems.pollin(0)) { //frontend
                 forwardToPellet(msgRecvMeter, frontend, backend,
                         msgBackupSender);
-            } else if (pollerItems.pollin(1)) { //backend
+            /*} else if (pollerItems.pollin(1)) { //backend
                 Utils.forwardCompleteMessage(backend, frontend);
             } else if (pollerItems.pollin(2)) { //from xsubFromPelletsSock
                 Utils.forwardCompleteMessage(
                         xsubFromPelletsSock, xpubToPredSock);
             } else if (pollerItems.pollin(3)) { //from xpubToPredSock
                 Utils.forwardCompleteMessage(
-                        xpubToPredSock, xsubFromPelletsSock);
-            } else if (pollerItems.pollin(4)) { //controlSocket
+                        xpubToPredSock, xsubFromPelletsSock);*/
+            } else if (pollerItems.pollin(1)) { //controlSocket
                 LOGGER.info("Control msg");
                 message = msgReceivercontrolForwardSocket.recv();
 
@@ -309,9 +309,9 @@ public class MsgReceiverComponent extends FlakeComponent {
                         LOGGER.info("FE connecting for: {}",
                                 dataChannel);
                         frontend.connect(dataChannel);
-                        xpubToPredSock.connect(backChannel);
+                        //xpubToPredSock.connect(backChannel);
                         result[0] = 1;
-                        backChannelPingger.send(result, 0);
+                        //backChannelPingger.send(result, 0);
                         break;
                     case DISCONNECT_PRED:
                         String disconnectstr = (String) command.getData();
