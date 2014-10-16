@@ -31,6 +31,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -117,9 +118,10 @@ public class FileSourcePellet extends StatelessPellet {
                         list.add(tokenizer.sval);
                     }
                 } else {
-                    for (int cnt = 0; cnt < list.size(); cnt++) {
+                    Iterator<String> iterator = list.iterator();
+                    while (iterator.hasNext()) {
                         Tuple ot = new Tuple();
-                        ot.put("word", list.get(cnt));
+                        ot.put("word", iterator.next());
                         LOGGER.info("Emmitting: {}", ot);
                         emitter.emit(ot);
                         if (interval > 0) {
