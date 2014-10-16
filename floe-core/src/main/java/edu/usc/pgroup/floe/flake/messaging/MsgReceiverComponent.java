@@ -21,6 +21,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
+import edu.usc.pgroup.floe.flake.QueueLenMonitor;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -249,6 +250,10 @@ public class MsgReceiverComponent extends FlakeComponent {
         Counter queLen = getMetricRegistry().counter(
                 MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
 
+        QueueLenMonitor monitor = new QueueLenMonitor(getMetricRegistry(),
+                queLen);
+        monitor.start();
+
         while (!done && !Thread.currentThread().isInterrupted()) {
             pollerItems.poll(pollDelay);
 
@@ -328,6 +333,7 @@ public class MsgReceiverComponent extends FlakeComponent {
                 }
             }
         }
+        monitor.interrupt();
     }
 
     /**
