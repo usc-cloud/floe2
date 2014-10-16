@@ -18,28 +18,18 @@ package edu.usc.pgroup.floe.flake.messaging;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
-import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.MessageDispersionStrategyFactory;
-import edu.usc.pgroup.floe.serialization.SerializerFactory;
-import edu.usc.pgroup.floe.serialization.TupleSerializer;
-import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -64,25 +54,15 @@ public class MsgReceiverComponent extends FlakeComponent {
     private Map<String, String> predChannelMap;
 
     /**
-     * Map of pred. pellet name to local dispersion strategy.
-     */
-    private final
-    Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap;
-
-    /**
-     * Serializer to be used to serialize and deserialized the data tuples.
-     */
-    private final TupleSerializer tupleSerializer;
-
-    /**
      * The neighbors currently subscribed for.
      */
     private List<String> neighborsSubscribedFor;
 
     /**
-     * Timer to measure approx. nw. latency.
+     * Receiver ME component.
      */
-    private Timer nwLatTimer;
+    private ReceiverME receiverMEComponent;
+
 
     /**
      * Constructor.
@@ -101,12 +81,7 @@ public class MsgReceiverComponent extends FlakeComponent {
                                 final Integer token) {
         super(metricRegistry, flakeId, componentName, ctx);
         this.predChannelMap = predChannelTypeMap;
-        this.localDispersionStratMap = new HashMap<>();
-        this.tupleSerializer = SerializerFactory.getSerializer();
         this.myToken = token;
-        nwLatTimer = metricRegistry.timer(
-                MetricRegistry.name(MsgReceiverComponent.class, "nw.latency")
-        );
     }
 
     /**
@@ -122,7 +97,11 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         //front end and backend for data messages.
         final ZMQ.Socket frontend = getContext().socket(ZMQ.SUB);
-        final ZMQ.Socket backend = getContext().socket(ZMQ.PUB);
+
+        //middle end for the tuples.
+        final ZMQ.Socket recevierME = getContext().socket(ZMQ.PUSH);
+        recevierME.connect(Utils.Constants.FLAKE_RECEIVER_MIDDLE_PREFIX
+                            + getFid());
 
         //xpub, xsub for backchannels (per edge).
         //final ZMQ.Socket xpubToPredSock = getContext().socket(ZMQ.XPUB);
@@ -135,7 +114,7 @@ public class MsgReceiverComponent extends FlakeComponent {
         // when a new pred. flake is created.
         //final ZMQ.Socket backChannelPingger = getContext().socket(ZMQ.PUB);
 
-        final ZMQ.Socket msgBackupSender = getContext().socket(ZMQ.PUSH);
+
 
         boolean result = false;
 
@@ -155,14 +134,6 @@ public class MsgReceiverComponent extends FlakeComponent {
 
 
 
-            //Backend socket to talk to the Pellets contained in the flake. The
-            // pellets may be added or removed dynamically.
-            LOGGER.info("Starting backend inproc socket to communicate with "
-                    + "pellets at: "
-                    + Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
-                    + getFid());
-            backend.bind(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
-                    + getFid());
 
 
 
@@ -188,11 +159,13 @@ public class MsgReceiverComponent extends FlakeComponent {
                             + getFid());
 
 
-            //initialize per edge flake local strategies.
-            initializeLocalDispersionStrategyMap();
+            receiverMEComponent = new ReceiverME(getMetricRegistry(),
+                    getFid(),
+                    "RECEIVER-NE", getContext(),
+                    predChannelMap,
+                    myToken);
 
-            msgBackupSender.connect(Utils.Constants.FLAKE_MSG_BACKUP_PREFIX
-                    + getFid());
+            receiverMEComponent.startAndWait();
 
             result = true;
         } catch (Exception ex) {
@@ -202,20 +175,22 @@ public class MsgReceiverComponent extends FlakeComponent {
             notifyStarted(result);
         }
 
+
+
+
         receiveAndProcess(
                 msgRecvMeter,
                 frontend,
-                backend,
+                recevierME,
                 //xsubFromPelletsSock,
                 //xpubToPredSock,
                 msgReceivercontrolForwardSocket,
                 //backChannelPingger,
-                terminateSignalReceiver,
-                msgBackupSender
+                terminateSignalReceiver
         );
 
         frontend.close();
-        backend.close();
+        recevierME.close();
         //xpubToPredSock.close();
         //xsubFromPelletsSock.close();
         msgReceivercontrolForwardSocket.close();
@@ -229,8 +204,7 @@ public class MsgReceiverComponent extends FlakeComponent {
      * @param msgRecvMeter Meter to measure the rate of incoming messages.
      * @param frontend The frontend socket to receive all messagess from all
      *                 pred. flakes.
-     * @param backend backend socket to forward messages to appropriate
-     *                pellet instances.
+     * @param recevierME socket to forward messages to middleend.
      * @aram xsubFromPelletsSock a raw xsub socket to to forward messages
      *                            from backchannel (per edge) to the pred.
      *                            flakes.
@@ -241,17 +215,15 @@ public class MsgReceiverComponent extends FlakeComponent {
      * @aram backChannelPingger socket to ping the backchannel whenever a
      *                           new pred. flake is added/removed.
      * @param terminateSignalReceiver terminate signal receiver.
-     * @param msgBackupSender socket to send the tuples meant for backup .
      */
     private void receiveAndProcess(
             final Meter msgRecvMeter, final ZMQ.Socket frontend,
-            final ZMQ.Socket backend,
+            final ZMQ.Socket recevierME,
             //final ZMQ.Socket xsubFromPelletsSock,
             //final ZMQ.Socket xpubToPredSock,
             final ZMQ.Socket msgReceivercontrolForwardSocket,
             //final ZMQ.Socket backChannelPingger,
-            final ZMQ.Socket terminateSignalReceiver,
-            final ZMQ.Socket msgBackupSender) {
+            final ZMQ.Socket terminateSignalReceiver) {
 
         byte[] message;
 
@@ -276,8 +248,12 @@ public class MsgReceiverComponent extends FlakeComponent {
             pollerItems.poll(pollDelay);
 
             if (pollerItems.pollin(0)) { //frontend
-                forwardToPellet(msgRecvMeter, frontend, backend,
-                        msgBackupSender);
+                //forwardToPellet(msgRecvMeter, frontend, backend,
+                //        msgBackupSender);
+
+                msgRecvMeter.mark();
+                Utils.forwardCompleteMessage(frontend, recevierME);
+
             /*} else if (pollerItems.pollin(1)) { //backend
                 Utils.forwardCompleteMessage(backend, frontend);
             } else if (pollerItems.pollin(2)) { //from xsubFromPelletsSock
@@ -336,12 +312,8 @@ public class MsgReceiverComponent extends FlakeComponent {
                         LOGGER.warn("Should have been processed by the flake.");
                 }
                 msgReceivercontrolForwardSocket.send(result, 0);
-            } else if (pollerItems.pollin(5)) { //interrupt socket
+            } else if (pollerItems.pollin(2)) { //interrupt socket
                 //HOW DO WE PROCESS PENDING MESSAGES? OR DO WE NEED TO?
-                for (FlakeLocalDispersionStrategy strategy
-                        : localDispersionStratMap.values()) {
-                    strategy.stopAndWait();
-                }
                 byte[] intr = terminateSignalReceiver.recv();
                 terminateSignalled = true;
             } else {
@@ -401,132 +373,6 @@ public class MsgReceiverComponent extends FlakeComponent {
         neighborsSubscribedFor.addAll(toAdd);
     }
 
-    /**
-     * Once the poller.poll returns, use this function as a component in the
-     * proxy to forward messages from one socket to another.
-     * @param msgRecvMeter Meter to measure the rate of incoming messages.
-     *                     NOTE: Only the ones to be forwarded to pellets.
-     *                     NOT the ones to be backedup.
-     * @param from socket to read from.
-     * @param to socket to send messages to.
-     * @param backup socket to send to backup the messages. Using socket and
-     */
-    private void forwardToPellet(final Meter msgRecvMeter,
-                                 final ZMQ.Socket from,
-                                 final ZMQ.Socket to,
-                                 final ZMQ.Socket backup) {
-        String fid = from.recvStr(0, Charset.defaultCharset());
-
-        byte[] message = from.recv();
-
-        msgRecvMeter.mark();
-
-        int dummy = 0;
-        LOGGER.info("dummy:{}", dummy);
-        if (dummy == 0) {
-            LOGGER.info("returning");
-            return;
-        }
-
-        LOGGER.info("has more:{}", from.hasReceiveMore());
-
-        Long currentNano = System.nanoTime();
-
-        Tuple t = tupleSerializer.deserialize(message);
-
-        Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
-
-        Long approxNwLat  = currentNano - ts;
-        if (approxNwLat > 0) {
-            nwLatTimer.update(approxNwLat, TimeUnit.NANOSECONDS);
-        }
-
-        if (!fid.equalsIgnoreCase(getFid())) {
-            LOGGER.info("THIS MESSAGE IS MEANT FOR BACKUP."
-                    + " SHOULD DO THAT HERE {} & {}", fid, getFid());
-            backup.sendMore(fid);
-            backup.send(message, 0);
-            return;
-        }
-
-        msgRecvMeter.mark();
-
-        String src = (String) t.get(Utils.Constants.SYSTEM_SRC_PELLET_NAME);
-
-        FlakeLocalDispersionStrategy strategy
-                = localDispersionStratMap.get(src);
-
-        if (strategy == null) {
-            LOGGER.info("No strategy found. Dropping message.");
-            return;
-        }
-
-        LOGGER.debug("Forwarding to pellet: {}", t);
-        List<String> pelletInstancesIds =
-                strategy.getTargetPelletInstances(t);
-
-        if (pelletInstancesIds != null
-                && pelletInstancesIds.size() > 0) {
-            for (String pelletInstanceId : pelletInstancesIds) {
-                LOGGER.debug("Sending to:" + pelletInstanceId);
-                to.sendMore(pelletInstanceId);
-                to.sendMore(currentNano.toString());
-                to.send(message, 0);
-            }
-        } else { //should queue up messages.
-            LOGGER.warn("Message dropped because no pellet active.");
-            //TODO: FIX THIS..
-        }
-
-        LOGGER.debug("Received msg from:" + src);
-    }
-
-    /**
-     * Initializes the pred. strategy map.
-     */
-    private void initializeLocalDispersionStrategyMap() {
-
-        for (Map.Entry<String, String> channel: predChannelMap.entrySet()) {
-            String src = channel.getKey();
-            String channelType = channel.getValue();
-
-            String[] ctypesAndArgs = channelType.split("__");
-            String ctype = ctypesAndArgs[0];
-            String args = null;
-            if (ctypesAndArgs.length > 1) {
-                args = ctypesAndArgs[1];
-            }
-            LOGGER.info("type and args: {}, Channel type: {}", channelType,
-                    ctype);
-
-            FlakeLocalDispersionStrategy strat = null;
-
-            if (!ctype.startsWith("NONE")) {
-                TChannelType type = Enum.valueOf(TChannelType.class, ctype);
-                try {
-                    strat = MessageDispersionStrategyFactory
-                                .getFlakeLocalDispersionStrategy(
-                                        getMetricRegistry(),
-                                    type,
-                                    src,
-                                    getContext(),
-                                    getFid(),
-                                    myToken,
-                                    args
-                                );
-                    strat.startAndWait();
-                    localDispersionStratMap.put(src, strat);
-
-                    //forward the first back message before this returns..
-                    // should help. lets see.
-
-                } catch (Exception ex) {
-                    LOGGER.error("Invalid dispersion strategy: {}. "
-                            + "Using default RR", type);
-                }
-            }
-        }
-    }
 
     /**
      * NOtifies all strategy instances that a pellet has been added.
@@ -534,6 +380,8 @@ public class MsgReceiverComponent extends FlakeComponent {
      */
     private void notifyPelletAdded(
             final String peInstanceId) {
+        Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap
+                = receiverMEComponent.getStratMap();
         for (FlakeLocalDispersionStrategy strat
                 : localDispersionStratMap.values()) {
             strat.pelletAdded(peInstanceId);
@@ -546,6 +394,8 @@ public class MsgReceiverComponent extends FlakeComponent {
      */
     private void notifyPelletRemoved(
             final String peInstanceId) {
+        Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap
+                = receiverMEComponent.getStratMap();
         for (FlakeLocalDispersionStrategy strat
                 : localDispersionStratMap.values()) {
             strat.pelletRemoved(peInstanceId);

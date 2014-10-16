@@ -432,6 +432,13 @@ public final class Utils {
          * Flake receiver Control socket prefix (this is suffixed by flake id).
          * Used for receiving control signals from the container.
          */
+        public static final String FLAKE_RECEIVER_MIDDLE_PREFIX
+                = "inproc://flake-recv-middle-";
+
+        /**
+         * Flake receiver Control socket prefix (this is suffixed by flake id).
+         * Used for receiving control signals from the container.
+         */
         public static final String FLAKE_RECEIVER_CONTROL_FWD_PREFIX
                 = "inproc://flake-control-fwd-";
 
