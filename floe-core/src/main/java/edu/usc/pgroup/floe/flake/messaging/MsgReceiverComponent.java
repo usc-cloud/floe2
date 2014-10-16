@@ -422,8 +422,9 @@ public class MsgReceiverComponent extends FlakeComponent {
         msgRecvMeter.mark();
 
         int dummy = 0;
-
+        LOGGER.info("dummy:{}", dummy);
         if (dummy == 0) {
+            LOGGER.info("returning");
             return;
         }
 
