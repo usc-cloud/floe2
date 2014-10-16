@@ -16,12 +16,14 @@
 
 package edu.usc.pgroup.floe.flake;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
 import edu.usc.pgroup.floe.signals.PelletSignal;
@@ -284,20 +286,19 @@ public class PelletExecutor extends Thread {
         pollerItems.register(signalReceiver, ZMQ.Poller.POLLIN);
 
         Meter msgDequeuedMeter =  metricRegistry.meter(
-                MetricRegistry.name(PelletExecutor.class, "dequed")
-        );
+                MetricRegistry.name(PelletExecutor.class, "dequed"));
 
         Meter msgProcessedMeter =  metricRegistry.meter(
-                MetricRegistry.name(PelletExecutor.class, "processed")
-        );
+                MetricRegistry.name(PelletExecutor.class, "processed"));
 
         Timer queueTimer = metricRegistry.timer(
-                MetricRegistry.name(PelletExecutor.class, "queue.latency")
-        );
+                MetricRegistry.name(PelletExecutor.class, "queue.latency"));
 
         Timer processTimer = metricRegistry.timer(
-                MetricRegistry.name(PelletExecutor.class, "process.latency")
-        );
+                MetricRegistry.name(PelletExecutor.class, "process.latency"));
+
+        Counter queLen = metricRegistry.counter(
+                MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
 
         boolean disconnected = false;
         String key;
@@ -310,6 +311,8 @@ public class PelletExecutor extends Thread {
                     String queueAddedTime
                             = dataReceiver.recvStr(Charset.defaultCharset());
                     byte[] serializedTuple = dataReceiver.recv();
+
+                    queLen.dec();
 
                     long queueAddedTimeL = Long.parseLong(queueAddedTime);
                     long queueRemovedTime = System.nanoTime();
