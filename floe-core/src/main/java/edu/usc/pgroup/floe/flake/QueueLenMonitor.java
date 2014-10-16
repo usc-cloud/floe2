@@ -17,8 +17,10 @@
 package edu.usc.pgroup.floe.flake;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -48,17 +50,23 @@ public class QueueLenMonitor extends Thread {
     @Override
     public final void run() {
 
-        Histogram qhist
+        /*Histogram qhist
                 = metricReg.histogram(MetricRegistry.name(QueueLenMonitor.class,
-                                                    "q.len.histo"));
+                                                    "q.len.histo"));*/
+
+        Timer qhist
+                = metricReg.timer(MetricRegistry.name(QueueLenMonitor.class,
+                "q.len.histo"));
 
         final int monitorint = 10;
         while (!Thread.interrupted()) {
 
-            qhist.update(qCounter.getCount());
+            //qhist.update(qCounter.getCount());
+            //qhist.mark(qCounter.getCount());
+            qhist.update(qCounter.getCount(), TimeUnit.MILLISECONDS);
 
             try {
-                Thread.sleep(monitorint);
+                Thread.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
