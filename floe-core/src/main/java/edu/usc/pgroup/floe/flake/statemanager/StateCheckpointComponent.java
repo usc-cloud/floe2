@@ -117,6 +117,8 @@ public class StateCheckpointComponent extends FlakeComponent {
         notifyStarted(true);
         Boolean done = false;
 
+        long starttime = System.currentTimeMillis();
+
         while (!done && !Thread.currentThread().isInterrupted()) {
 
             int polled = pollerItems.poll(checkpointPeriod);
@@ -134,6 +136,9 @@ public class StateCheckpointComponent extends FlakeComponent {
                     snp.get95thPercentile() * durationFactor,
                     msgProcessedMeter.getOneMinuteRate());
 
+            if (stableenough(starttime)) {
+                LOGGER.error("Open for load balancing.");
+            }
 
             LOGGER.debug("Checkpointing State");
             byte[] checkpointdata = stateManager.checkpointState();
@@ -145,5 +150,20 @@ public class StateCheckpointComponent extends FlakeComponent {
 
         stateSoc.close();
         notifyStopped(true);
+    }
+
+    /**
+     * Checks if enough time has passed (say a min).
+     * @param starttime start time since when the time must be checked.
+     * @return true if the time passed is more than a min.
+     */
+    private boolean stableenough(final long starttime) {
+        long now = System.currentTimeMillis();
+        final int secs = 60;
+        final int th = 1000;
+        if ((now - starttime) / th > secs) {
+            return true;
+        }
+        return false;
     }
 }
