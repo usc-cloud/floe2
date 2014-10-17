@@ -258,7 +258,7 @@ public class Flake {
 
         this.metricRegistry = new MetricRegistry();
 
-        final int reporterPeriod = 5;
+        final int reporterPeriod = 1;
 
 
         File metricDir = new File("./metrics/" + flakeId);

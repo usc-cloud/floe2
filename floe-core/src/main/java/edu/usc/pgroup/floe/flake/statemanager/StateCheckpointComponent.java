@@ -16,14 +16,21 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.Timer;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
+import edu.usc.pgroup.floe.flake.PelletExecutor;
+import edu.usc.pgroup.floe.flake.QueueLenMonitor;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -95,10 +102,21 @@ public class StateCheckpointComponent extends FlakeComponent {
         ZMQ.Socket stateSoc = getContext().socket(ZMQ.PUB);
         String ssConnetStr = Utils.Constants.FLAKE_STATE_PUB_SOCK + port;
         LOGGER.info("binding STATE CHECKPOINTER to socket at: {}", ssConnetStr);
+
+        TimeUnit durationUnit = TimeUnit.MILLISECONDS;
+        double durationFactor = 1.0 / durationUnit.toNanos(1);
+
         stateSoc.bind(ssConnetStr);
+        Timer qhist
+                = getMetricRegistry().timer(
+                MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"));
+
+        Meter msgProcessedMeter =  getMetricRegistry().meter(
+                MetricRegistry.name(PelletExecutor.class, "processed"));
 
         notifyStarted(true);
         Boolean done = false;
+
         while (!done && !Thread.currentThread().isInterrupted()) {
 
             int polled = pollerItems.poll(checkpointPeriod);
@@ -108,6 +126,14 @@ public class StateCheckpointComponent extends FlakeComponent {
                 terminateSignalReceiver.recv();
                 done = true;
             }
+
+            Snapshot snp = qhist.getSnapshot();
+            //snp.dump(System.out);
+            LOGGER.error("fid:{}; q 95->{}; msgs procd: {}",
+                    getFid(),
+                    snp.get95thPercentile() * durationFactor,
+                    msgProcessedMeter.getOneMinuteRate());
+
 
             LOGGER.debug("Checkpointing State");
             byte[] checkpointdata = stateManager.checkpointState();
