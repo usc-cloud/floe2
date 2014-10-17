@@ -20,12 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.util.List;
+
 /**
  * @author kumbhare
  */
-public abstract class ReducerPellet extends StatefulPellet
-        implements EmitterEnvelopeHook{
-
+public abstract class MapperPellet extends StatelessPellet
+        implements EmitterEnvelopeHook {
 
     /**
      * the global logger instance.
@@ -43,19 +44,13 @@ public abstract class ReducerPellet extends StatefulPellet
      * @param keyName name of the field from the input tuple to be
      *                     used as the key for grouping tuples.
      */
-    public ReducerPellet(final String keyName) {
+    public MapperPellet(final String keyName) {
         this.keyFieldName = keyName;
     }
 
-    /**
-     * @return The field name which is to be used for grouping tuples.
-     */
-    public final String getKeyFieldName() {
-        return keyFieldName;
-    }
 
     @Override
-    public final void addEnvelope(final ZMQ.Socket socket, Tuple tuple) {
+    public void addEnvelope(ZMQ.Socket socket, Tuple tuple) {
         LOGGER.info("Adding envelope:{}", tuple.get(keyFieldName));
         socket.sendMore((String) tuple.get(keyFieldName));
     }

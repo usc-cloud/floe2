@@ -76,25 +76,20 @@ public final class MessageDispersionStrategyFactory {
     /**
      * Factory function for creating the MessageDispersionStrategy.
      * @param metricRegistry Metrics registry used to log various metrics.
-     * @param channelType type of the channel (edge) in the application.
-     * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
-     * @param token Flake's token on the ring.
-     * @param args Any arguments to be sent to the Strategy Class while
+     * param args Any arguments to be sent to the Strategy Class while
      *             initialization.
      * @return new instance of MessageDispersionStrategy based on the edge type.
      * @throws java.lang.ClassNotFoundException if the given channel type is
      * invalid or the class for custom strategy is not found.
-     */
+     *
     public static FlakeLocalDispersionStrategy
     getFlakeLocalDispersionStrategy(
             final MetricRegistry metricRegistry,
             final TChannelType channelType,
-            final String srcPelletName,
             final ZMQ.Context context,
             final String flakeId,
-            final Integer token,
             final String args) throws ClassNotFoundException {
 
         FlakeLocalDispersionStrategy strategy = null;
@@ -103,12 +98,12 @@ public final class MessageDispersionStrategyFactory {
             case ROUND_ROBIN:
                 strategy = new RRFlakeLocalDispersionStrategy(
                         metricRegistry, srcPelletName,
-                        context, flakeId, token);
+                        context, flakeId);
                 break;
             case REDUCE:
                 strategy = new ElasticReducerFlakeLocalDispersion(
                         metricRegistry, srcPelletName,
-                        context, flakeId, token);
+                        context, flakeId);
                 break;
             case LOAD_BALANCED:
             case CUSTOM:
@@ -118,6 +113,17 @@ public final class MessageDispersionStrategyFactory {
 
         strategy.initialize(args);
         return strategy;
-    }
+    }*/
 
+    public static FlakeLocalDispersionStrategy
+                    getFlakeLocalDispersionStrategy(
+            final MetricRegistry metricRegistry,
+            final ZMQ.Context context,
+            final String flakeId) {
+        FlakeLocalDispersionStrategy strat
+                = new ElasticReducerFlakeLocalDispersion(metricRegistry, context,
+                flakeId);
+        strat.initialize(null);
+        return strat;
+    }
 }

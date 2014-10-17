@@ -43,11 +43,6 @@ public class BackChannelSenderComponent extends FlakeComponent {
     private final FlakeLocalDispersionStrategy dispersionStrategy;
 
     /**
-     * Name of the source/predecessor pellet.
-     */
-    private final String srcPellet;
-
-    /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeLocalDispersionStrategy flake local strategy associated
@@ -55,18 +50,14 @@ public class BackChannelSenderComponent extends FlakeComponent {
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
-     * @param srcPelletName the pred. pellet name which is the src for this
-     *                      edge.
      */
     public BackChannelSenderComponent(final MetricRegistry metricRegistry,
               final FlakeLocalDispersionStrategy flakeLocalDispersionStrategy,
               final String flakeId,
               final String componentName,
-              final ZMQ.Context ctx,
-              final String srcPelletName) {
+              final ZMQ.Context ctx) {
         super(metricRegistry, flakeId, componentName, ctx);
         this.dispersionStrategy = flakeLocalDispersionStrategy;
-        this.srcPellet = srcPelletName;
     }
 
     /**

@@ -100,6 +100,13 @@ public class PelletStateDelta /*implements KryoSerializable*/ {
         this.deltaState.putAll(delta.getDeltaState());
     }
 
+    /**
+     * Clear the state from backup.
+     */
+    public void clear() {
+        deltaState.clear();
+    }
+
     /*@Override
     public final void write(
             final Kryo kryo,

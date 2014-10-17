@@ -214,8 +214,12 @@ public class SenderBEComponent extends FlakeComponent {
             pollerItems.poll();
             if (pollerItems.pollin(0)) { //data messages
                 streamName = middleendreceiver
-                        .recvStr(Charset.defaultCharset());
-                message = middleendreceiver.recv();
+                        .recvStr(Charset.defaultCharset()); //read an ignore.
+
+
+                dispersionStrategy.disperseMessage(middleendreceiver, backend);
+
+                /*message = middleendreceiver.recv();
 
                 Tuple tuple = tupleSerializer.deserialize(message);
 
@@ -244,7 +248,7 @@ public class SenderBEComponent extends FlakeComponent {
                     LOGGER.warn("Message dropped because no connection "
                             + "received");
                     //TODO: FIX THIS..
-                }
+                }*/
                 msgSendMeter.mark();
             } else if (pollerItems.pollin(1)) { //kill signal
                 LOGGER.warn("Terminating flake sender ME: {}", getFid());

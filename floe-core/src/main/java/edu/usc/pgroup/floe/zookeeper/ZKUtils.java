@@ -366,19 +366,19 @@ public final class ZKUtils {
      * @param appName the application name.
      * @param pelletName pellet's name to which this flake belongs.
      * @param flakeId flake id.
-     * @param myToken Flake's token.
+     * @param token Flake's token.
      * @param flakeDataPort flake's port for data checkpointing.
      */
     public static void updateToken(final String appName,
                                    final String pelletName,
                                    final String flakeId,
-                                   final Integer myToken,
+                                   final Integer token,
                                    final Integer flakeDataPort) {
         String flakeTokenPath = getApplicationFlakeTokenPath(
                 appName, pelletName, flakeId);
 
-        FlakeToken token = new FlakeToken(
-                myToken,
+        FlakeToken ftoken = new FlakeToken(
+                token,
                 Utils.getHostNameOrIpAddress(),
                 flakeDataPort
         );
@@ -387,11 +387,11 @@ public final class ZKUtils {
             if (ZKClient.getInstance().getCuratorClient()
                     .checkExists().forPath(flakeTokenPath) != null) {
                 ZKClient.getInstance().getCuratorClient().setData()
-                    .forPath(flakeTokenPath, Utils.serialize(token));
+                    .forPath(flakeTokenPath, Utils.serialize(ftoken));
             } else {
                 ZKClient.getInstance().getCuratorClient()
                         .create().creatingParentsIfNeeded()
-                        .forPath(flakeTokenPath, Utils.serialize(token));
+                        .forPath(flakeTokenPath, Utils.serialize(ftoken));
             }
         } catch (Exception e) {
             LOGGER.error("Could not update flake's token.");

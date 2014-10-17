@@ -51,7 +51,6 @@ public final class CoordinationManagerFactory {
      * @param pellet The pellet object, used to figure out type of state
      *               manager to create.
      * @param flakeId       Flake's id to which this component belongs.
-     * @param myToken       This flake's current token value.
      * @param componentName Unique name of the component.
      * @param stateManager the state manager associated with this flake.
      * @param ctx           Shared zmq context.
@@ -63,7 +62,6 @@ public final class CoordinationManagerFactory {
             final String pelletName,
             final Pellet pellet,
             final String flakeId,
-            final Integer myToken,
             final String componentName,
             final StateManagerComponent stateManager,
             final ZMQ.Context ctx) {
@@ -77,7 +75,6 @@ public final class CoordinationManagerFactory {
                             appName,
                             pelletName,
                             flakeId,
-                            myToken,
                             componentName,
                             ctx,
                             tolerance,

@@ -45,12 +45,6 @@ public class MsgReceiverComponent extends FlakeComponent {
             LoggerFactory.getLogger(MsgReceiverComponent.class);
 
     /**
-     * Flake's token on the ring.
-     */
-    private final Integer myToken;
-
-
-    /**
      * Predecessor to channel type map.
      */
     private Map<String, String> predChannelMap;
@@ -73,17 +67,14 @@ public class MsgReceiverComponent extends FlakeComponent {
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      * @param predChannelTypeMap the pred. to channel type map.
-     * @param token Flake's token on the ring.
      */
     public MsgReceiverComponent(final MetricRegistry metricRegistry,
                                 final String flakeId,
                                 final String componentName,
                                 final ZMQ.Context ctx,
-                                final Map<String, String> predChannelTypeMap,
-                                final Integer token) {
+                                final Map<String, String> predChannelTypeMap) {
         super(metricRegistry, flakeId, componentName, ctx);
         this.predChannelMap = predChannelTypeMap;
-        this.myToken = token;
     }
 
     /**
@@ -164,8 +155,7 @@ public class MsgReceiverComponent extends FlakeComponent {
             receiverMEComponent = new ReceiverME(getMetricRegistry(),
                     getFid(),
                     "RECEIVER-NE", getContext(),
-                    predChannelMap,
-                    myToken);
+                    predChannelMap);
 
             receiverMEComponent.startAndWait();
 
@@ -314,7 +304,7 @@ public class MsgReceiverComponent extends FlakeComponent {
                         notifyPelletRemoved(dpeId);
                         break;
                     case UPDATE_SUBSCRIPTION:
-                        LOGGER.error("UPDATING SUBS");
+                        //LOGGER.error("UPDATING SUBS");
                         List<String> currentNeighborsToSubscribe
                                 = (List<String>) command.getData();
                         updateFrontendSubscription(
@@ -393,12 +383,13 @@ public class MsgReceiverComponent extends FlakeComponent {
      */
     private void notifyPelletAdded(
             final String peInstanceId) {
-        Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap
+        /*Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap
                 = receiverMEComponent.getStratMap();
         for (FlakeLocalDispersionStrategy strat
                 : localDispersionStratMap.values()) {
             strat.pelletAdded(peInstanceId);
-        }
+        }*/
+        receiverMEComponent.pelletAdded(peInstanceId);
     }
 
     /**
@@ -407,11 +398,12 @@ public class MsgReceiverComponent extends FlakeComponent {
      */
     private void notifyPelletRemoved(
             final String peInstanceId) {
-        Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap
+        /*Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap
                 = receiverMEComponent.getStratMap();
         for (FlakeLocalDispersionStrategy strat
                 : localDispersionStratMap.values()) {
             strat.pelletRemoved(peInstanceId);
-        }
+        }*/
+        receiverMEComponent.pelletRemoved(peInstanceId);
     }
 }

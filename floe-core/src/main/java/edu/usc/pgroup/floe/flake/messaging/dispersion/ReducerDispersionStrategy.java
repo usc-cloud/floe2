@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -24,7 +25,10 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.zeromq.ZMQ;
 
+import javax.rmi.CORBA.Util;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,18 +96,31 @@ public class ReducerDispersionStrategy implements MessageDispersionStrategy {
     /**
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
+     * param tuple tuple object.
+     * return the list of target instances to send the given tuple.
      *
-     * @param tuple tuple object.
-     * @return the list of target instances to send the given tuple.
+     * @param middleendreceiver
+     * @param backend
      */
     @Override
-    public final List<String> getTargetFlakeIds(final Tuple tuple) {
-        Object value = tuple.get(keyFieldName);
-        int currentIndex = value.hashCode() % targetFlakeIds.size();
-        List<String> target = targetFlakeIds.subList(
-                currentIndex,
-                currentIndex + 1);
-        return target;
+    public void disperseMessage(ZMQ.Socket middleendreceiver,
+                                ZMQ.Socket backend) {
+        String key = middleendreceiver.recvStr(Charset.defaultCharset());
+        String fid = getTargetFlakeIds(key);
+        backend.sendMore(fid);
+        backend.sendMore(key);
+        Utils.forwardCompleteMessage(middleendreceiver, backend);
+    }
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     *
+     * @return the list of target instances to send the given tuple.
+     */
+    public final String getTargetFlakeIds(String key) {
+        int currentIndex = key.hashCode() % targetFlakeIds.size();
+        return targetFlakeIds.get(currentIndex);
     }
 
     /**

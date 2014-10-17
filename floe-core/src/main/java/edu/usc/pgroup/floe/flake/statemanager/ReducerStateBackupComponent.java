@@ -143,11 +143,20 @@ public class ReducerStateBackupComponent extends FlakeComponent {
                 break;
             } else if (pollerItems.pollin(1)) {
                 String nfid = backupListener.recvStr(Charset.defaultCharset());
+
+                String hashInt = backupListener.recvStr(
+                        Charset.defaultCharset());
+                Integer hash = Integer.parseInt(hashInt);
+
+                String tss = backupListener.recvStr(Charset.defaultCharset());
+
+                long ts = Long.parseLong(tss);
+
                 byte[] btuple = backupListener.recv();
 
                 if (!recoveringFlakes.containsKey(nfid)) {
                     Tuple t = tupleSerializer.deserialize(btuple);
-                    addTupleToBackup(nfid, t);
+                    addTupleToBackup(nfid, t, ts);
                 } else {
                     msgRecoverySock.sendMore(getFid());
                     msgRecoverySock.send(btuple, 0);
@@ -171,7 +180,8 @@ public class ReducerStateBackupComponent extends FlakeComponent {
                             Tuple tuple = tuples.remove(ts);
 
                             byte[] btuple = tupleSerializer.serialize(tuple);
-                            LOGGER.info("RECOVERING NOW.");
+                            LOGGER.error("RECOVERING NOW."); //MAYBE SEND
+                            // DIRECTLY TO THE ME?
                             msgRecoverySock.sendMore(getFid());
                             msgRecoverySock.send(btuple, 0);
                         }
@@ -188,9 +198,10 @@ public class ReducerStateBackupComponent extends FlakeComponent {
      * Adds the tuple to the backup.
      * @param nfid neighbor's flake id.
      * @param t the tuple to add.
+     * @param ts
      */
     private void addTupleToBackup(final String nfid,
-                                  final Tuple t) {
+                                  final Tuple t, long ts) {
 
         Map<String, SortedMap<Long, Tuple>> keyMap = messageBackup.get(nfid);
 
@@ -212,8 +223,6 @@ public class ReducerStateBackupComponent extends FlakeComponent {
             keyMap.put(keyValue, messages);
         }
 
-
-        Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
         LOGGER.debug("Backing up msg: {}", t);
         synchronized (messages) {
             messages.put(ts, t);

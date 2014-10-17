@@ -151,7 +151,7 @@ public class StateCheckpointComponent extends FlakeComponent {
                 }
             }
 
-            LOGGER.error("Checkpointing State");
+            LOGGER.info("Checkpointing State");
             byte[] checkpointdata = stateManager.checkpointState();
 
             stateSoc.sendMore(getFid());

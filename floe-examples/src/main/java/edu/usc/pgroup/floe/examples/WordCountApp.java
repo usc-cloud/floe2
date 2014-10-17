@@ -95,8 +95,8 @@ public final class WordCountApp {
         }
         //String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
-        builder.addPellet("words", new FileSourcePellet(path, wordInterval))
-                                    .setParallelism(numMappers);
+        builder.addPellet("words", new FileSourcePellet("word", path,
+                wordInterval)).setParallelism(numMappers);
 
         builder.addPellet("count", new WordCountReducer("word"))
                 .setParallelism(numReducers).reduce("words");

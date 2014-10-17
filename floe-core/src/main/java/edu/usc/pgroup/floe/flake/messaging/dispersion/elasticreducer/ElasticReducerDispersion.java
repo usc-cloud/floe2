@@ -27,7 +27,9 @@ import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.zeromq.ZMQ;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -134,16 +136,17 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     /**
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
+     * param tuple tuple object.
+     * return the list of target instances to send the given tuple.
      *
-     * @param tuple tuple object.
-     * @return the list of target instances to send the given tuple.
+     * @param middleendreceiver
+     * @param backend
      */
     @Override
-    public final List<String> getTargetFlakeIds(final Tuple tuple) {
-        if (circle.isEmpty()) {
-            return null;
-        }
-        Object key = tuple.get(keyFieldName);
+    public void disperseMessage(ZMQ.Socket middleendreceiver,
+                                ZMQ.Socket backend) {
+        String key = middleendreceiver.recvStr(Charset.defaultCharset());
+
         byte[] seralized = null;
         if (key instanceof  String) {
             seralized = ((String) key).getBytes();
@@ -151,7 +154,31 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
             LOGGER.info("KEY IS NOT STRING. Use of string keys is suggested.");
             seralized = Utils.serialize(key);
         }
-        int actualHash = hashingFunction.hash(seralized);
+        Integer actualHash = hashingFunction.hash(seralized);
+
+        LOGGER.info("KEY: {}, ACTUAL HASH SENDING:{}", key, actualHash);
+        Integer hash = getTargetFlakeHash(actualHash);
+        String fid =  circle.get(hash);
+
+
+        backend.sendMore(fid);
+        backend.sendMore(actualHash.toString());
+        backend.sendMore(String.valueOf(System.currentTimeMillis()));
+        Utils.forwardCompleteMessage(middleendreceiver, backend);
+    }
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     *
+     * @return the list of target instances to send the given tuple.
+     */
+    public synchronized final Integer getTargetFlakeHash(
+            Integer actualHash) {
+        if (circle.isEmpty()) {
+            return null;
+        }
+
         int hash = actualHash;
         if (!circle.containsKey(hash)) {
             SortedMap<Integer, String> tailMap = circle.tailMap(hash);
@@ -163,9 +190,9 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
             }
         }
         LOGGER.debug("Key:{}, actualHash:{}, token:{}, target:{}",
-                key, actualHash, hash, circle.get(hash));
-        targetFlakeIds.clear();
-        targetFlakeIds.add(circle.get(hash));
+                actualHash, hash, circle.get(hash));
+
+        return hash;
 
         /** NOT REQUIRED............... SINCE FLAKES KNOW ABOUT THEIR
          * NEIGHBOURS. EACH NEIGHBOUR CAN JUST AD AN EXTRA SUBSCRIPTION.
@@ -187,8 +214,6 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
             Integer neighborToken = frontIterator.next();
             targetFlakeIds.add(circle.get(neighborToken));
         }*/
-
-        return targetFlakeIds;
     }
 
     /**
@@ -220,7 +245,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
      *                   msg. False if the message is sent on scaling down i
      *                   .e. 'terminate' is called on the target flake.
      */
-    public final void updateCircle(final String targetFlakeId,
+    public final synchronized void updateCircle(final String targetFlakeId,
                                    final Integer newPosition,
                                    final boolean toContinue) {
         Integer current = flakeIdToTokenMap.get(targetFlakeId);
@@ -258,7 +283,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     public final void childAdded(final ChildData addedChild) {
 
         String destFid = ZKPaths.getNodeFromPath(addedChild.getPath());
-        LOGGER.info("Adding Dest FID: {}", destFid);
+        LOGGER.error("Adding Dest FID: {}", destFid);
 
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 addedChild.getData());
@@ -275,7 +300,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     @Override
     public final void childRemoved(final ChildData removedChild) {
         String destFid = ZKPaths.getNodeFromPath(removedChild.getPath());
-        LOGGER.info("Removing dest FID: {}", destFid);
+        LOGGER.error("Removing dest FID: {}", destFid);
 
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 removedChild.getData());
@@ -293,7 +318,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     @Override
     public final void childUpdated(final ChildData updatedChild) {
         String destFid = ZKPaths.getNodeFromPath(updatedChild.getPath());
-        LOGGER.info("Updating dest FID: {}", destFid);
+        LOGGER.error("Updating dest FID: {}", destFid);
 
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 updatedChild.getData());

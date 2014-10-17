@@ -81,16 +81,9 @@ public class SenderMEComponent extends FlakeComponent {
 
         notifyStarted(true);
         while (!Thread.currentThread().isInterrupted()) {
-            byte[] message;
-            String streamName;
             pollerItems.poll();
             if (pollerItems.pollin(0)) {
-                streamName = frontend.recvStr(Charset.defaultCharset());
-                message = frontend.recv();
-                LOGGER.debug("MD: {}", streamName);
-                LOGGER.debug("MD MS: {}", message);
-                middleend.sendMore(streamName);
-                middleend.send(message, 0);
+                Utils.forwardCompleteMessage(frontend, middleend);
             } else if (pollerItems.pollin(1)) {
                 LOGGER.warn("Terminating flake sender ME: {}", getFid());
                 terminateSignalReceiver.recv();

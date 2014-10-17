@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.messaging;
 
 import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.EmitterEnvelopeHook;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -51,20 +52,31 @@ public class MessageEmitter implements Emitter {
     private final TupleSerializer serializer;
 
     /**
+     * Emitter hook to add custom envelopes (e.g. the reducer key)
+     */
+    private final EmitterEnvelopeHook emitterEnvelopeHook;
+
+    private final String pelletName;
+
+    /**
      * Constructor.
      * @param context shared ZMQ context to be used in inproc comm. for
      *                      receiving message from the flake.
      * @param fid flake's id to which this pellet belongs.
      * @param tupleSerializer custom tuple serializer.
      */
-    public MessageEmitter(final String fid, final ZMQ.Context context,
-                          final TupleSerializer tupleSerializer) {
+    public MessageEmitter(final String fid, final String pelletName,
+                          final ZMQ.Context context,
+                          final TupleSerializer tupleSerializer,
+                          final EmitterEnvelopeHook emitterHook) {
+        this.pelletName = pelletName;
         this.flakeId = fid;
         this.zcontex = context;
         this.socket = context.socket(ZMQ.PUSH);
         this.socket.connect(Utils.Constants.FLAKE_SENDER_FRONTEND_SOCK_PREFIX
                 + flakeId);
         this.serializer = tupleSerializer;
+        this.emitterEnvelopeHook = emitterHook;
     }
 
     /**
@@ -95,8 +107,13 @@ public class MessageEmitter implements Emitter {
      * @param message a tuple message to emit
      */
     public final void emit(final String streamName, final Tuple message) {
+        //message.put(Utils.Constants.SYSTEM_SRC_PELLET_NAME, pelletName);
+
         byte[] serialized = serializer.serialize(message);
         this.socket.sendMore(streamName);
+        if (emitterEnvelopeHook != null) {
+            emitterEnvelopeHook.addEnvelope(socket, message);
+        }
         this.socket.send(serialized, 0);
     }
 }

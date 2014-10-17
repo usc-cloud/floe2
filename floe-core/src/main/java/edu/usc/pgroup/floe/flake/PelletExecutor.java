@@ -19,6 +19,7 @@ package edu.usc.pgroup.floe.flake;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import edu.usc.pgroup.floe.app.EmitterEnvelopeHook;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -97,6 +98,12 @@ public class PelletExecutor extends Thread {
      */
     private Pellet pellet;
 
+
+    /**
+     * Pellet id/name as it apprears in the toplogy.
+     */
+    private String pelletId;
+
     /**
      * The emmitter object associated with this pellet.
      */
@@ -136,6 +143,7 @@ public class PelletExecutor extends Thread {
             final int pelletIndex,
             final ZMQ.Context sharedContext,
             final String fid,
+            final String pid,
             final StateManagerComponent stateManager) {
         this.context = sharedContext;
         this.tupleSerializer = SerializerFactory.getSerializer();
@@ -145,6 +153,7 @@ public class PelletExecutor extends Thread {
         this.killSignalReceived = false;
         this.pelletStateManager = stateManager;
         this.metricRegistry = registry;
+        this.pelletId = pid;
     }
 
     /**
@@ -162,10 +171,10 @@ public class PelletExecutor extends Thread {
      */
     public PelletExecutor(final MetricRegistry registry,
                           final int pelletIndex,
-                    final String fqdnClass, final String fid,
+                    final String fqdnClass, final String fid, final String pid,
                     final ZMQ.Context sharedContext,
                     final StateManagerComponent stateManager) {
-        this(registry, pelletIndex, sharedContext, fid, stateManager);
+        this(registry, pelletIndex, sharedContext, fid, fid, stateManager);
         this.pelletClass = fqdnClass;
         this.pellet = (Pellet) Utils.instantiateObject(pelletClass);
         this.pellet.setup(null, new PelletContext(pelletInstanceId));
@@ -189,10 +198,10 @@ public class PelletExecutor extends Thread {
     public PelletExecutor(final MetricRegistry registry,
                           final int pelletIndex,
                           final Pellet p,
-                          final String fid,
+                          final String fid, final String pid,
                           final ZMQ.Context sharedContext,
                           final StateManagerComponent stateManager) {
-        this(registry, pelletIndex, sharedContext, fid, stateManager);
+        this(registry, pelletIndex, sharedContext, fid, pid, stateManager);
         this.pellet = p;
         this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
@@ -272,8 +281,13 @@ public class PelletExecutor extends Thread {
                         + flakeId);
 
         //Create the emitter.
-        emitter = new MessageEmitter(flakeId,
-                        context, tupleSerializer);
+        if (pellet instanceof EmitterEnvelopeHook) {
+            emitter = new MessageEmitter(flakeId, pelletId,
+                    context, tupleSerializer, (EmitterEnvelopeHook) pellet);
+        } else {
+            emitter = new MessageEmitter(flakeId, pelletId,
+                    context, tupleSerializer, null);
+        }
 
         //Dummy execute with null values. NO NEED TO DO THIS HERE.
         //Fix for ISSUE #17. Changing this to start on a container signal.
@@ -299,15 +313,15 @@ public class PelletExecutor extends Thread {
                 MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
 
         boolean disconnected = false;
-        String key;
+
         while (!Thread.currentThread().isInterrupted()) {
             LOGGER.debug("POLLING: ");
             //try {
                 pollerItems.poll();
                 if (pollerItems.pollin(0)) {
-                    key = dataReceiver.recvStr(Charset.defaultCharset());
-                    //String queueAddedTime
-                    //        = dataReceiver.recvStr(Charset.defaultCharset());
+                    dataReceiver.recvStr(Charset.defaultCharset());
+                    String sentTime
+                            = dataReceiver.recvStr(Charset.defaultCharset());
                     byte[] serializedTuple = dataReceiver.recv();
 
                     queLen.dec();
@@ -335,8 +349,7 @@ public class PelletExecutor extends Thread {
                     pellet.execute(tuple, emitter, state);
                     if (state != null) {
                         state.setLatestTimeStampAtomic(
-                                (Long) tuple.get(
-                                        Utils.Constants.SYSTEM_TS_FIELD_NAME));
+                                Long.parseLong(sentTime));
                     }
 
 

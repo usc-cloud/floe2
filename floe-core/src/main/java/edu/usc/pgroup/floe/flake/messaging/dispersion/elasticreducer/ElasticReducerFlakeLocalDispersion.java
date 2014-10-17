@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,18 +49,24 @@ public class ElasticReducerFlakeLocalDispersion
     /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
-     * @param srcPelletName The name of the src pellet on this edge.
      * @param context       shared ZMQ context.
      * @param flakeId       Current flake id.
-     * @param token Flake's token on the ring.
      */
     public ElasticReducerFlakeLocalDispersion(final MetricRegistry
                                                       metricRegistry,
-                                              final String srcPelletName,
                                               final ZMQ.Context context,
-                                              final String flakeId,
-                                              final Integer token) {
-        super(metricRegistry, srcPelletName, context, flakeId, token);
+                                              final String flakeId) {
+        super(metricRegistry, context, flakeId);
+    }
+
+    @Override
+    public void sendToPellets(ZMQ.Socket from, ZMQ.Socket to) {
+        String hashInt = from.recvStr(Charset.defaultCharset());
+        Integer actualHash = Integer.parseInt(hashInt);
+        LOGGER.info("ACTUAL HASH RECEIVED:{}", actualHash);
+        String peinstanceid = getTargetPelletInstances(actualHash);
+        to.sendMore(peinstanceid);
+        Utils.forwardCompleteMessage(from, to);
     }
 
     /**
@@ -72,11 +79,6 @@ public class ElasticReducerFlakeLocalDispersion
      * value.
      */
     private HashMap<String, Integer> reverseMap;
-
-    /**
-     * Key field name to be used for grouping.
-     */
-    private String keyFieldName;
 
     /**
      * List of target pellet instances.
@@ -104,7 +106,6 @@ public class ElasticReducerFlakeLocalDispersion
         this.targetPelletIds = new ArrayList<>();
         this.circle = new TreeMap<>(Collections.reverseOrder());
         this.reverseMap = new HashMap<>();
-        this.keyFieldName = args;
         this.hashingFunction = new Murmur32();
     }
 
@@ -112,23 +113,13 @@ public class ElasticReducerFlakeLocalDispersion
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
      *
-     * @param tuple tuple object.
      * @return the list of target instances to send the given tuple.
      */
-    @Override
-    public final List<String> getTargetPelletInstances(final Tuple tuple) {
+    public final String getTargetPelletInstances(Integer actualHash) {
         if (circle.isEmpty()) {
             return null;
         }
-        Object key = tuple.get(keyFieldName);
-        byte[] seralized = null;
-        if (key instanceof  String) {
-            seralized = ((String) key).getBytes();
-        } else {
-            LOGGER.info("KEY IS NOT STRING. Use of string keys is suggested.");
-            seralized = Utils.serialize(key);
-        }
-        int actualHash = hashingFunction.hash(seralized);
+
         int hash = actualHash;
         if (!circle.containsKey(hash)) {
             SortedMap<Integer, String> tailMap = circle.tailMap(hash);
@@ -141,23 +132,20 @@ public class ElasticReducerFlakeLocalDispersion
         }
 
         LOGGER.debug("LOCAL Key:{}, actualHash:{}, token:{}, target:{}",
-                key, actualHash, hash, circle.get(hash));
-        targetPelletIds.clear();
+                actualHash, hash, circle.get(hash));
 
-        targetPelletIds.add(circle.get(hash));
-
-        return targetPelletIds;
+        return circle.get(hash);
     }
 
     /**
      * @return the current backchannel data (e.g. for loadbalancing or the
      * token on the ring etc.)
-     */
+     *
     @Override
     public final byte[] getCurrentBackchannelData() {
-        LOGGER.debug("MyToken: {}", getToken());
+        LOGGER.debug("Token: {}", getToken());
         return Utils.serialize(getToken());
-    }
+    }*/
 
     /**
      * Called whenever a new pellet is added.
@@ -166,6 +154,7 @@ public class ElasticReducerFlakeLocalDispersion
      */
     @Override
     public final void pelletAdded(final String pelletId) {
+        LOGGER.info("Adding :{} to circle", pelletId);
         Integer pelletPosition = hashingFunction.hash(pelletId.getBytes());
 
         reverseMap.put(pelletId, pelletPosition);

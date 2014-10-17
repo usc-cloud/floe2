@@ -31,23 +31,11 @@ import java.util.List;
 public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
         implements PelletUpdateListener {
 
-
-    /**
-     * Randomly generated token for this flake on the ring.
-     * LATER: WE CAN ADD FEATURES SUCH AS RACK_LOCAL, DATACENTER_LOCAL etc.
-     */
-    private Integer myToken;
-
     /**
      * the global logger instance.
      */
     private static final Logger LOGGER =
             LoggerFactory.getLogger(FlakeLocalDispersionStrategy.class);
-
-    /**
-     * The name of the src pellet on this edge.
-     */
-    private final String srcPellet;
 
     /**
      * Backchannel sender specific to this edge.
@@ -66,54 +54,32 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
      * defined strategy.
      * @param tuple tuple object.
      * @return the list of target instances to send the given tuple.
-     */
-    public abstract List<String> getTargetPelletInstances(Tuple tuple);
+     *
+    public abstract List<String> getTargetPelletInstances(Tuple tuple);*/
 
     /**
      * @return the current backchannel data (e.g. for loadbalancing or the
      * token on the ring etc.)
      */
-    public abstract byte[] getCurrentBackchannelData();
+    //public abstract byte[] getCurrentBackchannelData();
 
     /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
-     * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
-     * @param token Flake's random 32bit token on the ring.
      */
     public FlakeLocalDispersionStrategy(
             final MetricRegistry metricRegistry,
-            final String srcPelletName,
                                         final ZMQ.Context context,
-                                        final String flakeId,
-                                        final Integer token) {
+                                        final String flakeId) {
 
         super(metricRegistry, flakeId, "FL-LOCAL-STRATEGY", context);
-        this.srcPellet = srcPelletName;
-
-        this.myToken = token;
 
         LOGGER.info("Initializing flake local strategy.");
         backChannelSenderComponent = new BackChannelSenderComponent(
                 metricRegistry, this,
-                getFid(), "BACK-CHANNEL-SENDER", context, srcPelletName);
-    }
-
-    /**
-     * @return The flake's token on the ring.
-     */
-    public final Integer getToken() {
-        return myToken;
-    }
-
-    /**
-     * Sets/updates the flake's token on the ring.
-     * @param token the new token.
-     */
-    public final void updateToken(final Integer token) {
-        this.myToken = token;
+                getFid(), "BACK-CHANNEL-SENDER", context);
     }
 
     /**
@@ -136,5 +102,7 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
         backChannelSenderComponent.stopAndWait();
         notifyStopped(true);
     }
+
+    public abstract void sendToPellets(ZMQ.Socket from, ZMQ.Socket to);
 }
 

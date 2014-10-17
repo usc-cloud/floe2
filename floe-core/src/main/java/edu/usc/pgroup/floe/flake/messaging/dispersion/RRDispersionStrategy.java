@@ -17,6 +17,9 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.utils.Utils;
+import org.zeromq.ZMQ;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,13 +57,25 @@ public class RRDispersionStrategy implements MessageDispersionStrategy {
     /**
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
+     * param tuple tuple object.
+     * return the list of target instances to send the given tuple.
      *
-     * @param tuple tuple object.
-     * @return the list of target instances to send the given tuple.
+     * @param middleendreceiver
+     * @param backend
      */
     @Override
-    public final List<String> getTargetFlakeIds(
-            final Tuple tuple) {
+    public void disperseMessage(ZMQ.Socket middleendreceiver,
+                                ZMQ.Socket backend) {
+        backend.sendMore(getNextFlakeId());
+        Utils.forwardCompleteMessage(middleendreceiver, backend);
+    }
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     * @return the list of target instances to send the given tuple.
+     */
+    public final String getNextFlakeId() {
         if (currentIndex >= targetFlakeIds.size()) {
             currentIndex = 0;
         }
@@ -69,11 +84,9 @@ public class RRDispersionStrategy implements MessageDispersionStrategy {
             return null;
         }
 
-        List<String> target = targetFlakeIds.subList(
-                                                    currentIndex,
-                                                    currentIndex + 1);
+        String fid = targetFlakeIds.get(currentIndex);
         currentIndex++;
-        return target;
+        return fid;
     }
 
     /**

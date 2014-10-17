@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,18 +52,14 @@ public class RRFlakeLocalDispersionStrategy
     /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
-     * @param srcPelletName The name of the src pellet on this edge.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
-     * @param token Flake's token on the ring.
      */
     public RRFlakeLocalDispersionStrategy(
                 final MetricRegistry metricRegistry,
-                final String srcPelletName,
                 final ZMQ.Context context,
-                final String flakeId,
-                final Integer token) {
-        super(metricRegistry, srcPelletName, context, flakeId, token);
+                final String flakeId) {
+        super(metricRegistry, context, flakeId);
     }
 
     /**
@@ -84,7 +81,7 @@ public class RRFlakeLocalDispersionStrategy
      * @param tuple tuple object.
      * @return the list of target instances to send the given tuple.
      */
-    @Override
+
     public final List<String> getTargetPelletInstances(final Tuple tuple) {
         if (currentIndex >= targetPelletInstances.size()) {
             currentIndex = 0;
@@ -101,16 +98,21 @@ public class RRFlakeLocalDispersionStrategy
         return target;
     }
 
+    @Override
+    public void sendToPellets(ZMQ.Socket from, ZMQ.Socket to) {
+        //do something.
+    }
+
     /**
      * @return the current backchannel data (e.g. for loadbalancing or the
      * token on the ring etc.)
-     */
+     *
     @Override
     public final byte[] getCurrentBackchannelData() {
         byte[] b = new byte[]{'a'};
         LOGGER.info("Sending data on bk channel {}", b);
         return b;
-    }
+    }*/
 
     /**
      * Called whenever a new pellet is added.

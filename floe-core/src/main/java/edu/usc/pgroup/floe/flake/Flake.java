@@ -178,11 +178,6 @@ public class Flake {
     private CoordinationComponent coordinationManager;
 
     /**
-     * Flake's token on the ring.
-     */
-    private int myToken;
-
-    /**
      * The user pellet object including all alternates.
      */
     private TPellet tPellet;
@@ -259,12 +254,18 @@ public class Flake {
 
         this.metricRegistry = new MetricRegistry();
 
+        int initialToken;
         if (token.equalsIgnoreCase("nan")) {
-            this.myToken = new Random(System.nanoTime()).nextInt();
+            initialToken = new Random(System.nanoTime()).nextInt();
         } else {
-            this.myToken = Integer.parseInt(token);
+            initialToken = Integer.parseInt(token);
         }
 
+        ZKUtils.updateToken(appName,
+                pelletId,
+                flakeId,
+                initialToken,
+                stateChkptPort); //update it on the ZK.
 
         final int reporterPeriod = 1;
 
@@ -333,13 +334,6 @@ public class Flake {
         LOGGER.info("starting flake.");
         flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
-
-
-        ZKUtils.updateToken(appName,
-                pelletId,
-                flakeId,
-                myToken,
-                stateChkptPort);
 
         //start heartbeat
         LOGGER.info("Scheduling flake heartbeat.");
@@ -421,7 +415,7 @@ public class Flake {
                 .getCoordinationManager(metricRegistry, appName,
                         pelletId,
                         pellet,
-                        flakeId, myToken,
+                        flakeId,
                         "COORDINATION-MANAGER", stateManager, sharedContext);
 
         if (coordinationManager != null) {
@@ -448,7 +442,7 @@ public class Flake {
         flakeReceiverComponent
                 = new MsgReceiverComponent(
                 metricRegistry, flakeId, "MSG-RECEIVER",
-                sharedContext, predPelletChannelTypeMap, myToken);
+                sharedContext, predPelletChannelTypeMap);
         flakeReceiverComponent.startAndWait();
 
 
@@ -487,7 +481,7 @@ public class Flake {
         Pellet pellet = deserializePellet(p);
 
         PelletExecutor pe = new PelletExecutor(metricRegistry, nextPEIdx,
-                pellet, flakeId, sharedContext, stateManager);
+                pellet, flakeId, pelletId, sharedContext, stateManager);
 
         /*PelletExecutor pe = new PelletExecutor(nextPEIdx, p, appName, appJar,
                 flakeId,

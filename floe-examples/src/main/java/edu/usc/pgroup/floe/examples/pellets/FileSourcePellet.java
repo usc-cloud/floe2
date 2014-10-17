@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.MapperPellet;
 import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.StatelessPellet;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -28,14 +29,16 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * @author kumbhare
  */
-public class FileSourcePellet extends StatelessPellet {
+public class FileSourcePellet extends MapperPellet {
 
     /**
      * the global logger instance.
@@ -58,19 +61,13 @@ public class FileSourcePellet extends StatelessPellet {
      * @param filePath file path.
      * @param sleepTime interval between reading lines.
      */
-    public FileSourcePellet(final String filePath, final long sleepTime) {
+    public FileSourcePellet(final String keyFieldName, final String filePath,
+                            final long sleepTime) {
+        super(keyFieldName);
         this.path = filePath;
         this.interval = sleepTime;
     }
 
-
-    /**
-     * Constructor.
-     * @param filePath file path.
-     */
-    public FileSourcePellet(final String filePath) {
-        this(filePath, Utils.Constants.MILLI);
-    }
 
     /**
      * The execute method which is called for each tuple. (stateless)
@@ -100,13 +97,13 @@ public class FileSourcePellet extends StatelessPellet {
 
         List<String> list = new ArrayList<>();
         final int large = 100000;
-        final int small = 50;
+        final int small = 6;
         Tuple ot = new Tuple();
         Integer id = 0;
         while (true) {
 
             try {
-                /*if (list.size() == 0) {
+                if (list.size() == 0) {
                     while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
                         String w = tokenizer.sval;
                         if (w == null) {
@@ -144,9 +141,9 @@ public class FileSourcePellet extends StatelessPellet {
                             Thread.sleep(interval);
                         }
                     }
-                }*/
+                }
 
-                ot.put("word", id.toString());
+                /*ot.put("word", id.toString());
                 emitter.emit(ot);
                 id++;
                 if (id >= small) {
@@ -154,13 +151,13 @@ public class FileSourcePellet extends StatelessPellet {
                 }
                 if (interval > 0) {
                     Thread.sleep(interval);
-                }
+                }*/
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;
-            } /*catch (IOException e) {
+            } catch (IOException e) {
                 LOGGER.error("Exception: {}", e);
-            }*/
+            }
         }
     }
 
