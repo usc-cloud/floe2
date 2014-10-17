@@ -314,6 +314,7 @@ public class MsgReceiverComponent extends FlakeComponent {
                         notifyPelletRemoved(dpeId);
                         break;
                     case UPDATE_SUBSCRIPTION:
+                        LOGGER.error("UPDATING SUBS");
                         List<String> currentNeighborsToSubscribe
                                 = (List<String>) command.getData();
                         updateFrontendSubscription(

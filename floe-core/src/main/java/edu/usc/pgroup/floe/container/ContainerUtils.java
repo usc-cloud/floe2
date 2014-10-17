@@ -69,6 +69,7 @@ public final class ContainerUtils {
      * @param predChannelTypeMap Map of src pellet to channel type
      *                                (one per edge)
      * @param pelletStreamsMap map of pellet name to list of stream names.
+     * @param token token of the flake.
      * @return the flake id of the launched flake.
      */
     public static synchronized String launchFlake(
@@ -81,7 +82,8 @@ public final class ContainerUtils {
             final Map<String, Integer> backChannelPortMap,
             final Map<String, String> successorChannelTypeMap,
             final Map<String, String> predChannelTypeMap,
-            final Map<String, List<String>> pelletStreamsMap) {
+            final Map<String, List<String>> pelletStreamsMap,
+            final String token) {
 
         final String fid  = String.valueOf(getUniqueFlakeId());
 
@@ -100,6 +102,8 @@ public final class ContainerUtils {
         }
         args.add("-cid");
         args.add(cid);
+        args.add("-token");
+        args.add(token);
         args.add("-stateport");
         args.add(statePort.toString());
         args.add("-ports");
@@ -132,8 +136,8 @@ public final class ContainerUtils {
         final String[] argsarr = new String[args.size()];
         args.toArray(argsarr);
 
-        LOGGER.info("args: {}", args);
-
+        LOGGER.error("args: {}", args);
+        //System.exit(1);
 
         Thread t = new Thread(
                 new Runnable() {
@@ -526,6 +530,8 @@ public final class ContainerUtils {
             final String pid = entry.getKey();
 
             ResourceMapping.FlakeInstance flakeInstance = entry.getValue();
+            LOGGER.error("Launching flake with token:{}",
+                    flakeInstance.getToken());
             final String fid = ContainerUtils.launchFlake(
                     pid,
                     appName,
@@ -536,7 +542,8 @@ public final class ContainerUtils {
                     flakeInstance.getPelletBackChannelPortMapping(),
                     flakeInstance.getTargetPelletChannelTypeMapping(),
                     flakeInstance.getSrcPelletChannelTypeMapping(),
-                    flakeInstance.getPelletStreamsMapping());
+                    flakeInstance.getPelletStreamsMapping(),
+                    flakeInstance.getToken());
 
             try {
                 FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory

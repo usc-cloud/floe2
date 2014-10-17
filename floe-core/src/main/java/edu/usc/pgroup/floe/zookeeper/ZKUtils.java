@@ -404,9 +404,9 @@ public final class ZKUtils {
      * @param pelletName pellet's name to which this flake belongs.
      * @param flakeId flake id.
      */
-    public static void removeToken(final String appName,
-                                   final String pelletName,
-                                   final String flakeId) {
+    public static void removeNeighbor(final String appName,
+                                      final String pelletName,
+                                      final String flakeId) {
 
         String flakeTokenPath = getApplicationFlakeTokenPath(
                 appName, pelletName, flakeId);

@@ -99,7 +99,7 @@ public class StateCheckpointComponent extends FlakeComponent {
         /**
          * ZMQ socket connection publish the state to the backups.
          */
-        ZMQ.Socket stateSoc = getContext().socket(ZMQ.PUB);
+        ZMQ.Socket stateSoc = getContext().socket(ZMQ.PUSH);
         String ssConnetStr = Utils.Constants.FLAKE_STATE_PUB_SOCK + port;
         LOGGER.info("binding STATE CHECKPOINTER to socket at: {}", ssConnetStr);
 
@@ -119,6 +119,8 @@ public class StateCheckpointComponent extends FlakeComponent {
 
         long starttime = System.currentTimeMillis();
 
+        final int qLenThreshold = 10;
+        boolean loadbalancing = false;
         while (!done && !Thread.currentThread().isInterrupted()) {
 
             int polled = pollerItems.poll(checkpointPeriod);
@@ -131,20 +133,30 @@ public class StateCheckpointComponent extends FlakeComponent {
 
             Snapshot snp = qhist.getSnapshot();
             //snp.dump(System.out);
-            LOGGER.error("fid:{}; q 95->{}; msgs procd: {}",
+            LOGGER.info("fid:{}; q 95->{}; 75->{}; 99->{}; msgs procd: {}",
                     getFid(),
                     snp.get95thPercentile() * durationFactor,
+                    snp.get75thPercentile() * durationFactor,
+                    snp.get99thPercentile() * durationFactor,
                     msgProcessedMeter.getOneMinuteRate());
 
+            Boolean reqLB = false;
             if (stableenough(starttime)) {
-                LOGGER.error("Open for load balancing.");
+                if (!loadbalancing
+                   && snp.get75thPercentile()
+                        * durationFactor > qLenThreshold) {
+                    LOGGER.error("Initiating loadbalancing.");
+                    reqLB = true;
+                    loadbalancing = true;
+                }
             }
 
-            LOGGER.debug("Checkpointing State");
+            LOGGER.error("Checkpointing State");
             byte[] checkpointdata = stateManager.checkpointState();
 
             stateSoc.sendMore(getFid());
             stateSoc.sendMore(done.toString());
+            stateSoc.sendMore(reqLB.toString());
             stateSoc.send(checkpointdata, 0);
         }
 
@@ -159,7 +171,7 @@ public class StateCheckpointComponent extends FlakeComponent {
      */
     private boolean stableenough(final long starttime) {
         long now = System.currentTimeMillis();
-        final int secs = 60;
+        final int secs = 30;
         final int th = 1000;
         if ((now - starttime) / th > secs) {
             return true;

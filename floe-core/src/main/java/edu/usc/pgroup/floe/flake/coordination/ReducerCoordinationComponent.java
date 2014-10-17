@@ -107,6 +107,11 @@ public class ReducerCoordinationComponent extends CoordinationComponent
     private final String tokenListenerSockPrefix = "inproc://flake-token-";
 
     /**
+     * my data backchannel port.
+     */
+    private int myPort;
+
+    /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param app           the application name.
@@ -153,16 +158,15 @@ public class ReducerCoordinationComponent extends CoordinationComponent
         String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
                 getAppName(), getPelletName());
 
-        flakeCache = new ZKFlakeTokenCache(pelletTokenPath, this);
+        flakeCache = new ZKFlakeTokenCache(pelletTokenPath, null);
 
         boolean success = true;
 
-        ZMQ.Socket stateSoc = getContext().socket(ZMQ.SUB);
+        ZMQ.Socket stateSoc = getContext().socket(ZMQ.PULL);
 
         try {
             //flakeCache.start();
             flakeCache.rebuild();
-
 
             List<ChildData> childData = flakeCache.getCurrentCachedData();
 
@@ -170,13 +174,14 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             neighborsToBackupMsgsFor =
                     extractNeighboursToSubscribeForMessages(childData);
 
+            LOGGER.error("ME: {}, MYTOKEN:{}, MY NEIGH:{}", getFid(),
+                    myToken, neighborsToBackupMsgsFor);
             updateStateSubscriptions(stateSoc, neighborsToBackupMsgsFor, null);
 
         } catch (Exception e) {
             LOGGER.error("Could not start token monitor.{}", e);
             success = false;
         }
-
 
         ZMQ.Socket controlSoc = getContext().socket(ZMQ.PULL);
         controlSoc.bind(tokenListenerSockPrefix + getFid());
@@ -215,14 +220,12 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                 //Merge with the state manager.
                 String nfid = stateSoc.recvStr(Charset.defaultCharset());
                 String last = stateSoc.recvStr(Charset.defaultCharset());
+                String lb = stateSoc.recvStr(Charset.defaultCharset());
 
                 Boolean scalingDown = Boolean.parseBoolean(last);
+                Boolean loadbalanceReq = Boolean.parseBoolean(lb);
 
-                if (scalingDown) {
-                    LOGGER.info("Scaling down flake: {}", nfid);
-                }
-
-                LOGGER.debug("State delta received from:{}", nfid);
+                LOGGER.error("State delta received from:{}", nfid);
                 byte[] serializedState = stateSoc.recv();
 
                 List<PelletStateDelta> deltas
@@ -232,7 +235,10 @@ public class ReducerCoordinationComponent extends CoordinationComponent
 
                 if (scalingDown) {
                     LOGGER.info("Scaling down NEIGHBOR flake: {}", nfid);
-                    initiateScaleDownAndTakeOver(nfid);
+                    initiateScaleDownAndTakeOver(nfid, false);
+                } else if (loadbalanceReq) {
+                    LOGGER.error("LB request received.");
+                    initiateScaleDownAndTakeOver(nfid, true);
                 }
 
                 //stateManager.backupState(nfid, deltas);
@@ -241,7 +247,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                     controlSoc.recv(); //receive and ignore. otherwise the
                     // pollin will go into infinite loop.
 
-                    LOGGER.info("UPDATING STATE SUBSCRIPTIONS.");
+                    LOGGER.error("UPDATING STATE SUBSCRIPTIONS.");
                     List<ChildData> childData
                             = flakeCache.getCurrentCachedData();
 
@@ -285,7 +291,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                             Utils.serialize(newCommand), 0);
                     msgReceivercontrolForwardSocket.recv();
 
-
+                    LOGGER.error("UPDATING STATE SUBSCRIPTIONS DONE.");
                 } catch (Exception e) {
                     LOGGER.error("Could not start token monitor.{}", e);
                     success = false;
@@ -367,9 +373,11 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                         + connctInfo.getIpOrHost() + ":"
                         + connctInfo.getStateCheckptPort();
 
-                stateSoc.subscribe(finfo.getValue().getBytes());
+                //stateSoc.subscribe(finfo.getValue().getBytes());
 
-                LOGGER.info("connecting STATE CHECKPOINTER "
+
+                LOGGER.error("{} SUBING FOR {}", getFid(), finfo.getValue());
+                LOGGER.error("connecting STATE CHECKPOINTER "
                         + "to listen for state updates: {}", ssConnetStr);
 
                 stateSoc.connect(ssConnetStr);
@@ -402,9 +410,11 @@ public class ReducerCoordinationComponent extends CoordinationComponent
      * Initiates the scale down process for the flake and take's over it's
      * state and key space.
      * @param nfid neighbor's flake id which is to be scaled down.
+     * @param b true if this is a load balance request, false if scale down.
      */
-    private void initiateScaleDownAndTakeOver(final String nfid) {
-        new RecoveryHandler(nfid).start();
+    private void initiateScaleDownAndTakeOver(final String nfid,
+                                              final boolean b) {
+        new RecoveryHandler(nfid, b).start();
     }
 
     /**
@@ -510,6 +520,9 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             String nfid = parseFlakeId(path);
             allFlakes.put(token.getToken(), nfid);
             allFlakesConnectData.put(nfid, token);
+            if (token.getToken() == myToken) {
+                myPort  = token.getToken();
+            }
             LOGGER.info("CHILDREN: {} , TOKEN: {}", path, token.getToken());
         }
 
@@ -638,11 +651,28 @@ public class ReducerCoordinationComponent extends CoordinationComponent
         private final String neighborFid;
 
         /**
+         * Flag indicating whether this is loadbalance or scale down.
+         */
+        private final boolean isLoadBalance;
+
+        /**
          * Constructor.
          * @param nfid the neighbor's flake id which is to be scaled down.
          */
         public RecoveryHandler(final String nfid) {
+            this(nfid, false);
+        }
+
+        /**
+         * Constructor.
+         * @param nfid the neighbor's flake id which is to be scaled down.
+         * @param loadbalance param indicating whether this is LB or scaledown.
+         *
+         */
+        public RecoveryHandler(final String nfid,
+                               final boolean loadbalance) {
             this.neighborFid = nfid;
+            this.isLoadBalance = loadbalance;
         }
 
         /**
@@ -653,7 +683,8 @@ public class ReducerCoordinationComponent extends CoordinationComponent
         public void run() {
             //If this is not an immediate neighbor then skip recovery. Give
             // chance to the immediate neighbor first.
-            if (!isImmediateNextNeighbor(neighborFid)) {
+            int neighborToken = isImmediateNextNeighbor(neighborFid);
+            if (neighborToken == -1) {
                 return;
             }
 
@@ -667,6 +698,9 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             Map<String, PelletStateDelta> flakeState
                     = stateManager.getBackupState(neighborFid);
 
+
+            //FIXME: WE CAN OPTIMIZE STATE COPY FOR LB PHASE,
+            // FOR NOW JUST LEAVE IT AS IS.
             for (Map.Entry<String, PelletStateDelta> stateEntry
                                         : flakeState.entrySet()) {
                 String key = stateEntry.getKey();
@@ -701,7 +735,25 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             // for new neighbors. BUT HOW?
             //3c. UPDATE THE DISPERSION STRATEGY FOR PREDECESSOR to use the
             // new .. BUT HOW?
-            ZKUtils.removeToken(getAppName(), getPelletName(), neighborFid);
+            boolean removeNeighbor = true;
+            Integer newPos = neighborToken;
+            if (isLoadBalance) {
+                removeNeighbor = false;
+                if (newPos < myToken) {
+                    newPos = (myToken - newPos) / 2;
+                } else {
+                    newPos = Integer.MAX_VALUE - 1;
+                }
+            }
+            neighborsToBackupMsgsFor.headMap(myToken);
+
+            ZKUtils.updateToken(getAppName(), getPelletName(),
+                    getFid(), newPos, myPort);
+
+            if (!isLoadBalance) {
+                ZKUtils.removeNeighbor(getAppName(), getPelletName(),
+                        neighborFid);
+            }
         }
 
         /**
@@ -709,7 +761,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
          * @return returns true if the given fid is the immediate neighbor,
          * false otherwise.
          */
-        private boolean isImmediateNextNeighbor(final String nfid) {
+        private Integer isImmediateNextNeighbor(final String nfid) {
             SortedMap<Integer, String> tailMap
                     = neighborsToBackupMsgsFor.tailMap(myToken);
 
@@ -731,9 +783,9 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             }
 
             if (firstNeighbor.equalsIgnoreCase(nfid)) {
-                return true;
+                return -1;
             }
-            return false;
+            return firstneighborKey;
         }
     }
 }

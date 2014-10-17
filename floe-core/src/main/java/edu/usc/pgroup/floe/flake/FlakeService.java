@@ -60,23 +60,23 @@ public final class FlakeService {
      * @param fid flake's id. (the container decides a unique id for the
      *                flake)
      * @param cid container's id. This will be appended by fid to get the
-     *            actual globally unique flake id. This is to support
-     *            psuedo-distributed mode with multiple containers. Bug#1.
+ *            actual globally unique flake id. This is to support
+ *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param appName application's name to which this flake belongs.
      * @param jar the application's jar file name.
      * @param statePort       Port to be used for sending checkpoint data.
      * @param pelletPortMap the list of ports on which this flake should
-     *                       listen on. Note: This is fine here (and not as a
-     *                       control signal) because this depends only on
-     *                       static application configuration and not on
+*                       listen on. Note: This is fine here (and not as a
+*                       control signal) because this depends only on
+*                       static application configuration and not on
      * @param backChannelPortMap map of port for the dispersion. One port
-     *                           per target pellet.
+*                           per target pellet.
      * @param successorChannelTypeMap Map of target pellet to channel type
-     *                                (one per edge)
+*                                (one per edge)
      * @param predChannelTypeMap Map of src pellet to channel type
-     *                                (one per edge)
+*                                (one per edge)
      * @param pelletStreamsMap map from successor pellets to subscribed
-     *                         streams.
+     * @param token token from the container.
      */
     private FlakeService(final String pid,
                          final String fid,
@@ -88,7 +88,8 @@ public final class FlakeService {
                          final Map<String, Integer> backChannelPortMap,
                          final Map<String, String> successorChannelTypeMap,
                          final Map<String, String> predChannelTypeMap,
-                         final Map<String, List<String>> pelletStreamsMap) {
+                         final Map<String, List<String>> pelletStreamsMap,
+                         final String token) {
         flake = new Flake(pid, fid,
                 cid,
                 appName,
@@ -98,7 +99,8 @@ public final class FlakeService {
                 backChannelPortMap,
                 successorChannelTypeMap,
                 predChannelTypeMap,
-                pelletStreamsMap);
+                pelletStreamsMap,
+                token);
     }
 
     /**
@@ -180,6 +182,11 @@ public final class FlakeService {
                 .withDescription("Port number to use for state checkpointing")
                 .create("stateport");
 
+        Option tokenOption = OptionBuilder.withArgName("token:<num>")
+                .hasArgs().isRequired()
+                .withDescription("Port number to use for state checkpointing")
+                .create("token");
+
         options.addOption(pidOption);
         options.addOption(idOption);
         options.addOption(cidOption);
@@ -191,6 +198,7 @@ public final class FlakeService {
         options.addOption(channelTypeOption);
         options.addOption(predChannelTypeOption);
         options.addOption(statePortOption);
+        options.addOption(tokenOption);
 
         return options;
     }
@@ -201,7 +209,6 @@ public final class FlakeService {
      * @param args commandline arguments. (TODO)
      */
     public static void main(final String[] args) {
-
 
         Options options = buildOptions();
 
@@ -221,6 +228,7 @@ public final class FlakeService {
         String id = line.getOptionValue("id");
         String cid = line.getOptionValue("cid");
         String appName = line.getOptionValue("appname");
+        String token = line.getOptionValue("token");
         String jar = null;
         if (line.hasOption("jar")) {
             jar = line.getOptionValue("jar");
@@ -294,7 +302,7 @@ public final class FlakeService {
                     pelletBackChannelPortMap,
                     pelletChannelTypeMap,
                     predPelletChannelTypeMap,
-                    pelletStreamsMap).start();
+                    pelletStreamsMap, token).start();
         } catch (Exception e) {
             LOGGER.error("Invalid port number: Exception: {}", e);
             return;

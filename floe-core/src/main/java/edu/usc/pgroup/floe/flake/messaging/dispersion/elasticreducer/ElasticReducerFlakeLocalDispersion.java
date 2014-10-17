@@ -131,12 +131,12 @@ public class ElasticReducerFlakeLocalDispersion
         int actualHash = hashingFunction.hash(seralized);
         int hash = actualHash;
         if (!circle.containsKey(hash)) {
-            SortedMap<Integer, String> headMap = circle.headMap(hash);
+            SortedMap<Integer, String> tailMap = circle.tailMap(hash);
 
-            if (headMap.isEmpty()) {
-                hash = circle.lastKey();
+            if (tailMap.isEmpty()) {
+                hash = circle.firstKey();
             } else {
-                hash = headMap.lastKey();
+                hash = tailMap.firstKey();
             }
         }
 

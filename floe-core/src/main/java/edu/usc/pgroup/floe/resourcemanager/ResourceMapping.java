@@ -103,7 +103,8 @@ public class ResourceMapping implements Serializable {
      * @param container container info object.
      */
     public final void createNewInstance(final String pelletId,
-                                  final ContainerInfo container) {
+                                  final ContainerInfo container,
+                                  final String token) {
 
         ContainerInstance containerInstance = null;
         if (!containerMap.containsKey(container.getContainerId())) {
@@ -120,7 +121,7 @@ public class ResourceMapping implements Serializable {
         LOGGER.info("FL for pid:{} = {}", pelletId, fl);
         if (fl == null) {
             LOGGER.error("Creating flake");
-            fl = containerInstance.createFlake(pelletId);
+            fl = containerInstance.createFlake(pelletId, token);
             if (mappingDelta != null) {
                 mappingDelta.flakeAdded(fl);
             }
@@ -420,7 +421,8 @@ public class ResourceMapping implements Serializable {
          * @param pid create flake for the given pid in the current container.
          * @return the newly created flake instance.
          */
-        private FlakeInstance createFlake(final String pid) {
+        private FlakeInstance createFlake(final String pid,
+                                          final String token) {
 
             TPellet tPellet = floeApp.get_pellets().get(pid);
 
@@ -437,7 +439,7 @@ public class ResourceMapping implements Serializable {
             }
 
             FlakeInstance flakeInstance = new FlakeInstance(pid, containerId,
-                    containerInfo.getHostnameOrIpAddr(), flPorts);
+                    containerInfo.getHostnameOrIpAddr(), flPorts, token);
             flakeMap.put(pid, flakeInstance);
             return  flakeInstance;
         }
@@ -556,6 +558,11 @@ public class ResourceMapping implements Serializable {
          */
         private int numPelletInstances;
 
+        /**
+         * pre assigned token to the flake.
+         */
+        private String fToken;
+
 
         /**
          * Constructor.
@@ -566,7 +573,8 @@ public class ResourceMapping implements Serializable {
          */
         public FlakeInstance(final String pid, final String cid,
                              final String hostnameOrIpAddr,
-                             final int[] flPorts) {
+                             final int[] flPorts,
+                             final String token) {
             this.containerId = cid;
             this.pelletId = pid;
             this.host = hostnameOrIpAddr;
@@ -574,6 +582,11 @@ public class ResourceMapping implements Serializable {
             this.pelletBackChannelPortMapping = new HashMap<>();
             this.targetPelletChannelTypeMapping = new HashMap<>();
             this.srcPelletChannelTypeMapping = new HashMap<>();
+            if (token == null) {
+                fToken = "nan";
+            } else {
+                fToken = token;
+            }
 
             this.streamNames = new HashMap<>();
 
@@ -775,6 +788,13 @@ public class ResourceMapping implements Serializable {
          */
         public final int getStateCheckpointingPort() {
             return stateChekpointingPort;
+        }
+
+        /**
+         * @return the token as string or "nan"
+         */
+        public String getToken() {
+            return fToken;
         }
     }
 }

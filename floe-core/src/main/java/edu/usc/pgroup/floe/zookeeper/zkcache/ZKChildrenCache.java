@@ -61,6 +61,7 @@ public class ZKChildrenCache {
                            final PathChildrenUpdateListener listener) {
         this.cachedPath = path;
         this.cacheListener = listener;
+
         initializeContainerMonitor();
     }
 
@@ -70,6 +71,7 @@ public class ZKChildrenCache {
     private void initializeContainerMonitor() {
         LOGGER.info("Subscribing for updates at path:"
                 + cachedPath);
+
         pathCache = ZKClient.getInstance().cacheAndSubscribeChildren(
                 cachedPath,
                 cacheListener,

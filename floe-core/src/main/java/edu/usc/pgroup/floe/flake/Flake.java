@@ -213,23 +213,23 @@ public class Flake {
      * @param fid flake's id. (the container decides a unique id for the
      *                flake)
      * @param cid container's id. This will be appended by fid to get the
-     *            actual globally unique flake id. This is to support
-     *            psuedo-distributed mode with multiple containers. Bug#1.
+ *            actual globally unique flake id. This is to support
+ *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param app application's name to which this flake belongs.
      * @param jar the application's jar file name.
      * @param statePort       Port to be used for sending checkpoint data.
      * @param portMap the map of ports on which this flake should
-     *                       listen on. Note: This is fine here (and not as a
-     *                       control signal) because this depends only on
-     *                       static application configuration and not on
+*                       listen on. Note: This is fine here (and not as a
+*                       control signal) because this depends only on
+*                       static application configuration and not on
      * @param backChannelPortMap map of port for the dispersion. One port
-     *                           per target pellet.
+*                           per target pellet.
      * @param successorChannelTypeMap Map of target pellet to channel type
-     *                                (one per edge)
+*                                (one per edge)
      * @param predChannelTypeMap Map of src pellet to channel type
-     *                                (one per edge)
+*                                (one per edge)
      * @param streamsMap map from successor pellets to subscribed
-     *                         streams.
+     * @param token token from container.
      */
     public Flake(final String pid,
                  final String fid,
@@ -241,7 +241,8 @@ public class Flake {
                  final Map<String, Integer> backChannelPortMap,
                  final Map<String, String> successorChannelTypeMap,
                  final Map<String, String> predChannelTypeMap,
-                 final Map<String, List<String>> streamsMap) {
+                 final Map<String, List<String>> streamsMap,
+                 final String token) {
         this.flakeId = Utils.generateFlakeId(cid, fid);
         this.containerId = cid;
         this.pelletPortMap = portMap;
@@ -257,6 +258,13 @@ public class Flake {
         this.stateChkptPort = statePort;
 
         this.metricRegistry = new MetricRegistry();
+
+        if (token.equalsIgnoreCase("nan")) {
+            this.myToken = new Random(System.nanoTime()).nextInt();
+        } else {
+            this.myToken = Integer.parseInt(token);
+        }
+
 
         final int reporterPeriod = 1;
 
@@ -326,7 +334,7 @@ public class Flake {
         flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
 
-        this.myToken = new Random(System.nanoTime()).nextInt();
+
         ZKUtils.updateToken(appName,
                 pelletId,
                 flakeId,
@@ -372,8 +380,9 @@ public class Flake {
      * function returns, the flake should be fully initialized.
      * This is called after receiving an initialize signal from the container.
      * (After start)
+     * @param msgReceivercontrolForwardSocket control socket for receiver.
      */
-    private void initializeFlake() {
+    private void initializeFlake(ZMQ.Socket msgReceivercontrolForwardSocket) {
 
         //get the application configuration.
         ResourceMapping resourceMapping
@@ -442,6 +451,21 @@ public class Flake {
                 sharedContext, predPelletChannelTypeMap, myToken);
         flakeReceiverComponent.startAndWait();
 
+
+        if (coordinationManager
+                instanceof ReducerCoordinationComponent &&
+                runningPelletInstances.size() == 0) {
+
+            List<String> neighbors = ((ReducerCoordinationComponent)
+                    coordinationManager).getNeighborsToBackupMsgsFor();
+            FlakeControlCommand newCommand = new FlakeControlCommand(
+                    FlakeControlCommand.Command.UPDATE_SUBSCRIPTION,
+                    neighbors
+            );
+            msgReceivercontrolForwardSocket.send(
+                    Utils.serialize(newCommand), 0);
+            msgReceivercontrolForwardSocket.recv();
+        }
         LOGGER.info("Finished flake execution. {}", flakeId);
     }
 
@@ -555,7 +579,8 @@ public class Flake {
             LOGGER.info("Received command: " + command);
             switch (command.getCommand()) {
                 case INITIALIZE:
-                    initializeFlake();
+                    initializeFlake(msgReceivercontrolForwardSocket);
+
                     break;
                 case CONNECT_PRED:
                 case DISCONNECT_PRED:
@@ -635,8 +660,9 @@ public class Flake {
 
                 //NOTE: WE SHOULD DO THIS ON SPECIAL COMMAND. BUT
                 // DOING IT HERE JUST TO TEST.
-                if (coordinationManager
-                        instanceof ReducerCoordinationComponent) {
+                /*if (coordinationManager
+                        instanceof ReducerCoordinationComponent &&
+                        runningPelletInstances.size() == 0) {
 
                     List<String> neighbors = ((ReducerCoordinationComponent)
                             coordinationManager).getNeighborsToBackupMsgsFor();
@@ -647,7 +673,7 @@ public class Flake {
                     msgReceivercontrolForwardSocket.send(
                             Utils.serialize(newCommand), 0);
                     msgReceivercontrolForwardSocket.recv();
-                }
+                }*/
                 break;
             case DECREMENT_PELLET:
                 String dpid = (String) command.getData();

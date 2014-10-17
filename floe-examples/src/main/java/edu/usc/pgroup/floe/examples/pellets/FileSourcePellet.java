@@ -28,10 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -101,19 +99,21 @@ public class FileSourcePellet extends StatelessPellet {
         tokenizer.quoteChar('"');
 
         List<String> list = new ArrayList<>();
+        final int large = 100000;
+        final int small = 50;
+        Tuple ot = new Tuple();
+        Integer id = 0;
         while (true) {
 
             try {
-
-
-                if (list.size() == 0) {
+                /*if (list.size() == 0) {
                     while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
                         String w = tokenizer.sval;
                         if (w == null) {
                             continue;
                         }
 
-                        Tuple ot = new Tuple();
+
                         ot.put("word", w);
                         LOGGER.info("Emmitting: {}", ot);
                         emitter.emit(ot);
@@ -122,10 +122,21 @@ public class FileSourcePellet extends StatelessPellet {
                         }
                         list.add(w);
                     }
+                    LOGGER.error("DONE FILE.");
+                    for (int i = 0; i < large; i++) {
+                        ot.put("word", "the");
+                        for (int j = 0; j < small; j++) {
+                            emitter.emit(ot);
+                        }
+                        if (interval > 0) {
+                            Thread.sleep(interval);
+                        }
+                    }
+                    LOGGER.error("DONE THEs.");
                 } else {
                     Iterator<String> iterator = list.iterator();
                     while (iterator.hasNext()) {
-                        Tuple ot = new Tuple();
+
                         ot.put("word", iterator.next());
                         LOGGER.info("Emmitting: {}", ot);
                         emitter.emit(ot);
@@ -133,14 +144,23 @@ public class FileSourcePellet extends StatelessPellet {
                             Thread.sleep(interval);
                         }
                     }
-                }
+                }*/
 
+                ot.put("word", id.toString());
+                emitter.emit(ot);
+                id++;
+                if (id >= small) {
+                    id = 0;
+                }
+                if (interval > 0) {
+                    Thread.sleep(interval);
+                }
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;
-            } catch (IOException e) {
+            } /*catch (IOException e) {
                 LOGGER.error("Exception: {}", e);
-            }
+            }*/
         }
     }
 

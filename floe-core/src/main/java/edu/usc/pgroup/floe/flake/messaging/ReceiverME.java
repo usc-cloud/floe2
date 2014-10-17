@@ -37,7 +37,6 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -240,28 +239,31 @@ public class ReceiverME extends FlakeComponent {
             return;
         }*/
 
-        LOGGER.info("has more:{}", from.hasReceiveMore());
+        //LOGGER.info("has more:{}", from.hasReceiveMore());
 
-        Long currentNano = System.nanoTime();
+        //Long currentNano = System.nanoTime();
 
         Tuple t = tupleSerializer.deserialize(message);
 
-        Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
-
-        Long approxNwLat  = currentNano - ts;
-        if (approxNwLat > 0) {
-            nwLatTimer.update(approxNwLat, TimeUnit.NANOSECONDS);
+        if (!fid.equalsIgnoreCase(getFid())) {
+            queLen.dec();
         }
 
+        Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
+
+        //Long approxNwLat  = currentNano - ts;
+        //if (approxNwLat > 0) {
+        //    nwLatTimer.update(approxNwLat, TimeUnit.NANOSECONDS);
+        //}
+
         if (!fid.equalsIgnoreCase(getFid())) {
-            LOGGER.info("THIS MESSAGE IS MEANT FOR BACKUP."
-                    + " SHOULD DO THAT HERE {} & {}", fid, getFid());
+            LOGGER.error("BACKUP:{}", t.get("word"));
             backup.sendMore(fid);
             backup.send(message, 0);
-            queLen.dec();
             return;
         }
 
+        LOGGER.error("MY:{}", t.get("word"));
         String src = (String) t.get(Utils.Constants.SYSTEM_SRC_PELLET_NAME);
 
         FlakeLocalDispersionStrategy strategy
@@ -281,7 +283,7 @@ public class ReceiverME extends FlakeComponent {
             for (String pelletInstanceId : pelletInstancesIds) {
                 LOGGER.debug("Sending to:" + pelletInstanceId);
                 to.sendMore(pelletInstanceId);
-                to.sendMore(currentNano.toString());
+                //to.sendMore(currentNano.toString());
                 to.send(message, 0);
             }
         } else { //should queue up messages.

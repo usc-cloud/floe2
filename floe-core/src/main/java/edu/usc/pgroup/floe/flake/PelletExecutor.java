@@ -19,7 +19,6 @@ package edu.usc.pgroup.floe.flake;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -39,7 +38,6 @@ import org.zeromq.ZMQ;
 
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The pellet executor class.
@@ -291,11 +289,11 @@ public class PelletExecutor extends Thread {
         Meter msgProcessedMeter =  metricRegistry.meter(
                 MetricRegistry.name(PelletExecutor.class, "processed"));
 
-        Timer queueTimer = metricRegistry.timer(
-                MetricRegistry.name(PelletExecutor.class, "queue.latency"));
+        //Timer queueTimer = metricRegistry.timer(
+        //        MetricRegistry.name(PelletExecutor.class, "queue.latency"));
 
-        Timer processTimer = metricRegistry.timer(
-                MetricRegistry.name(PelletExecutor.class, "process.latency"));
+        //Timer processTimer = metricRegistry.timer(
+        //        MetricRegistry.name(PelletExecutor.class, "process.latency"));
 
         Counter queLen = metricRegistry.counter(
                 MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
@@ -308,16 +306,16 @@ public class PelletExecutor extends Thread {
                 pollerItems.poll();
                 if (pollerItems.pollin(0)) {
                     key = dataReceiver.recvStr(Charset.defaultCharset());
-                    String queueAddedTime
-                            = dataReceiver.recvStr(Charset.defaultCharset());
+                    //String queueAddedTime
+                    //        = dataReceiver.recvStr(Charset.defaultCharset());
                     byte[] serializedTuple = dataReceiver.recv();
 
                     queLen.dec();
 
-                    long queueAddedTimeL = Long.parseLong(queueAddedTime);
-                    long queueRemovedTime = System.nanoTime();
-                    queueTimer.update(queueRemovedTime - queueAddedTimeL
-                            , TimeUnit.NANOSECONDS);
+                    //long queueAddedTimeL = Long.parseLong(queueAddedTime);
+                    //long queueRemovedTime = System.nanoTime();
+                    //queueTimer.update(queueRemovedTime - queueAddedTimeL
+                    //        , TimeUnit.NANOSECONDS);
 
                     msgDequeuedMeter.mark();
 
@@ -343,8 +341,8 @@ public class PelletExecutor extends Thread {
 
 
                     long processedTime = System.nanoTime();
-                    processTimer.update(processedTime - queueRemovedTime,
-                            TimeUnit.NANOSECONDS);
+                    //processTimer.update(processedTime - queueRemovedTime,
+                    //        TimeUnit.NANOSECONDS);
                     msgProcessedMeter.mark();
 
                 } else if (pollerItems.pollin(1)) {
