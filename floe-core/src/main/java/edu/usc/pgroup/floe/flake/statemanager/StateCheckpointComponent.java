@@ -176,7 +176,7 @@ public class StateCheckpointComponent extends FlakeComponent {
             Boolean reqLB = false;
             //double a80 = (snp.get95thPercentile() * durationFactor +
                     //snp.get75thPercentile() * durationFactor) / 2.0;
-            double a80 = (snp.get95thPercentile() + snp.get75thPercentile()) 
+            double a80 = (snp.get95thPercentile() + snp.get75thPercentile())
                     / 2.0;
 
             if (stableenough(starttime)) {

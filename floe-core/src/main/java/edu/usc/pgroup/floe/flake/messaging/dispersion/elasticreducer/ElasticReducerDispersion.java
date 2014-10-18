@@ -32,6 +32,7 @@ import org.zeromq.ZMQ;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SortedMap;
@@ -94,7 +95,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
             final String destPelletName,
             final String args) {
         this.targetFlakeIds = new ArrayList<>();
-        this.circle = new TreeMap<>();
+        this.circle = new TreeMap<>(Collections.reverseOrder());
         this.flakeIdToTokenMap = new HashMap<>();
         this.keyFieldName = args;
         this.hashingFunction = new Murmur32();
