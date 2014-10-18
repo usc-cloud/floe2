@@ -16,10 +16,13 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.StateSizeMonitor;
+import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -45,6 +48,8 @@ public class ReducerStateManager extends StateManagerComponent
      * Key field name used by the reducer for grouping.
      */
     private final String keyFieldName;
+    private final Meter checkptSizemeter;
+    private final Meter fullSizemeter;
 
 
     /**
@@ -100,6 +105,16 @@ public class ReducerStateManager extends StateManagerComponent
         backupComponent = new ReducerStateBackupComponent(metricRegistry,
                 flakeId,
                 componentName + "-STBACKUP", ctx, fieldName);
+
+        fullSizemeter = metricRegistry.meter(MetricRegistry.name
+                (ReducerStateManager.class, "full.size"));
+
+        checkptSizemeter = metricRegistry.meter(MetricRegistry.name
+                (ReducerStateManager.class, "chkpt.size"));
+
+        metricRegistry.register(MetricRegistry.name
+                (ReducerStateManager.class, "ratio.size"),
+                new StateSizeMonitor(fullSizemeter, checkptSizemeter));
     }
 
     /**
@@ -191,7 +206,14 @@ public class ReducerStateManager extends StateManagerComponent
 
         kryoOut.flush();
         kryoOut.close();
-        return outStream.toByteArray();
+
+        byte[] chkpt = outStream.toByteArray();
+        checkptSizemeter.mark(chkpt.length);
+
+        byte[] full = Utils.serialize(pelletStateMap);
+        fullSizemeter.mark(full.length);
+
+        return chkpt;
         //byte[] serialized = serializer.getBuffer();
         //LOGGER.info("Serialied size:{}", serialized.length);
         //return serialized;
