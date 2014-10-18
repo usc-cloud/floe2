@@ -78,7 +78,7 @@ public class ClusterResourceManager extends ResourceManager {
                 numInstances = pelletEntry.getValue().get_parallelism();
             }
 
-            //Integer tokens[] = {-2048702562, 1281117438, -172207135};
+            Integer tokens[] = {-598260261, 1224420058, 1077889423};
             int idx = -1;
             ContainerInfo prev = null;
             for (int cnt = 0; cnt < numInstances; cnt++) {
@@ -87,7 +87,7 @@ public class ClusterResourceManager extends ResourceManager {
                         pelletEntry.getKey(),
                         containers,
                         mapping);
-                /*if (pelletEntry.getKey().equalsIgnoreCase("count")) {
+                if (pelletEntry.getKey().equalsIgnoreCase("count")) {
                     LOGGER.error("Setting token for count");
                     if (prev != container) {
                         idx++;
@@ -96,11 +96,11 @@ public class ClusterResourceManager extends ResourceManager {
                     LOGGER.error("Token:{}", tokens[idx].toString());
                     mapping.createNewInstance(pelletEntry.getKey(),
                             container, tokens[idx].toString());
-                } else {*/
+                } else {
 
                     mapping.createNewInstance(pelletEntry.getKey(),
                             container, null);
-                //}
+                }
             }
         }
         return  mapping;
