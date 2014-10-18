@@ -188,6 +188,7 @@ public class MsgReceiverComponent extends FlakeComponent {
         msgReceivercontrolForwardSocket.close();
         //backChannelPingger.close();
 
+        receiverMEComponent.stopAndWait();
         notifyStopped(result);
     }
 

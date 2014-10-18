@@ -163,9 +163,9 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
         Integer hash = getTargetFlakeHash(actualHash);
         String fid =  circle.get(hash);
 
-        if (key.equals("the")) {
+        /*if (key.equals("the")) {
             LOGGER.error("the: {}, flake's:{}", actualHash, hash);
-        }
+        }*/
 
         LOGGER.debug("Sending to:{}", hash.toString());
         backend.sendMore(fid.toString());

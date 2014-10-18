@@ -65,8 +65,12 @@ public class ElasticReducerFlakeLocalDispersion
         LOGGER.info("HASH RECEIVED:{}", hashInt);
         Integer actualHash = Integer.parseInt(hashInt);
         String peinstanceid = getTargetPelletInstances(actualHash);
-        to.sendMore(peinstanceid);
-        Utils.forwardCompleteMessage(from, to);
+        if (peinstanceid != null) {
+            to.sendMore(peinstanceid);
+            Utils.forwardCompleteMessage(from, to);
+        } else {
+            Utils.recvAndignore(from);
+        }
     }
 
     /**

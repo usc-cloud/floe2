@@ -205,13 +205,11 @@ public class ReducerStateManager extends StateManagerComponent
         }
 
         kryoOut.flush();
-        kryoOut.close();
 
         byte[] chkpt = outStream.toByteArray();
         checkptSizemeter.mark(chkpt.length);
 
-        byte[] full = Utils.serialize(pelletStateMap);
-        fullSizemeter.mark(full.length);
+        kryoOut.close();       
 
         return chkpt;
         //byte[] serialized = serializer.getBuffer();

@@ -152,15 +152,16 @@ public class ReceiverME extends FlakeComponent {
                         : localDispersionStratMap.values()) {
                     strategy.stopAndWait();
                 }*/
-                localDispersionStrat.startAndWait();
+
                 byte[] intr = terminateSignalReceiver.recv();
                 break;
             }
         }
-
+        localDispersionStrat.stopAndWait();
         backend.close();
         recevierME.close();
         msgBackupSender.close();
+        notifyStopped(true);
     }
 
 

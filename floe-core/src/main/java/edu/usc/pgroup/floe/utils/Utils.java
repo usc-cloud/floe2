@@ -350,6 +350,24 @@ public final class Utils {
         }
     }
 
+    public static void recvAndignore(final ZMQ.Socket from) {
+        byte[] message;
+        boolean more = false;
+        while (true) {
+            // receive message
+            message = from.recv(0);
+            more = from.hasReceiveMore();
+            // Broker it
+            int flags = 0;
+            if (more) {
+                flags = ZMQ.SNDMORE;
+            }
+            if (!more) {
+                break;
+            }
+        }
+    }
+
     /**
      * Various Constants used across the project.
      * Note: The string constants for configuration file,
