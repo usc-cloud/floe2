@@ -755,7 +755,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                     Integer C = neighborToken;
                     Integer d1 = A - Integer.MIN_VALUE;
                     Integer d2 = Integer.MAX_VALUE - C;
-                    Integer K = (d1 + d2) / 2;
+                    Integer K = d1/2 + d2/2;
                     if (d1 >= K) {
                         newPos = A - K;
                     } else {
