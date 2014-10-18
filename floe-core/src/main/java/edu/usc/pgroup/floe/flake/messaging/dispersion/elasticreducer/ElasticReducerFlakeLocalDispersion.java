@@ -62,8 +62,8 @@ public class ElasticReducerFlakeLocalDispersion
     @Override
     public void sendToPellets(ZMQ.Socket from, ZMQ.Socket to) {
         String hashInt = from.recvStr(Charset.defaultCharset());
+        LOGGER.info("HASH RECEIVED:{}", hashInt);
         Integer actualHash = Integer.parseInt(hashInt);
-        LOGGER.info("ACTUAL HASH RECEIVED:{}", actualHash);
         String peinstanceid = getTargetPelletInstances(actualHash);
         to.sendMore(peinstanceid);
         Utils.forwardCompleteMessage(from, to);

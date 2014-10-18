@@ -399,6 +399,40 @@ public final class ZKUtils {
     }
 
     /**
+     * Updates the token associated with the given app and flakeid.
+     * Note: flake id is globally unique.
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @param flakeId flake id.
+     */
+    public static Integer getToken(final String appName,
+                                   final String pelletName,
+                                   final String flakeId) {
+        String flakeTokenPath = getApplicationFlakeTokenPath(
+                appName, pelletName, flakeId);
+
+
+
+        try {
+            if (ZKClient.getInstance().getCuratorClient()
+                    .checkExists().forPath(flakeTokenPath) != null) {
+                byte[] data = ZKClient.getInstance()
+                        .getCuratorClient().getData()
+                        .forPath(flakeTokenPath);
+
+                FlakeToken token = (FlakeToken) Utils.deserialize(data);
+                return token.getToken();
+            } else {
+                LOGGER.error("Fatal error. cannot continue.");
+                return null;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Could not get flake's token.");
+        }
+        return null;
+    }
+
+    /**
      * removes the flake from the token ring in Zookeeper.
      * @param appName the application name.
      * @param pelletName pellet's name to which this flake belongs.

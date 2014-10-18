@@ -81,7 +81,7 @@ public class WordCountReducer extends ReducerPellet {
             LOGGER.error("I have 'the'");
         }
         state.setValue("count", count);
-        LOGGER.error("Count for {}: {}", word, count);
+        LOGGER.info("Count for {}: {}", word, count);
     }
 
     /**

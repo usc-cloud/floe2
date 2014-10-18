@@ -304,7 +304,7 @@ public final class FlakeService {
                     predPelletChannelTypeMap,
                     pelletStreamsMap, token).start();
         } catch (Exception e) {
-            LOGGER.error("Invalid port number: Exception: {}", e);
+            LOGGER.error("Exception while creating flake: {}", e);
             return;
         }
     }

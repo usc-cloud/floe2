@@ -161,7 +161,8 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
         String fid =  circle.get(hash);
 
 
-        backend.sendMore(fid);
+        LOGGER.debug("Sending to:{}", hash.toString());
+        backend.sendMore(fid.toString());
         backend.sendMore(actualHash.toString());
         backend.sendMore(String.valueOf(System.currentTimeMillis()));
         Utils.forwardCompleteMessage(middleendreceiver, backend);

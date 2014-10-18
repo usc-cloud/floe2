@@ -120,7 +120,7 @@ public class FileSourcePellet extends MapperPellet {
                         list.add(w);
                     }
                     LOGGER.error("DONE FILE.");
-                    for (int i = 0; i < large; i++) {
+                    /*for (int i = 0; i < large; i++) {
                         ot.put("word", "the");
                         for (int j = 0; j < small; j++) {
                             emitter.emit(ot);
@@ -128,8 +128,8 @@ public class FileSourcePellet extends MapperPellet {
                         if (interval > 0) {
                             Thread.sleep(interval);
                         }
-                    }
-                    LOGGER.error("DONE THEs.");
+                    }*/
+                    //LOGGER.error("DONE THEs.");
                 } else {
                     Iterator<String> iterator = list.iterator();
                     while (iterator.hasNext()) {
@@ -137,6 +137,12 @@ public class FileSourcePellet extends MapperPellet {
                         ot.put("word", iterator.next());
                         LOGGER.info("Emmitting: {}", ot);
                         emitter.emit(ot);
+
+                        ot.put("word", "the");
+                        LOGGER.info("Emmitting: {}", ot);
+                        emitter.emit(ot);
+                        emitter.emit(ot);
+
                         if (interval > 0) {
                             Thread.sleep(interval);
                         }

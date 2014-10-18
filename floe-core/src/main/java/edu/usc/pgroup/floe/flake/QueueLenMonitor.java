@@ -17,8 +17,13 @@
 package edu.usc.pgroup.floe.flake;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingTimeWindowReservoir;
 import com.codahale.metrics.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +31,13 @@ import java.util.concurrent.TimeUnit;
  * @author kumbhare
  */
 public class QueueLenMonitor extends Thread {
+
+
+    /**
+     * the global logger instance.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(QueueLenMonitor.class);
 
     /**
      * Metric Registry.
@@ -36,34 +48,35 @@ public class QueueLenMonitor extends Thread {
      * Queue counter.
      */
     private final Counter qCounter;
+    private final Histogram qhist;
 
     /**
      * @param registry Metric registry.
      * @param counter queue counter.
      */
     public QueueLenMonitor(final MetricRegistry registry,
-                           final Counter counter) {
+                           final Counter counter,
+                           Histogram qhist) {
         this.metricReg = registry;
         this.qCounter = counter;
+        this.qhist = qhist;
     }
 
     @Override
     public final void run() {
 
-        /*Histogram qhist
-                = metricReg.histogram(MetricRegistry.name(QueueLenMonitor.class,
-                                                    "q.len.histo"));*/
+        System.out.println(metricReg.getHistograms().keySet());
 
-        Timer qhist
-                = metricReg.timer(MetricRegistry.name(QueueLenMonitor.class,
-                "q.len.histo"));
+        /*Meter qhist
+                = metricReg.meter(MetricRegistry.name(QueueLenMonitor.class,
+                "q.len.histo"));*/
 
         final int monitorint = 10;
         while (!Thread.interrupted()) {
 
-            //qhist.update(qCounter.getCount());
+            qhist.update(qCounter.getCount());
             //qhist.mark(qCounter.getCount());
-            qhist.update(qCounter.getCount(), TimeUnit.MILLISECONDS);
+            //qhist.update(qCounter.getCount(), TimeUnit.MILLISECONDS);
 
             try {
                 Thread.sleep(1);

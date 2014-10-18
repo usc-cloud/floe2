@@ -202,6 +202,8 @@ public class Flake {
      */
     private CsvReporter reporter;
 
+    Integer initialToken;
+
     /**
      * Constructor.
      * @param pid pellet id/name.
@@ -254,7 +256,7 @@ public class Flake {
 
         this.metricRegistry = new MetricRegistry();
 
-        int initialToken;
+
         if (token.equalsIgnoreCase("nan")) {
             initialToken = new Random(System.nanoTime()).nextInt();
         } else {

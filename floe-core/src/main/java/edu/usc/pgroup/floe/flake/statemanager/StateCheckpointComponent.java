@@ -16,8 +16,11 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingTimeWindowReservoir;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import edu.usc.pgroup.floe.config.ConfigProperties;
@@ -25,11 +28,14 @@ import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.PelletExecutor;
 import edu.usc.pgroup.floe.flake.QueueLenMonitor;
+import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -107,9 +113,30 @@ public class StateCheckpointComponent extends FlakeComponent {
         double durationFactor = 1.0 / durationUnit.toNanos(1);
 
         stateSoc.bind(ssConnetStr);
-        Timer qhist
-                = getMetricRegistry().timer(
-                MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"));
+        /*Meter qhist
+                = getMetricRegistry().meter(
+                MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"));*/
+
+        LOGGER.error("Hists: {}", getMetricRegistry().getHistograms());
+        /*Histogram qhist = getMetricRegistry()
+                .getHistograms()
+                .get(MetricRegistry.name(
+                        QueueLenMonitor.class, "q.len.histo"));*/
+
+        Counter queLen = getMetricRegistry().counter(
+                MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
+
+        Histogram qhist
+                = getMetricRegistry() .register(
+                MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"),
+                new Histogram(new SlidingTimeWindowReservoir(30,
+                        TimeUnit.SECONDS)));
+
+        QueueLenMonitor monitor = new QueueLenMonitor(getMetricRegistry(),
+                queLen, qhist);
+        monitor.start();
+
+
 
         Meter msgProcessedMeter =  getMetricRegistry().meter(
                 MetricRegistry.name(PelletExecutor.class, "processed"));
@@ -120,7 +147,7 @@ public class StateCheckpointComponent extends FlakeComponent {
         long starttime = System.currentTimeMillis();
 
         final int qLenThreshold = 10;
-        boolean loadbalancing = false;
+
         while (!done && !Thread.currentThread().isInterrupted()) {
 
             int polled = pollerItems.poll(checkpointPeriod);
@@ -133,22 +160,31 @@ public class StateCheckpointComponent extends FlakeComponent {
 
             Snapshot snp = qhist.getSnapshot();
             //snp.dump(System.out);
-            LOGGER.info("fid:{}; q 95->{}; 75->{}; 99->{}; msgs procd: {}",
+            LOGGER.error("fid:{}; q 95->{}; 75->{}; 99->{}; msgs procd: {}",
                     getFid(),
-                    snp.get95thPercentile() * durationFactor,
-                    snp.get75thPercentile() * durationFactor,
-                    snp.get99thPercentile() * durationFactor,
+                    snp.get95thPercentile(), //* durationFactor,
+                    snp.get75thPercentile(), //* durationFactor,
+                    snp.get99thPercentile(), //* durationFactor,
                     msgProcessedMeter.getOneMinuteRate());
 
+            //double last1min = qhist.;
+            /*LOGGER.error("fid:{}; q 1min->{}; msgs procd: {}",
+                    getFid(),
+                    last1min,
+                    msgProcessedMeter.getOneMinuteRate());*/
+
             Boolean reqLB = false;
+            //double a80 = (snp.get95thPercentile() * durationFactor +
+                    //snp.get75thPercentile() * durationFactor) / 2.0;
+            double a80 = (snp.get95thPercentile() + snp.get75thPercentile()) 
+                    / 2.0;
+
             if (stableenough(starttime)) {
-                if (!loadbalancing
-                   && snp.get75thPercentile()
-                        * durationFactor > qLenThreshold) {
+                if (a80 > qLenThreshold) {
                     LOGGER.error("Initiating loadbalancing.");
                     reqLB = true;
-                    loadbalancing = true;
                 }
+                starttime = System.currentTimeMillis();
             }
 
             LOGGER.info("Checkpointing State");
@@ -161,6 +197,7 @@ public class StateCheckpointComponent extends FlakeComponent {
         }
 
         stateSoc.close();
+        monitor.interrupt();
         notifyStopped(true);
     }
 
@@ -173,7 +210,7 @@ public class StateCheckpointComponent extends FlakeComponent {
         long now = System.currentTimeMillis();
         final int secs = 30;
         final int th = 1000;
-        if ((now - starttime) / th > secs) {
+        if ((now - starttime) / th >= secs) {
             return true;
         }
         return false;

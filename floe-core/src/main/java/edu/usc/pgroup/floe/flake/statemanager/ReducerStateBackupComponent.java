@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
@@ -29,6 +30,7 @@ import org.zeromq.ZMQ;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -39,6 +41,11 @@ import java.util.TreeMap;
  */
 public class ReducerStateBackupComponent extends FlakeComponent {
 
+
+    class TStore {
+        public String actualHash;
+        public byte[] message;
+    }
 
     /**
      * the global logger instance.
@@ -52,8 +59,12 @@ public class ReducerStateBackupComponent extends FlakeComponent {
      * Map from "neighbor's" flake id to a time sorted map of messages.
      * Neighbor Fid -> Reducer Key -> SortedTS -> Tuple
      */
-    private final Map<String,
-            Map<String, SortedMap<Long, Tuple>>> messageBackup;
+    //private final Map<String,
+//            Map<String, SortedMap<Long, Tuple>>> messageBackup;
+
+    //FIXME: currently not worrying about key. will replay all.
+    //Fid -> Sorted TS -> NOT ACTUAL TUPLE, JUST THE SEARILIZED VERISION.
+    private final Map<String, SortedMap<Long, TStore>> messageBackup;
 
 
     /**
@@ -99,6 +110,9 @@ public class ReducerStateBackupComponent extends FlakeComponent {
         this.keyFieldName = fieldName;
         this.stateBackup = new HashMap<>();
         this.recoveringFlakes = new HashMap<>();
+        //metricRegistry.meter(MetricRegistry.name
+         //       (ReducerStateBackupComponent.class,
+         //               "msg-q-len"));
     }
 
 
@@ -146,7 +160,6 @@ public class ReducerStateBackupComponent extends FlakeComponent {
 
                 String hashInt = backupListener.recvStr(
                         Charset.defaultCharset());
-                Integer hash = Integer.parseInt(hashInt);
 
                 String tss = backupListener.recvStr(Charset.defaultCharset());
 
@@ -154,37 +167,35 @@ public class ReducerStateBackupComponent extends FlakeComponent {
 
                 byte[] btuple = backupListener.recv();
 
-                if (!recoveringFlakes.containsKey(nfid)) {
-                    Tuple t = tupleSerializer.deserialize(btuple);
-                    addTupleToBackup(nfid, t, ts);
-                } else {
+                //if (!recoveringFlakes.containsKey(nfid)) {
+                    //Tuple t = tupleSerializer.deserialize(btuple);
+                    addTupleToBackup(nfid, hashInt, btuple, ts);
+                /*} else {
                     msgRecoverySock.sendMore(getFid());
+                    msgRecoverySock.sendMore(hashInt);
+                    msgRecoverySock.sendMore(tss);
                     msgRecoverySock.send(btuple, 0);
-                }
+                }*/
             } else if (pollerItems.pollin(2)) {
                 String nfid = backupMsgControl.recvStr(
                         Charset.defaultCharset());
 
-                Map<String, SortedMap<Long, Tuple>> keyMap
-                                        = messageBackup.get(nfid);
+                /*Map<String, SortedMap<Long, Tuple>> keyMap
+                                        = messageBackup.get(nfid);*/
+                SortedMap<Long, TStore> allMsgs = messageBackup.get(nfid);
 
-                if (keyMap != null) {
-                    for (Map.Entry<String, SortedMap<Long, Tuple>> keyTupleEntry
-                            : keyMap.entrySet()) {
-                        String key = keyTupleEntry.getKey();
-                        SortedMap<Long, Tuple> tuples
-                                    = keyTupleEntry.getValue();
-                        while (tuples != null && tuples.size() > 0) {
-                            //send the msgs.
-                            Long ts = tuples.firstKey();
-                            Tuple tuple = tuples.remove(ts);
+                LOGGER.error("Replaying messages.");
+                if (allMsgs != null) {
+                    for (Map.Entry<Long, TStore> tup: allMsgs.entrySet()) {
 
-                            byte[] btuple = tupleSerializer.serialize(tuple);
-                            LOGGER.error("RECOVERING NOW."); //MAYBE SEND
+
+                            //LOGGER.error("RECOVERING NOW."); //MAYBE SEND
                             // DIRECTLY TO THE ME?
-                            msgRecoverySock.sendMore(getFid());
-                            msgRecoverySock.send(btuple, 0);
-                        }
+                        msgRecoverySock.sendMore(getFid());
+                        msgRecoverySock.sendMore(tup.getValue().actualHash);
+                        msgRecoverySock.sendMore(tup.getKey().toString());
+                        msgRecoverySock.send(tup.getValue().message, 0);
+
                     }
                 }
                 recoveringFlakes.put(nfid, Boolean.TRUE);
@@ -197,35 +208,41 @@ public class ReducerStateBackupComponent extends FlakeComponent {
     /**
      * Adds the tuple to the backup.
      * @param nfid neighbor's flake id.
-     * @param t the tuple to add.
+     * param t the tuple to add.
      * @param ts
      */
     private void addTupleToBackup(final String nfid,
-                                  final Tuple t, long ts) {
+                                  final String actualHash,
+                                  final byte[] message,
+                                  long ts) {
 
-        Map<String, SortedMap<Long, Tuple>> keyMap = messageBackup.get(nfid);
+        SortedMap<Long, TStore> tupMap = messageBackup.get(nfid);
 
-        if (keyMap == null) {
-            keyMap = new HashMap<>();
-            messageBackup.put(nfid, keyMap);
+        if (tupMap == null) {
+            tupMap = Collections.synchronizedSortedMap(
+                    new TreeMap<Long, TStore>(Collections.reverseOrder()));
+            messageBackup.put(nfid, tupMap);
         }
 
 
         //get key value from tuple.
         //FIXME: COULD BE OTHER THAN STRING.
-        String keyValue = (String) t.get(keyFieldName);
+        //String keyValue = (String) t.get(keyFieldName);
 
-        SortedMap<Long, Tuple> messages = keyMap.get(keyValue);
+        //SortedMap<Long, Tuple> messages = keyMap.get(keyValue);
 
-        if (messages == null) {
+        /*if (tupMap == null) {
             messages = Collections.synchronizedSortedMap(
                     new TreeMap<Long, Tuple>(Collections.reverseOrder()));
             keyMap.put(keyValue, messages);
-        }
+        }*/
 
-        LOGGER.debug("Backing up msg: {}", t);
-        synchronized (messages) {
-            messages.put(ts, t);
+        //LOGGER.debug("Backing up msg: {}", t);
+        synchronized (tupMap) {
+            TStore tStore = new TStore();
+            tStore.actualHash = actualHash;
+            tStore.message = message;
+            tupMap.put(ts, tStore);
         }
     }
 
@@ -242,7 +259,7 @@ public class ReducerStateBackupComponent extends FlakeComponent {
         Map<String, PelletStateDelta> keyStateMap = stateBackup.get(nfid);
 
 
-        Map<String, SortedMap<Long, Tuple>> keyMsgMap = messageBackup.get(nfid);
+        SortedMap<Long, TStore> keyMsgMap = messageBackup.get(nfid);
 
 
         if (keyStateMap == null) {
@@ -265,20 +282,20 @@ public class ReducerStateBackupComponent extends FlakeComponent {
 
             //Remove the tuples from the msg backup that are no longer required.
             if (keyMsgMap != null) { //otherwise no msgs to remove. ignore.
-                SortedMap<Long, Tuple> messages = keyMsgMap.get(key);
-                if (messages != null) { //otherwise ignore.
+                //SortedMap<Long, Tuple> messages = keyMsgMap.get(key);
+                //if (messages != null) { //otherwise ignore.
 
                     //FIXME: SUBTRACT THE 2 *
                     //FIXME: MAX_LATENCY VALUE FROM TIME STAMP HERE
-                    synchronized (messages) {
-                        SortedMap<Long, Tuple> msgsToRemove
-                                = messages.tailMap(ts);
+                    synchronized (keyMsgMap) {
+                        SortedMap<Long, TStore> msgsToRemove
+                                = keyMsgMap.tailMap(ts);
                         LOGGER.debug("Clearing msgs {} from backup for "
                                         + "fid/key: {}.{} before ts: {}",
-                                          msgsToRemove, nfid, key, ts);
+                                msgsToRemove, nfid, key, ts);
                         msgsToRemove.clear();
                     }
-                }
+                //}
             }
         }
     }

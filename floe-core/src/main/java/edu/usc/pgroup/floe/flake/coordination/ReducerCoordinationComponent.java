@@ -393,7 +393,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                         + connctInfo.getIpOrHost() + ":"
                         + connctInfo.getStateCheckptPort();
 
-                stateSoc.unsubscribe(finfo.getValue().getBytes());
+                //stateSoc.unsubscribe(finfo.getValue().getBytes());
 
                 LOGGER.info("DISCONNECTING STATE CHECKPOINTER "
                         + "to listen for state updates: {}", ssConnetStr);
@@ -630,6 +630,10 @@ public class ReducerCoordinationComponent extends CoordinationComponent
         controlSoc.close();
     }
 
+    public Integer getToken() {
+        return myToken;
+    }
+
     /**
      * @return the list of neighbors to be used for state backup.
      *
@@ -740,22 +744,36 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             // new .. BUT HOW?
 
             LOGGER.error("Updating my token, both on ZK and local copy.");
-            Integer newPos = neighborToken;
+            Integer newPos = myToken; //start with original position.
             if (isLoadBalance) {
-                if (newPos < myToken) {
-                    newPos = (myToken - newPos) / 2;
+                if (neighborToken < myToken) {
+                    newPos = myToken - ((myToken - neighborToken) / 2);
                 } else {
-                    newPos = Integer.MAX_VALUE - 1;
+                    //newPos = Integer.MAX_VALUE - 1;
+                    //wrapping around the circle
+                    Integer A = myToken;
+                    Integer C = neighborToken;
+                    Integer d1 = A - Integer.MIN_VALUE;
+                    Integer d2 = Integer.MAX_VALUE - C;
+                    Integer K = (d1 + d2) / 2;
+                    if (d1 >= K) {
+                        newPos = A - K;
+                    } else {
+                        Integer remaining = K - d1;
+                        newPos = Integer.MAX_VALUE - remaining;
+                    }
                 }
             }
-            neighborsToBackupMsgsFor.headMap(myToken);
 
             LOGGER.error("OLD POS:{}, NEW POS:{}, NEIGH:{}.", myToken, newPos,
                     neighborToken);
+
+
             ZKUtils.updateToken(getAppName(), getPelletName(),
                     getFid(), newPos, myPort);
 
             myToken = newPos;
+
             if (!isLoadBalance) {
                 LOGGER.error("NOT LOAD BALANCE SO removing reighbor.");
                 ZKUtils.removeNeighbor(getAppName(), getPelletName(),

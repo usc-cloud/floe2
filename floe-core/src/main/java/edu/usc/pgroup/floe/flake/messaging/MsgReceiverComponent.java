@@ -240,10 +240,6 @@ public class MsgReceiverComponent extends FlakeComponent {
         Counter queLen = getMetricRegistry().counter(
                 MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
 
-        QueueLenMonitor monitor = new QueueLenMonitor(getMetricRegistry(),
-                queLen);
-        monitor.start();
-
         while (!done && !Thread.currentThread().isInterrupted()) {
             pollerItems.poll(pollDelay);
 
@@ -324,14 +320,13 @@ public class MsgReceiverComponent extends FlakeComponent {
                 }
             }
         }
-        monitor.interrupt();
+
     }
 
     /**
      * Updates the front end subscription.
      * @param frontend the frontend socket to update the subscriptions for.
      * @param newNeighborsToSubscribe the list of neighbors to subscribe
-     *                                    for received from the coordination
      */
     private void updateFrontendSubscription(
             final ZMQ.Socket frontend,
