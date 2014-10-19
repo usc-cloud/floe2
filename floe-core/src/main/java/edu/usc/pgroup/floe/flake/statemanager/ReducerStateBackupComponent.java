@@ -17,9 +17,12 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingTimeWindowReservoir;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
+import edu.usc.pgroup.floe.flake.QueueLenMonitor;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -35,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -110,6 +114,28 @@ public class ReducerStateBackupComponent extends FlakeComponent {
         this.keyFieldName = fieldName;
         this.stateBackup = new HashMap<>();
         this.recoveringFlakes = new HashMap<>();
+
+        Gauge<Integer> lenMonitor = metricRegistry.register("BACkUPLEN",
+                new Gauge<Integer>() {
+
+                    @Override
+                    public Integer getValue() {
+                        Integer sum = 0;
+                        for (String key : messageBackup.keySet()) {
+                            sum += messageBackup.get(key).size();
+                        }
+                        return sum;
+                    }
+                });
+
+        Histogram qhist
+                = getMetricRegistry() .register(
+                MetricRegistry.name(QueueLenMonitor.class, "bkp.len.histo"),
+                new Histogram(new SlidingTimeWindowReservoir(2,
+                        TimeUnit.SECONDS)));
+
+        BackupLenMonitor mon = new BackupLenMonitor(lenMonitor, qhist);
+        mon.start();
         //metricRegistry.meter(MetricRegistry.name
          //       (ReducerStateBackupComponent.class,
          //               "msg-q-len"));

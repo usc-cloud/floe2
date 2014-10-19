@@ -411,20 +411,6 @@ public class Flake {
             stateManager.startAndWait();
         }
 
-        //Start the coordination manager.
-        LOGGER.info("Starting coordination manager.");
-        coordinationManager = CoordinationManagerFactory
-                .getCoordinationManager(metricRegistry, appName,
-                        pelletId,
-                        pellet,
-                        flakeId,
-                        "COORDINATION-MANAGER", stateManager, sharedContext);
-
-        if (coordinationManager != null) {
-            coordinationManager.startAndWait();
-        }
-
-
         LOGGER.info("Start the command receiver.");
         flakeSenderComponent = new SenderFEComponent(
                 metricRegistry,
@@ -446,6 +432,19 @@ public class Flake {
                 metricRegistry, flakeId, "MSG-RECEIVER",
                 sharedContext, predPelletChannelTypeMap);
         flakeReceiverComponent.startAndWait();
+
+        //Start the coordination manager.
+        LOGGER.info("Starting coordination manager.");
+        coordinationManager = CoordinationManagerFactory
+                .getCoordinationManager(metricRegistry, appName,
+                        pelletId,
+                        pellet,
+                        flakeId,
+                        "COORDINATION-MANAGER", stateManager, sharedContext);
+
+        if (coordinationManager != null) {
+            coordinationManager.startAndWait();
+        }
 
 
         if (coordinationManager

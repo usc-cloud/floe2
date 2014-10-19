@@ -51,8 +51,7 @@ import java.util.TreeMap;
 /**
  * @author kumbhare
  */
-public class ReducerCoordinationComponent extends CoordinationComponent
-        implements PathChildrenUpdateListener {
+public class ReducerCoordinationComponent extends CoordinationComponent {
 
     /**
      * Logger.
@@ -152,10 +151,16 @@ public class ReducerCoordinationComponent extends CoordinationComponent
     @Override
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
+
+
+        ZMQ.Socket controlSoc = getContext().socket(ZMQ.PULL);
+        controlSoc.bind(tokenListenerSockPrefix + getFid());
+
         String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
                 getAppName(), getPelletName());
 
-        flakeCache = new ZKFlakeTokenCache(pelletTokenPath, null);
+        flakeCache = new ZKFlakeTokenCache(pelletTokenPath,
+                new FlakeTokenUpdater());
 
         boolean success = true;
 
@@ -180,9 +185,6 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             success = false;
         }
 
-        ZMQ.Socket controlSoc = getContext().socket(ZMQ.PULL);
-        controlSoc.bind(tokenListenerSockPrefix + getFid());
-
         final ZMQ.Socket msgReceivercontrolForwardSocket
                 = getContext().socket(ZMQ.REQ);
         msgReceivercontrolForwardSocket.connect(
@@ -200,11 +202,12 @@ public class ReducerCoordinationComponent extends CoordinationComponent
         pollerItems.register(controlSoc, ZMQ.Poller.POLLIN);
 
         //THis is for checkpoint receiver. MAX delay.
-        final int checkpointDelay = FloeConfig.getConfig().getInt(
-                ConfigProperties.FLAKE_STATE_CHECKPOINT_PERIOD);
+        final int checkpointDelay = 3 * FloeConfig.getConfig().getInt(
+                ConfigProperties.FLAKE_STATE_CHECKPOINT_PERIOD)
+                * Utils.Constants.MILLI;
 
         // logic here.
-
+        boolean nowRecovering = false;
         while (!Thread.currentThread().isInterrupted()) {
             //LOGGER.info("Receiving checkpointed State");
             int polled = pollerItems.poll(checkpointDelay);
@@ -213,7 +216,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                 LOGGER.warn("Terminating state checkpointing");
                 terminateSignalReceiver.recv();
                 break;
-            } else if (pollerItems.pollin(1)) {
+            } else if (pollerItems.pollin(1)) { //received checkpoint from nghb
                 //Merge with the state manager.
                 String nfid = stateSoc.recvStr(Charset.defaultCharset());
                 String last = stateSoc.recvStr(Charset.defaultCharset());
@@ -222,7 +225,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                 Boolean scalingDown = Boolean.parseBoolean(last);
                 Boolean loadbalanceReq = Boolean.parseBoolean(lb);
 
-                LOGGER.debug("State delta received from:{}", nfid);
+                LOGGER.info("State delta received from:{}", nfid);
                 byte[] serializedState = stateSoc.recv();
 
                 List<PelletStateDelta> deltas
@@ -238,6 +241,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                     initiateScaleDownAndTakeOver(nfid, true);
                 }
 
+                nowRecovering = false;
                 //stateManager.backupState(nfid, deltas);
             } else if (pollerItems.pollin(2)) {
                 try {
@@ -284,6 +288,8 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                             FlakeControlCommand.Command.UPDATE_SUBSCRIPTION,
                             neighbors
                     );
+
+                    LOGGER.error("SENDING update subs to receiver.");
                     msgReceivercontrolForwardSocket.send(
                             Utils.serialize(newCommand), 0);
                     msgReceivercontrolForwardSocket.recv();
@@ -292,6 +298,16 @@ public class ReducerCoordinationComponent extends CoordinationComponent
                 } catch (Exception e) {
                     LOGGER.error("Could not start token monitor.{}", e);
                     success = false;
+                }
+            } else {
+                if(!nowRecovering) {
+                    LOGGER.error("NO CHECKPOINT " +
+                            "RECEIVED YEEEEEEEEEEEEEEEEEEEEEEE");
+                    LOGGER.error("Initiating recovery procedure");
+                    String nfid = neighborsToBackupMsgsFor
+                            .get(neighborsToBackupMsgsFor.firstKey());
+                    initiateScaleDownAndTakeOver(nfid, false);
+                    nowRecovering = true;
                 }
             }
         }
@@ -569,66 +585,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
         return new ArrayList<>(neighborsToBackupMsgsFor.values());
     }
 
-    /**
-     * Triggered when initial list of children is cached.
-     * This is retrieved synchronously.
-     *
-     * @param initialChildren initial list of children.
-     */
-    @Override
-    public final void childrenListInitialized(final Collection<ChildData>
-                                                     initialChildren) {
 
-    }
-
-    /**
-     * Triggered when a new child is added.
-     * Note: this is not recursive.
-     *
-     * @param addedChild newly added child's data.
-     */
-    @Override
-    public final void childAdded(final ChildData addedChild) {
-        LOGGER.info("FLAKE ADDED REMOVED");
-        ZMQ.Socket controlSoc = getContext().socket(ZMQ.PUSH);
-        controlSoc.connect(tokenListenerSockPrefix + getFid());
-        byte[] dummy = new byte[]{1};
-        controlSoc.send(dummy, 0);
-        controlSoc.close();
-    }
-
-    /**
-     * Triggered when an existing child is removed.
-     * Note: this is not recursive.
-     *
-     * @param removedChild removed child's data.
-     */
-    @Override
-    public final void childRemoved(final ChildData removedChild) {
-        LOGGER.info("FLAKE CHILD REMOVED");
-        ZMQ.Socket controlSoc = getContext().socket(ZMQ.PUSH);
-        controlSoc.connect(tokenListenerSockPrefix + getFid());
-        byte[] dummy = new byte[]{1};
-        controlSoc.send(dummy, 0);
-        controlSoc.close();
-    }
-
-    /**
-     * Triggered when a child is updated.
-     * Note: This is called only when Children data is also cached in
-     * addition to stat information.
-     *
-     * @param updatedChild update child's data.
-     */
-    @Override
-    public final void childUpdated(final ChildData updatedChild) {
-        LOGGER.info("FLAKE UPDATED REMOVED");
-        ZMQ.Socket controlSoc = getContext().socket(ZMQ.PUSH);
-        controlSoc.connect(tokenListenerSockPrefix + getFid());
-        byte[] dummy = new byte[]{1};
-        controlSoc.send(dummy, 0);
-        controlSoc.close();
-    }
 
     public Integer getToken() {
         return myToken;
@@ -744,7 +701,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             // new .. BUT HOW?
 
             LOGGER.error("Updating my token, both on ZK and local copy.");
-            Integer newPos = myToken; //start with original position.
+            Integer newPos = neighborToken; //start with original position.
             if (isLoadBalance) {
                 if (neighborToken < myToken) {
                     newPos = myToken - ((myToken - neighborToken) / 2);
@@ -814,4 +771,69 @@ public class ReducerCoordinationComponent extends CoordinationComponent
             return firstneighborKey;
         }
     }
+
+    class FlakeTokenUpdater implements PathChildrenUpdateListener {
+
+        /**
+         * Triggered when initial list of children is cached.
+         * This is retrieved synchronously.
+         *
+         * @param initialChildren initial list of children.
+         */
+        @Override
+        public final void childrenListInitialized(final Collection<ChildData>
+                                                          initialChildren) {
+
+        }
+
+        /**
+         * Triggered when a new child is added.
+         * Note: this is not recursive.
+         *
+         * @param addedChild newly added child's data.
+         */
+        @Override
+        public final void childAdded(final ChildData addedChild) {
+            LOGGER.info("FLAKE ADDED REMOVED");
+            ZMQ.Socket controlSoc = getContext().socket(ZMQ.PUSH);
+            controlSoc.connect(tokenListenerSockPrefix + getFid());
+            byte[] dummy = new byte[]{1};
+            controlSoc.send(dummy, 0);
+            controlSoc.close();
+        }
+
+        /**
+         * Triggered when an existing child is removed.
+         * Note: this is not recursive.
+         *
+         * @param removedChild removed child's data.
+         */
+        @Override
+        public final void childRemoved(final ChildData removedChild) {
+            ZMQ.Socket controlSoc = getContext().socket(ZMQ.PUSH);
+            controlSoc.connect(tokenListenerSockPrefix + getFid());
+            byte[] dummy = new byte[]{1};
+            controlSoc.send(dummy, 0);
+            controlSoc.close();
+        }
+
+        /**
+         * Triggered when a child is updated.
+         * Note: This is called only when Children data is also cached in
+         * addition to stat information.
+         *
+         * @param updatedChild update child's data.
+         */
+        @Override
+        public final void childUpdated(final ChildData updatedChild) {
+            LOGGER.info("FLAKE UPDATED REMOVED");
+            ZMQ.Socket controlSoc = getContext().socket(ZMQ.PUSH);
+            controlSoc.connect(tokenListenerSockPrefix + getFid());
+            byte[] dummy = new byte[]{1};
+            controlSoc.send(dummy, 0);
+            controlSoc.close();
+        }
+    }
 }
+
+

@@ -159,10 +159,12 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
 
 
 
-        LOGGER.info("KEY: {}, ACTUAL HASH SENDING:{}", key, actualHash);
+
         Integer hash = getTargetFlakeHash(actualHash);
         String fid =  circle.get(hash);
 
+        //LOGGER.error("Circle: {}", circle);
+        //LOGGER.error("KEY: {}, TO:{}", key, fid);
         /*if (key.equals("the")) {
             LOGGER.error("the: {}, flake's:{}", actualHash, hash);
         }*/
@@ -258,16 +260,27 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
         Integer current = flakeIdToTokenMap.get(targetFlakeId);
         if (current != null) {
             circle.remove(current);
+            flakeIdToTokenMap.remove(targetFlakeId);
         }
 
         if (toContinue) {
-            LOGGER.debug("received Token: {}", newPosition);
+            LOGGER.info("received Token: {} for {}", newPosition, targetFlakeId);
 
             flakeIdToTokenMap.put(targetFlakeId, newPosition);
+
+            String prev = circle.get(newPosition);
+
+            if (prev != null) {
+                circle.remove(newPosition);
+                flakeIdToTokenMap.remove(prev);
+            }
+
             circle.put(newPosition, targetFlakeId);
+
+
         }
 
-        LOGGER.error("Circle:", circle);
+        LOGGER.error("Circle:{}", circle);
     }
 
     /**

@@ -160,7 +160,7 @@ public class StateCheckpointComponent extends FlakeComponent {
 
             Snapshot snp = qhist.getSnapshot();
             //snp.dump(System.out);
-            LOGGER.error("fid:{}; q 95->{}; 75->{}; 99->{}; msgs procd: {}",
+            LOGGER.info("fid:{}; q 95->{}; 75->{}; 99->{}; msgs procd: {}",
                     getFid(),
                     snp.get95thPercentile(), //* durationFactor,
                     snp.get75thPercentile(), //* durationFactor,

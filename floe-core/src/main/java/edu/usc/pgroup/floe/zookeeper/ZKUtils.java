@@ -448,6 +448,7 @@ public final class ZKUtils {
         try {
             if (ZKClient.getInstance().getCuratorClient()
                     .checkExists().forPath(flakeTokenPath) != null) {
+                LOGGER.error("DELETEING FLAKE FROM RING.");
                 ZKClient.getInstance().getCuratorClient().delete()
                         .deletingChildrenIfNeeded()
                         .forPath(flakeTokenPath);

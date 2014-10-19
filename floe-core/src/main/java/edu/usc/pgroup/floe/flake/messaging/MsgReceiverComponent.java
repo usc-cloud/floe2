@@ -301,11 +301,12 @@ public class MsgReceiverComponent extends FlakeComponent {
                         notifyPelletRemoved(dpeId);
                         break;
                     case UPDATE_SUBSCRIPTION:
-                        //LOGGER.error("UPDATING SUBS");
+                        LOGGER.error("UPDATING SUBS");
                         List<String> currentNeighborsToSubscribe
                                 = (List<String>) command.getData();
                         updateFrontendSubscription(
                                 frontend, currentNeighborsToSubscribe);
+                        LOGGER.error("UPDATING SUBS DONE");
                         break;
                     default:
                         LOGGER.warn("Should have been processed by the flake.");
