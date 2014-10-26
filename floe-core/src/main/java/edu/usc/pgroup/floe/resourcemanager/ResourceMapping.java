@@ -101,6 +101,7 @@ public class ResourceMapping implements Serializable {
      * Create a new instance of the given pellet on the given container.
      * @param pelletId pellet id.
      * @param container container info object.
+     * @param token user defined token to be associated with the flake.
      */
     public final void createNewInstance(final String pelletId,
                                   final ContainerInfo container,
@@ -419,6 +420,7 @@ public class ResourceMapping implements Serializable {
         /**
          * Creates a new flake instance.
          * @param pid create flake for the given pid in the current container.
+         * @param token user defined token to be associated with the flake.
          * @return the newly created flake instance.
          */
         private FlakeInstance createFlake(final String pid,
@@ -570,6 +572,7 @@ public class ResourceMapping implements Serializable {
          * @param cid Container id to which this flake belongs.
          * @param hostnameOrIpAddr Host name or ip address of the container
          * @param flPorts ports on which this flake should listen for
+         * @param token user defined token to be associated with the flake.
          */
         public FlakeInstance(final String pid, final String cid,
                              final String hostnameOrIpAddr,
@@ -791,9 +794,9 @@ public class ResourceMapping implements Serializable {
         }
 
         /**
-         * @return the token as string or "nan"
+         * @return the token as string or "nan" (the user defined token, if any)
          */
-        public String getToken() {
+        public final String getToken() {
             return fToken;
         }
     }

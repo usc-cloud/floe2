@@ -16,26 +16,39 @@
 
 package edu.usc.pgroup.floe.flake;
 
-import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.RatioGauge;
-import com.codahale.metrics.Timer;
 
 /**
  * @author kumbhare
  */
 public class StateSizeMonitor extends RatioGauge {
 
+    /**
+     * total state size.
+     */
     private final Meter totalStateSize;
+    /**
+     * state size since last checkpoint.
+     */
     private final Meter incrementStateSize;
 
-    public StateSizeMonitor(Meter totalStateSize, Meter incrementStateSize) {
-        this.totalStateSize = totalStateSize;
-        this.incrementStateSize = incrementStateSize;
+    /**
+     * constructor.
+     * @param fullStateSize full state size meter.
+     * @param incrStateSize incremental state size meter.
+     */
+    public StateSizeMonitor(final Meter fullStateSize,
+                            final Meter incrStateSize) {
+        this.totalStateSize = fullStateSize;
+        this.incrementStateSize = incrStateSize;
     }
 
+    /**
+     * @return the last one minute rate of full to incremental state size ratio.
+     */
     @Override
-    protected Ratio getRatio() {
+    protected final Ratio getRatio() {
         return RatioGauge.Ratio.of(incrementStateSize.getOneMinuteRate(),
                 totalStateSize.getOneMinuteRate());
     }

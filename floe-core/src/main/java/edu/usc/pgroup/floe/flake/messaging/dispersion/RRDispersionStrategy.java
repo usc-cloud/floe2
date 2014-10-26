@@ -16,7 +16,6 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
-import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.zeromq.ZMQ;
 
@@ -60,12 +59,12 @@ public class RRDispersionStrategy implements MessageDispersionStrategy {
      * param tuple tuple object.
      * return the list of target instances to send the given tuple.
      *
-     * @param middleendreceiver
-     * @param backend
+     * @param middleendreceiver middleend receiver to get the message.
+     * @param backend backend sender to send message to the succeeding flakes.
      */
     @Override
-    public void disperseMessage(ZMQ.Socket middleendreceiver,
-                                ZMQ.Socket backend) {
+    public final void disperseMessage(final ZMQ.Socket middleendreceiver,
+                                      final ZMQ.Socket backend) {
         backend.sendMore(getNextFlakeId());
         Utils.forwardCompleteMessage(middleendreceiver, backend);
     }

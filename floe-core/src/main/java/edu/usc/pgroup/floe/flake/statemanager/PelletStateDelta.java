@@ -103,7 +103,7 @@ public class PelletStateDelta /*implements KryoSerializable*/ {
     /**
      * Clear the state from backup.
      */
-    public void clear() {
+    public final void clear() {
         deltaState.clear();
     }
 

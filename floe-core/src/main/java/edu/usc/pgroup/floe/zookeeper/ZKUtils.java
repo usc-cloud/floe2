@@ -404,6 +404,7 @@ public final class ZKUtils {
      * @param appName the application name.
      * @param pelletName pellet's name to which this flake belongs.
      * @param flakeId flake id.
+     * @return the token associated with the given flake from ZK.
      */
     public static Integer getToken(final String appName,
                                    final String pelletName,

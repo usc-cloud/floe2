@@ -18,14 +18,9 @@ package edu.usc.pgroup.floe.flake;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SlidingTimeWindowReservoir;
-import com.codahale.metrics.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -48,20 +43,28 @@ public class QueueLenMonitor extends Thread {
      * Queue counter.
      */
     private final Counter qCounter;
+
+    /**
+     * The histogram of recent history of the queuelength.
+     */
     private final Histogram qhist;
 
     /**
      * @param registry Metric registry.
-     * @param counter queue counter.
+     * @param counter queue counter to monitor.
+     * @param hist The histogram of recent history of the queuelength.
      */
     public QueueLenMonitor(final MetricRegistry registry,
                            final Counter counter,
-                           Histogram qhist) {
+                           final Histogram hist) {
         this.metricReg = registry;
         this.qCounter = counter;
-        this.qhist = qhist;
+        this.qhist = hist;
     }
 
+    /**
+     * The monitor thread's run method.
+     */
     @Override
     public final void run() {
 

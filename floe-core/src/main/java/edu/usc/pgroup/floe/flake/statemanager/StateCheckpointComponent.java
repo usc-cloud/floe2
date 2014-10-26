@@ -22,7 +22,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
 import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.Timer;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
@@ -34,8 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -126,10 +123,11 @@ public class StateCheckpointComponent extends FlakeComponent {
         Counter queLen = getMetricRegistry().counter(
                 MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
 
+        final int windowlen = 30; //seconds.
         Histogram qhist
                 = getMetricRegistry() .register(
                 MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"),
-                new Histogram(new SlidingTimeWindowReservoir(30,
+                new Histogram(new SlidingTimeWindowReservoir(windowlen,
                         TimeUnit.SECONDS)));
 
         QueueLenMonitor monitor = new QueueLenMonitor(getMetricRegistry(),

@@ -22,5 +22,11 @@ import org.zeromq.ZMQ;
  * @author kumbhare
  */
 public interface EmitterEnvelopeHook {
-    public void addEnvelope(ZMQ.Socket socket, Tuple tuple);
+    /**
+     * Used by specific pellet types (e.g. reducers) to put additional frames
+     * in the message
+     * @param socket the ZMQ socket to add the envelope.
+     * @param tuple the tuple for which the envelope is to be added.
+     */
+    void addEnvelope(ZMQ.Socket socket, Tuple tuple);
 }

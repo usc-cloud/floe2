@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,7 +98,7 @@ public class RRFlakeLocalDispersionStrategy
     }
 
     @Override
-    public void sendToPellets(ZMQ.Socket from, ZMQ.Socket to) {
+    public void sendToPellets(final ZMQ.Socket from, final ZMQ.Socket to) {
         //do something.
     }
 

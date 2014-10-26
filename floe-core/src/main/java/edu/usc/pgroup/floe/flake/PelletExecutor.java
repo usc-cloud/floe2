@@ -137,6 +137,7 @@ public class PelletExecutor extends Thread {
      * @param stateManager The common state manager object. This is one per
      *                     flake and common fro all pellet instances. Should
      *                     be thread safe.
+     * @param pid pellet's user defined name
      */
     private PelletExecutor(
             final MetricRegistry registry,
@@ -168,6 +169,7 @@ public class PelletExecutor extends Thread {
      * @param stateManager The common state manager object. This is one per
      *                     flake and common fro all pellet instances. Should
      *                     be thread safe.
+     * @param pid pellet's user defined name
      */
     public PelletExecutor(final MetricRegistry registry,
                           final int pelletIndex,
@@ -194,6 +196,7 @@ public class PelletExecutor extends Thread {
      * @param stateManager The common state manager object. This is one per
      *                     flake and common fro all pellet instances. Should
      *                     be thread safe.
+     * @param pid pellet's user defined name.
      */
     public PelletExecutor(final MetricRegistry registry,
                           final int pelletIndex,
@@ -271,8 +274,6 @@ public class PelletExecutor extends Thread {
 
         //Receive messages meant only for this pellet.
         signalReceiver.subscribe(pelletInstanceId.getBytes());
-
-
 
         LOGGER.info("Open back channel from pellet");
         final ZMQ.Socket backendBackChannel = context.socket(ZMQ.PUB);

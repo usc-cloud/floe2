@@ -18,7 +18,6 @@ package edu.usc.pgroup.floe.flake.messaging.sender;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.MessageDispersionStrategy;

@@ -202,7 +202,10 @@ public class Flake {
      */
     private CsvReporter reporter;
 
-    Integer initialToken;
+    /**
+     * The initial token assigned (randomly) to the flake.
+     */
+    private Integer initialToken;
 
     /**
      * Constructor.
@@ -378,7 +381,8 @@ public class Flake {
      * (After start)
      * @param msgReceivercontrolForwardSocket control socket for receiver.
      */
-    private void initializeFlake(ZMQ.Socket msgReceivercontrolForwardSocket) {
+    private void initializeFlake(
+            final ZMQ.Socket msgReceivercontrolForwardSocket) {
 
         //get the application configuration.
         ResourceMapping resourceMapping
@@ -448,8 +452,8 @@ public class Flake {
 
 
         if (coordinationManager
-                instanceof ReducerCoordinationComponent &&
-                runningPelletInstances.size() == 0) {
+                instanceof ReducerCoordinationComponent
+                && runningPelletInstances.size() == 0) {
 
             List<String> neighbors = ((ReducerCoordinationComponent)
                     coordinationManager).getNeighborsToBackupMsgsFor();

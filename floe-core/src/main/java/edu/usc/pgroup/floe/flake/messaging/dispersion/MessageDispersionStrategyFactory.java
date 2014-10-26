@@ -115,14 +115,24 @@ public final class MessageDispersionStrategyFactory {
         return strategy;
     }*/
 
+    /**
+     * Factory function for creating the MessageDispersionStrategy.
+     * @param metricRegistry Metrics registry used to log various metrics.
+     * @param context shared ZMQ context.
+     * @param flakeId Current flake id.
+     * param args Any arguments to be sent to the Strategy Class while
+     *             initialization.
+     * @return new instance of MessageDispersionStrategy based on the edge type.
+     */
     public static FlakeLocalDispersionStrategy
                     getFlakeLocalDispersionStrategy(
             final MetricRegistry metricRegistry,
             final ZMQ.Context context,
             final String flakeId) {
         FlakeLocalDispersionStrategy strat
-                = new ElasticReducerFlakeLocalDispersion(metricRegistry, context,
-                flakeId);
+                = new ElasticReducerFlakeLocalDispersion(metricRegistry,
+                                                        context,
+                                                        flakeId);
         strat.initialize(null);
         return strat;
     }

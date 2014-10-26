@@ -350,6 +350,10 @@ public final class Utils {
         }
     }
 
+    /**
+     * receives a complete message from the socket and ignores.
+     * @param from the socket to read from.
+     */
     public static void recvAndignore(final ZMQ.Socket from) {
         byte[] message;
         boolean more = false;

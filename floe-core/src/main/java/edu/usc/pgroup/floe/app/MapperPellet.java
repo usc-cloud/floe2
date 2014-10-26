@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
-import java.util.List;
 
 /**
  * @author kumbhare
@@ -50,7 +49,7 @@ public abstract class MapperPellet extends StatelessPellet
 
 
     @Override
-    public void addEnvelope(ZMQ.Socket socket, Tuple tuple) {
+    public final void addEnvelope(final ZMQ.Socket socket, final Tuple tuple) {
         LOGGER.info("Adding envelope:{}", tuple.get(keyFieldName));
         socket.sendMore((String) tuple.get(keyFieldName));
     }

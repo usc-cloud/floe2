@@ -17,7 +17,7 @@
 <!-- Configuration for logback logger. -->
 <configuration>
 
-    <appender name="STDOUT" class="ch.qos.logback.core.FileAppender">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <!-- encoders are assigned the type
              ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
         <file>container.log</file>
@@ -27,7 +27,7 @@
         </encoder>
     </appender>
 
-    <root level="info">
+    <root level="error">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

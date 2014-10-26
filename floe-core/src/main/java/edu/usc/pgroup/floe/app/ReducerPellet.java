@@ -24,7 +24,7 @@ import org.zeromq.ZMQ;
  * @author kumbhare
  */
 public abstract class ReducerPellet extends StatefulPellet
-        implements EmitterEnvelopeHook{
+        implements EmitterEnvelopeHook {
 
 
     /**
@@ -55,7 +55,7 @@ public abstract class ReducerPellet extends StatefulPellet
     }
 
     @Override
-    public final void addEnvelope(final ZMQ.Socket socket, Tuple tuple) {
+    public final void addEnvelope(final ZMQ.Socket socket, final Tuple tuple) {
         LOGGER.info("Adding envelope:{}", tuple.get(keyFieldName));
         socket.sendMore((String) tuple.get(keyFieldName));
     }

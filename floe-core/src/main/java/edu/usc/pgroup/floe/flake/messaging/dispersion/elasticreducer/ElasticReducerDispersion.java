@@ -16,7 +16,6 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
 
-import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
@@ -140,12 +139,12 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
      * param tuple tuple object.
      * return the list of target instances to send the given tuple.
      *
-     * @param middleendreceiver
-     * @param backend
+     * @param middleendreceiver middleend receiver to get the message.
+     * @param backend backend sender to send message to the succeeding flakes.
      */
     @Override
-    public void disperseMessage(ZMQ.Socket middleendreceiver,
-                                ZMQ.Socket backend) {
+    public final void disperseMessage(final ZMQ.Socket middleendreceiver,
+                                      final ZMQ.Socket backend) {
         String key = middleendreceiver.recvStr(Charset.defaultCharset());
 
         byte[] seralized = null;
@@ -179,11 +178,11 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     /**
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
-     *
+     * @param actualHash the actual hash of the field.
      * @return the list of target instances to send the given tuple.
      */
-    public synchronized final Integer getTargetFlakeHash(
-            Integer actualHash) {
+    public final synchronized Integer getTargetFlakeHash(
+            final Integer actualHash) {
         if (circle.isEmpty()) {
             return null;
         }
@@ -264,7 +263,8 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
         }
 
         if (toContinue) {
-            LOGGER.info("received Token: {} for {}", newPosition, targetFlakeId);
+            LOGGER.info("received Token: {} for {}",
+                    newPosition, targetFlakeId);
 
             flakeIdToTokenMap.put(targetFlakeId, newPosition);
 

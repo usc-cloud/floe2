@@ -242,67 +242,21 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                 }
 
                 nowRecovering = false;
-                //stateManager.backupState(nfid, deltas);
+
             } else if (pollerItems.pollin(2)) {
                 try {
                     controlSoc.recv(); //receive and ignore. otherwise the
                     // pollin will go into infinite loop.
 
-                    LOGGER.error("UPDATING STATE SUBSCRIPTIONS.");
-                    List<ChildData> childData
-                            = flakeCache.getCurrentCachedData();
-
-                    //extractNeighboursToBackupState(childData);
-                    SortedMap<Integer, String> currentNeighbors
-                           = extractNeighboursToSubscribeForMessages(childData);
-
-                    LOGGER.info("Current neighbors:{}.", currentNeighbors);
-
-                    SortedMap<Integer, String> newFlakes
-                            = getNewlyAddedFlakes(currentNeighbors,
-                                                    neighborsToBackupMsgsFor);
-
-                    LOGGER.info("Newly added neighbors:{}.", newFlakes);
-
-                    SortedMap<Integer, String> removedFlakes
-                            = getRemovedFlakes(currentNeighbors,
-                            neighborsToBackupMsgsFor);
-
-                    LOGGER.info("Removed neighbors:{}.", removedFlakes);
-
-
-                    neighborsToBackupMsgsFor.putAll(newFlakes);
-
-                    for (Integer key: removedFlakes.keySet()) {
-                        neighborsToBackupMsgsFor.remove(key);
-                    }
-
-                    updateStateSubscriptions(stateSoc,
-                            newFlakes, removedFlakes);
-
-
-                    List<String> neighbors = new ArrayList<String>(
-                            neighborsToBackupMsgsFor.values());
-
-                    FlakeControlCommand newCommand = new FlakeControlCommand(
-                            FlakeControlCommand.Command.UPDATE_SUBSCRIPTION,
-                            neighbors
-                    );
-
-                    LOGGER.error("SENDING update subs to receiver.");
-                    msgReceivercontrolForwardSocket.send(
-                            Utils.serialize(newCommand), 0);
-                    msgReceivercontrolForwardSocket.recv();
-
-                    LOGGER.error("UPDATING STATE SUBSCRIPTIONS DONE.");
+                    updateNeighbors(null, null);
                 } catch (Exception e) {
                     LOGGER.error("Could not start token monitor.{}", e);
                     success = false;
                 }
             } else {
-                if(!nowRecovering) {
-                    LOGGER.error("NO CHECKPOINT " +
-                            "RECEIVED YEEEEEEEEEEEEEEEEEEEEEEE");
+                if (!nowRecovering) {
+                    LOGGER.error("NO CHECKPOINT "
+                            + "RECEIVED YEEEEEEEEEEEEEEEEEEEEEEE");
                     LOGGER.error("Initiating recovery procedure");
                     String nfid = neighborsToBackupMsgsFor
                             .get(neighborsToBackupMsgsFor.firstKey());
@@ -316,6 +270,66 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
         msgReceivercontrolForwardSocket.close();
 
         notifyStopped(success);
+    }
+
+    /**
+     * Updates the neighbors. This is called when a change in the neighbor
+     * ring is observed.
+     * @param stateSoc state socket.
+     * @param msgReceivercontrolForwardSocket msg receiver control socket to
+     *                                        send signals to the receiver to
+     *                                        update subscriptions..
+     */
+    private void updateNeighbors(
+            final ZMQ.Socket stateSoc,
+            final ZMQ.Socket msgReceivercontrolForwardSocket) {
+        LOGGER.error("UPDATING STATE SUBSCRIPTIONS.");
+        List<ChildData> childData
+                = flakeCache.getCurrentCachedData();
+
+        //extractNeighboursToBackupState(childData);
+        SortedMap<Integer, String> currentNeighbors
+                = extractNeighboursToSubscribeForMessages(childData);
+
+        LOGGER.info("Current neighbors:{}.", currentNeighbors);
+
+        SortedMap<Integer, String> newFlakes
+                = getNewlyAddedFlakes(currentNeighbors,
+                neighborsToBackupMsgsFor);
+
+        LOGGER.info("Newly added neighbors:{}.", newFlakes);
+
+        SortedMap<Integer, String> removedFlakes
+                = getRemovedFlakes(currentNeighbors,
+                neighborsToBackupMsgsFor);
+
+        LOGGER.info("Removed neighbors:{}.", removedFlakes);
+
+
+        neighborsToBackupMsgsFor.putAll(newFlakes);
+
+        for (Integer key: removedFlakes.keySet()) {
+            neighborsToBackupMsgsFor.remove(key);
+        }
+
+        updateStateSubscriptions(stateSoc,
+                newFlakes, removedFlakes);
+
+
+        List<String> neighbors = new ArrayList<String>(
+                neighborsToBackupMsgsFor.values());
+
+        FlakeControlCommand newCommand = new FlakeControlCommand(
+                FlakeControlCommand.Command.UPDATE_SUBSCRIPTION,
+                neighbors
+        );
+
+        LOGGER.error("SENDING update subs to receiver.");
+        msgReceivercontrolForwardSocket.send(
+                Utils.serialize(newCommand), 0);
+        msgReceivercontrolForwardSocket.recv();
+
+        LOGGER.error("UPDATING STATE SUBSCRIPTIONS DONE.");
     }
 
     /**
@@ -423,11 +437,11 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
      * Initiates the scale down process for the flake and take's over it's
      * state and key space.
      * @param nfid neighbor's flake id which is to be scaled down.
-     * @param b true if this is a load balance request, false if scale down.
+     * @param lb true if this is a load balance request, false if scale down.
      */
     private void initiateScaleDownAndTakeOver(final String nfid,
-                                              final boolean b) {
-        new RecoveryHandler(nfid, b).start();
+                                              final boolean lb) {
+        new RecoveryHandler(nfid, lb).start();
     }
 
     /**
@@ -585,19 +599,6 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
         return new ArrayList<>(neighborsToBackupMsgsFor.values());
     }
 
-
-
-    public Integer getToken() {
-        return myToken;
-    }
-
-    /**
-     * @return the list of neighbors to be used for state backup.
-     *
-    public final List<String> getStateBackupNeighbors() {
-        return new ArrayList<>(stateBackupNeighbors.values());
-    }*/
-
     /**
      * Recovery (take over) handler class. One instance of this class is
      * responsible for take over of one neighbor flake.
@@ -708,15 +709,15 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                 } else {
                     //newPos = Integer.MAX_VALUE - 1;
                     //wrapping around the circle
-                    Integer A = myToken;
-                    Integer C = neighborToken;
-                    Integer d1 = A - Integer.MIN_VALUE;
-                    Integer d2 = Integer.MAX_VALUE - C;
-                    Integer K = d1/2 + d2/2;
-                    if (d1 >= K) {
-                        newPos = A - K;
+                    Integer a = myToken;
+                    Integer c = neighborToken;
+                    Integer d1 = a - Integer.MIN_VALUE;
+                    Integer d2 = Integer.MAX_VALUE - c;
+                    Integer dist = d1 / 2 + d2 / 2;
+                    if (d1 >= dist) {
+                        newPos = a - dist;
                     } else {
-                        Integer remaining = K - d1;
+                        Integer remaining = dist - d1;
                         newPos = Integer.MAX_VALUE - remaining;
                     }
                 }
@@ -748,8 +749,8 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                     = neighborsToBackupMsgsFor.tailMap(myToken);
 
 
-            LOGGER.error("My token:{}. Allneighbors:{}, TailMap: {}, " +
-                            "REQUESTED NEIGH: {}",
+            LOGGER.error("My token:{}. Allneighbors:{}, TailMap: {}, "
+                            + "REQUESTED NEIGH: {}",
                     myToken, neighborsToBackupMsgsFor, tailMap, nfid);
 
             Iterator<Integer> iterator = tailMap.keySet().iterator();
@@ -772,6 +773,10 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
         }
     }
 
+    /**
+     * Flake token update listener class that signals whenever a token is
+     * updated for a neighbor flake.
+     */
     class FlakeTokenUpdater implements PathChildrenUpdateListener {
 
         /**

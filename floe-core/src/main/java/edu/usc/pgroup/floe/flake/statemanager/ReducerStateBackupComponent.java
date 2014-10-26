@@ -20,7 +20,6 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
-import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.QueueLenMonitor;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
@@ -33,7 +32,6 @@ import org.zeromq.ZMQ;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -45,10 +43,42 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReducerStateBackupComponent extends FlakeComponent {
 
-
+    /**
+     * The tuple composite with the hash and message.
+     */
     class TStore {
-        public String actualHash;
-        public byte[] message;
+        /**
+         * hash value associated with the tuple.
+         */
+        private final String actualHash;
+        /**
+         * serialized tuple.
+         */
+        private final byte[] message;
+
+        /**
+         * constructor.
+         * @param hash hash value associated with the tuple.
+         * @param data serialized tuple.
+         */
+        TStore(final String hash, final byte[] data) {
+            actualHash = hash;
+            message = data;
+        }
+
+        /**
+         * @return serialized tuple.
+         */
+        public final byte[] getMessage() {
+            return message;
+        }
+
+        /**
+         * @return hash value associated with the tuple.
+         */
+        public final String getActualHash() {
+            return actualHash;
+        }
     }
 
     /**
@@ -235,12 +265,14 @@ public class ReducerStateBackupComponent extends FlakeComponent {
      * Adds the tuple to the backup.
      * @param nfid neighbor's flake id.
      * param t the tuple to add.
-     * @param ts
+     * @param actualHash 32bit hash of the key.
+     * @param message the serialized tuple
+     * @param ts ts associated with the tuple
      */
     private void addTupleToBackup(final String nfid,
                                   final String actualHash,
                                   final byte[] message,
-                                  long ts) {
+                                  final long ts) {
 
         SortedMap<Long, TStore> tupMap = messageBackup.get(nfid);
 
@@ -265,9 +297,9 @@ public class ReducerStateBackupComponent extends FlakeComponent {
 
         //LOGGER.debug("Backing up msg: {}", t);
         synchronized (tupMap) {
-            TStore tStore = new TStore();
-            tStore.actualHash = actualHash;
-            tStore.message = message;
+            TStore tStore = new TStore(actualHash, message);
+//            tStore.actualHash = actualHash;
+//            tStore.message = message;
             tupMap.put(ts, tStore);
         }
     }

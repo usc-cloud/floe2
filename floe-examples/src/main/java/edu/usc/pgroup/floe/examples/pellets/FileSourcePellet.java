@@ -20,9 +20,7 @@ import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.MapperPellet;
 import edu.usc.pgroup.floe.app.PelletContext;
-import edu.usc.pgroup.floe.app.StatelessPellet;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +58,7 @@ public class FileSourcePellet extends MapperPellet {
      * Constructor.
      * @param filePath file path.
      * @param sleepTime interval between reading lines.
+     * @param keyFieldName fieldname used to emit tuples.
      */
     public FileSourcePellet(final String keyFieldName, final String filePath,
                             final long sleepTime) {
@@ -102,6 +101,9 @@ public class FileSourcePellet extends MapperPellet {
         Integer id = 0;
         while (true) {
 
+            ot.put("word", id.toString());
+            emitter.emit(ot);
+            id++;
             try {
                 if (list.size() == 0) {
                     while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
@@ -149,7 +151,7 @@ public class FileSourcePellet extends MapperPellet {
                     }
                 }
 
-                /*ot.put("word", id.toString());
+                ot.put("word", id.toString());
                 emitter.emit(ot);
                 id++;
                 if (id >= small) {
@@ -157,7 +159,7 @@ public class FileSourcePellet extends MapperPellet {
                 }
                 if (interval > 0) {
                     Thread.sleep(interval);
-                }*/
+                }
             } catch (InterruptedException e) {
                 LOGGER.error("Exception: {}", e);
                 break;

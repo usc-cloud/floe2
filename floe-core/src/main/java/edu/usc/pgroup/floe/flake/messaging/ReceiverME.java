@@ -19,7 +19,6 @@ package edu.usc.pgroup.floe.flake.messaging;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
@@ -27,15 +26,12 @@ import edu.usc.pgroup.floe.flake.messaging
         .dispersion.MessageDispersionStrategyFactory;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
-import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -60,7 +56,10 @@ public class ReceiverME extends FlakeComponent {
     //private final
     //Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap;
 
-    FlakeLocalDispersionStrategy localDispersionStrat;
+    /**
+     * local disp. strategy associated with the pellet.
+     */
+    private FlakeLocalDispersionStrategy localDispersionStrat;
 
     /**
      * Serializer to be used to serialize and deserialized the data tuples.
@@ -292,11 +291,19 @@ public class ReceiverME extends FlakeComponent {
         //LOGGER.debug("Received msg from:" + src);
     }
 
-    public void pelletAdded(String peInstanceId) {
+    /**
+     * called when a pe instance is added.
+     * @param peInstanceId instance id of the newly added pellet.
+     */
+    public final void pelletAdded(final String peInstanceId) {
         localDispersionStrat.pelletAdded(peInstanceId);
     }
 
-    public void pelletRemoved(String peInstanceId) {
+    /**
+     * called when a pe instance is removed.
+     * @param peInstanceId instance id of the removed pellet.
+     */
+    public final void pelletRemoved(final String peInstanceId) {
         localDispersionStrat.pelletRemoved(peInstanceId);
     }
 

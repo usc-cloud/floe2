@@ -16,10 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
-import edu.usc.pgroup.floe.app.Tuple;
 import org.zeromq.ZMQ;
-
-import java.util.List;
 
 /**
  * @author kumbhare
@@ -43,5 +40,14 @@ public interface MessageDispersionStrategy extends BackChannelReceiver {
      */
     //List<String> getTargetFlakeIds(Tuple tuple);
 
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     * param tuple tuple object.
+     * return the list of target instances to send the given tuple.
+     *
+     * @param middleendreceiver middleend receiver to get the message.
+     * @param backend backend sender to send message to the succeeding flakes.
+     */
     void disperseMessage(ZMQ.Socket middleendreceiver, ZMQ.Socket backend);
 }

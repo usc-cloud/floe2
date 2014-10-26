@@ -16,16 +16,10 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SlidingTimeWindowReservoir;
-import edu.usc.pgroup.floe.flake.QueueLenMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
@@ -36,15 +30,29 @@ public class BackupLenMonitor extends Thread {
      */
     private static final Logger LOGGER =
             LoggerFactory.getLogger(BackupLenMonitor.class);
+
+    /**
+     * backuplen gauge to monitor.
+     */
     private final Gauge<Integer> lengauge;
+
+    /**
+     * The histogram of recent history of the queuelength.
+     */
     private final Histogram qhist;
 
-
-    public BackupLenMonitor(Gauge<Integer> lengauge, Histogram qhist) {
-        this.lengauge = lengauge;
-        this.qhist = qhist;
+    /**
+     * @param len backuplen gauge to monitor.
+     * @param hist The histogram of recent history of the queuelength.
+     */
+    public BackupLenMonitor(final Gauge<Integer> len, final Histogram hist) {
+        this.lengauge = len;
+        this.qhist = hist;
     }
 
+    /**
+     * Monitor thread's run method.
+     */
     @Override
     public final void run() {
 
@@ -60,7 +68,7 @@ public class BackupLenMonitor extends Thread {
             qhist.update(lengauge.getValue());
 
             try {
-                Thread.sleep(10);
+                Thread.sleep(monitorint);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

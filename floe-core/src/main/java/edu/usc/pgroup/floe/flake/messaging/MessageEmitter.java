@@ -56,20 +56,25 @@ public class MessageEmitter implements Emitter {
      */
     private final EmitterEnvelopeHook emitterEnvelopeHook;
 
+    /**
+     * Pellet's name (user assigned name).
+     */
     private final String pelletName;
 
     /**
      * Constructor.
      * @param context shared ZMQ context to be used in inproc comm. for
      *                      receiving message from the flake.
+     * @param peName pellet's user assigned name.
      * @param fid flake's id to which this pellet belongs.
      * @param tupleSerializer custom tuple serializer.
+     * @param emitterHook emitter hook to be called for each emitted tuple
      */
-    public MessageEmitter(final String fid, final String pelletName,
+    public MessageEmitter(final String fid, final String peName,
                           final ZMQ.Context context,
                           final TupleSerializer tupleSerializer,
                           final EmitterEnvelopeHook emitterHook) {
-        this.pelletName = pelletName;
+        this.pelletName = peName;
         this.flakeId = fid;
         this.zcontex = context;
         this.socket = context.socket(ZMQ.PUSH);
