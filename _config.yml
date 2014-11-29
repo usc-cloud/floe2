@@ -1,14 +1,14 @@
 # Dependencies
 markdown:         redcarpet
-pygments:         true
+highlighter:      pygments
 
 # Permalinks
 permalink:        pretty
 
 # Setup
 title:            Floe2
-tagline:          'Dynamic Countinuous Dataflow Framework'
-description:      'A distributed, adaptive framework for dynamic dataflow applications.'
+tagline:          'Elastic, Fast streaming data analytics'
+description:      'A distributed, elastic and adaptive framework for dynamic streaming applications.'
 url:              http://usc-cloud.github.io/floe2
 
 author:

@@ -16,6 +16,8 @@
       {% for node in pages_list %}
         {% if node.title != null %}
           {% if node.layout == "page" %}
+            {% if node.weight != -1 %}
+          
             <li class="sidebar-nav-item{% if page.url == node.url %} active{% endif %}">
               {% if node.title == site.title %}
                 <a href="{{ site.baseurl }}{{ node.url }}">Home</a>
@@ -25,12 +27,13 @@
               
               
             </li>
+            {% endif %}
           {% endif %}
         {% endif %}
       {% endfor %}
 
-      <li class="sidebar-nav-item{% if page.title == "Blog Posts" %} active{% endif %}">
-        <a href="{{ site.baseurl }}/blog">Blog Posts</a>
+      <li class="sidebar-nav-item{% if page.title == "Blog" %} active{% endif %}">
+        <a href="{{ site.baseurl }}/blog">Blog</a>
       </li>
       
       <li class="sidebar-nav-item"><a href="{{ site.github.repo }}/zipball/master" id="download-zip" class="button"><span>Download Master .zip</span></a></li>
