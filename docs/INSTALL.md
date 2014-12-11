@@ -200,11 +200,11 @@ Note: This is a quick start guide to run zookeeper in a **standalone** mode. For
     bin/zkServer.sh start
 ```
 
-Note 2: Zookeeper can quickly consume your disk space. For long running jobs Zookeeper storage must be managed externally (for data dirctory and logs). See maintenance instructions on the [Getting started page](http://zookeeper.apache.org/doc/trunk/zookeeperStarted.html)
+Note 2: Zookeeper can quickly consume your disk space. For long running jobs Zookeeper storage must be managed externally (for data dirctory and logs). See maintenance instructions on the [zookeeper admin page](http://zookeeper.apache.org/doc/trunk/zookeeperAdmin.html#sc_maintenance)
 
 **Configure Floe2 and run distributed mode**
 
-Edit conf/floe.properties (change it on the Coodinator node and COPY it all container nodes whenever a change id made)
+Edit conf/floe.properties (change it on the Coodinator node and COPY it to all container nodes whenever a change is made)
 
 * Change ***floe.execution.mode***  to **distributed**  
 * Change **floe.zk.servers** to **comma separated list of ZK server ensamble.**
