@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -77,11 +78,9 @@ public class RRFlakeLocalDispersionStrategy
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
      *
-     * @param tuple tuple object.
      * @return the list of target instances to send the given tuple.
      */
-
-    public final List<String> getTargetPelletInstances(final Tuple tuple) {
+    public final String getTargetPelletInstances() {
         if (currentIndex >= targetPelletInstances.size()) {
             currentIndex = 0;
         }
@@ -90,16 +89,25 @@ public class RRFlakeLocalDispersionStrategy
             return null;
         }
 
-        List<String> target = targetPelletInstances.subList(
+        /*List<String> target = targetPelletInstances.subList(
                 currentIndex,
-                currentIndex + 1);
+                currentIndex + 1);*/
+        String peid = targetPelletInstances.get(currentIndex);
         currentIndex++;
-        return target;
+        return peid;
     }
 
     @Override
     public void sendToPellets(final ZMQ.Socket from, final ZMQ.Socket to) {
         //do something.
+        String peinstanceid = getTargetPelletInstances();
+
+        if (peinstanceid != null) {
+            to.sendMore(peinstanceid);
+            Utils.forwardCompleteMessage(from, to);
+        } else {
+            Utils.recvAndignore(from);
+        }
     }
 
     /**

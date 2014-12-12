@@ -26,6 +26,7 @@ import edu.usc.pgroup.floe.flake.messaging
         .dispersion.MessageDispersionStrategyFactory;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
+import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,7 +157,9 @@ public class ReceiverME extends FlakeComponent {
                 break;
             }
         }
-        localDispersionStrat.stopAndWait();
+        if (localDispersionStrat != null) {
+            localDispersionStrat.stopAndWait();
+        }
         backend.close();
         recevierME.close();
         msgBackupSender.close();
@@ -170,13 +173,37 @@ public class ReceiverME extends FlakeComponent {
      */
     private void initializeLocalDispersionStrategyMap() {
 
-        localDispersionStrat = MessageDispersionStrategyFactory
-                .getFlakeLocalDispersionStrategy(
-                        getMetricRegistry(),
-                        getContext(),
-                        getFid()
-                );
-        localDispersionStrat.startAndWait();
+
+        String channel
+                = predChannelMap.values().iterator().next();
+
+
+        String[] ctypesAndArgs = channel.split("__");
+        String ctype = ctypesAndArgs[0];
+        String args = null;
+        if (ctypesAndArgs.length > 1) {
+            args = ctypesAndArgs[1];
+        }
+        LOGGER.info("type and args: {}, Channel type: {}", channel,
+                ctype);
+
+        TChannelType type = null;
+        if (!ctype.startsWith("NONE")) {
+            type = Enum.valueOf(TChannelType.class, ctype);
+
+            try {
+                localDispersionStrat = MessageDispersionStrategyFactory
+                        .getFlakeLocalDispersionStrategy(
+                                getMetricRegistry(),
+                                getContext(),
+                                type,
+                                getFid()
+                        );
+                localDispersionStrat.startAndWait();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
 
         /*for (Map.Entry<String, String> channel: predChannelMap.entrySet()) {
             String src = channel.getKey();
@@ -231,7 +258,7 @@ public class ReceiverME extends FlakeComponent {
                                  final ZMQ.Socket to,
                                  final ZMQ.Socket backup) {
         String fid = from.recvStr(0, Charset.defaultCharset());
-
+        
         /*int dummy = 0;
         LOGGER.info("dummy:{}", dummy);
         if (dummy == 0) {
@@ -250,7 +277,7 @@ public class ReceiverME extends FlakeComponent {
         //}
 
         if (!fid.equalsIgnoreCase(getFid())) {
-            LOGGER.debug("BACKUP:{}");
+            LOGGER.info("BACKUP:{}");
             queLen.dec();
             backup.sendMore(fid);
             Utils.forwardCompleteMessage(from, backup);
@@ -296,7 +323,9 @@ public class ReceiverME extends FlakeComponent {
      * @param peInstanceId instance id of the newly added pellet.
      */
     public final void pelletAdded(final String peInstanceId) {
-        localDispersionStrat.pelletAdded(peInstanceId);
+        if(localDispersionStrat != null) {
+            localDispersionStrat.pelletAdded(peInstanceId);
+        }
     }
 
     /**
@@ -304,7 +333,9 @@ public class ReceiverME extends FlakeComponent {
      * @param peInstanceId instance id of the removed pellet.
      */
     public final void pelletRemoved(final String peInstanceId) {
-        localDispersionStrat.pelletRemoved(peInstanceId);
+        if(localDispersionStrat != null) {
+            localDispersionStrat.pelletRemoved(peInstanceId);
+        }
     }
 
     /**

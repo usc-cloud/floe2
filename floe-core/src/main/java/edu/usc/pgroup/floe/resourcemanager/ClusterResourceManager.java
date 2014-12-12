@@ -164,6 +164,12 @@ public class ClusterResourceManager extends ResourceManager {
 
             //Also check if the current mapping's container's flake has the
             // given pellet id.
+
+
+            //THE FOLLOWING IS TO RESTRICT ONE CONTAINTER TO SINGLE PELLET
+            // TYPE> WE DID THIS FOR IPDPS EXPERIMENTS. DONT NEED THIS NOW>
+
+            /*
             ResourceMapping.ContainerInstance cmapping
                     = mapping.getContainer(container.getContainerId());
             if (cmapping != null) {
@@ -173,7 +179,7 @@ public class ClusterResourceManager extends ResourceManager {
                 if (!cmapping.getFlakes().containsKey(pelletId)) {
                     continue;
                 }
-            }
+            }*/
 
             LOGGER.info("Feasible: {}", container.getContainerId());
             feasible.add(container);

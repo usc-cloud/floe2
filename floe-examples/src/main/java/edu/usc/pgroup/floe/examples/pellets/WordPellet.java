@@ -109,7 +109,7 @@ public class WordPellet extends StatelessPellet {
             }
             Tuple ot = new Tuple();
             ot.put("word", words[i]);
-            LOGGER.debug("Emmitting: {}", ot);
+            LOGGER.info("Emmitting: {}", ot);
             emitter.emit(ot);
             try {
                 Thread.sleep(interval);

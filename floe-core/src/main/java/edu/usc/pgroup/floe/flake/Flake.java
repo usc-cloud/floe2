@@ -16,9 +16,10 @@
 
 package edu.usc.pgroup.floe.flake;
 
-import com.codahale.metrics.CsvReporter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.ganglia.GangliaReporter;
 import edu.usc.pgroup.floe.app.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.coordination.CoordinationComponent;
@@ -34,6 +35,8 @@ import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
+import info.ganglia.gmetric4j.gmetric.GMetric;
+import info.ganglia.gmetric4j.gmetric.GangliaException;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 import org.slf4j.Logger;
@@ -41,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -50,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -200,7 +205,7 @@ public class Flake {
     /**
      * Metrics Reporter.
      */
-    private CsvReporter reporter;
+    private ScheduledReporter reporter;
 
     /**
      * The initial token assigned (randomly) to the flake.
@@ -281,10 +286,38 @@ public class Flake {
         }
 
 
-        this.reporter = CsvReporter.forRegistry(metricRegistry)
+        /*this.reporter = CsvReporter.forRegistry(metricRegistry)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .build(metricDir);
+                .build(metricDir);*/
+
+        GMetric gmetric = null;
+        try {
+            final int gangliaPort = 8649;
+            gmetric = new GMetric("239.2.11.71", gangliaPort,
+                    GMetric.UDPAddressingMode.MULTICAST, 1, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+            LOGGER.error("Error while initializeing ganglia client");
+        }
+
+        this.reporter = GangliaReporter.forRegistry(metricRegistry)
+                .convertDurationsTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build(gmetric);
+
+
+        if (gmetric != null) {
+            try {
+                final int testa = 11231;
+                gmetric.announce("MyTest", testa, "localhost");
+            } catch (GangliaException e) {
+                e.printStackTrace();
+                LOGGER.error("ERROR");
+                System.exit(-1);
+            }
+        }
+
         reporter.start(reporterPeriod, TimeUnit.SECONDS);
 
         metricRegistry.register(
