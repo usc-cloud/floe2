@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
@@ -169,7 +170,14 @@ public class FileSourcePellet extends StatelessPellet {
         }
     }
 
+    /**
+     * Use to configure different aspects of the pellet,such as state type etc.
+     * @param conf pellet configurer
+     */
+    @Override
+    public void configure(PelletConfiguration conf) {
 
+    }
 
     /**
      * The setup function is called once to let the pellet initialize.
@@ -179,22 +187,8 @@ public class FileSourcePellet extends StatelessPellet {
      * @param pelletContext Pellet instance context. Related to this
      */
     @Override
-    public final void setup(final AppContext appContext,
+    public final void onStart(final AppContext appContext,
                             final PelletContext pelletContext) {
-
-    }
-
-    /**
-     * The onStart function is called once just before executing the pellet
-     * and after the setup function. Typically, this is used by a data source
-     * pellet which does not depend on external data source but generates
-     * tuples on its own.
-     *
-     * @param emitter An output emitter which may be used by the user to emmit
-     *                results.
-     */
-    @Override
-    public void onStart(final Emitter emitter) {
 
     }
 

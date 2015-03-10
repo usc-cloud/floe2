@@ -84,22 +84,8 @@ public class WordMultiStreamPellet extends StatelessPellet {
      *                      particular pellet instance.
      */
     @Override
-    public void setup(final AppContext appContext,
+    public void onStart(final AppContext appContext,
                       final PelletContext pelletContext) {
-
-    }
-
-    /**
-     * The onStart function is called once just before executing the pellet
-     * and after the setup function. Typically, this is used by a data source
-     * pellet which does not depend on external data source but generates
-     * tuples on its own.
-     *
-     * @param emitter An output emitter which may be used by the user to emmit
-     *                results.
-     */
-    @Override
-    public void onStart(final Emitter emitter) {
 
     }
 
@@ -141,6 +127,7 @@ public class WordMultiStreamPellet extends StatelessPellet {
             }
         }
     }
+
 
     /**
      * The teardown function, called when the topology is killed.

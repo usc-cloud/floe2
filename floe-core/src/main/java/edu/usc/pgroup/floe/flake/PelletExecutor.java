@@ -179,7 +179,7 @@ public class PelletExecutor extends Thread {
         this(registry, pelletIndex, sharedContext, fid, fid, stateManager);
         this.pelletClass = fqdnClass;
         this.pellet = (Pellet) Utils.instantiateObject(pelletClass);
-        this.pellet.setup(null, new PelletContext(pelletInstanceId));
+        //this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
 
 
@@ -206,7 +206,7 @@ public class PelletExecutor extends Thread {
                           final StateManagerComponent stateManager) {
         this(registry, pelletIndex, sharedContext, fid, pid, stateManager);
         this.pellet = p;
-        this.pellet.setup(null, new PelletContext(pelletInstanceId));
+        //this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
 
     /**
@@ -435,11 +435,11 @@ public class PelletExecutor extends Thread {
                 this.pellet = (Pellet) Utils.deserialize(
                                                 signal.getSignalData(),
                                                 loader);
-                this.pellet.setup(null, new PelletContext(pelletInstanceId));
+                //this.pellet.setup(null, new PelletContext(pelletInstanceId));
                 break;
             case StartInstance:
                 LOGGER.info("Starting pellets.");
-                this.pellet.onStart(emitter);
+                this.pellet.onStart(null, new PelletContext(pelletInstanceId));
                 //FIXME..
                 PelletState state = getPelletState(null);
                 this.pellet.execute(null, emitter, state);

@@ -84,15 +84,15 @@ public final class WordCountApp {
         }
 
 
-        String[] words = new String[numWords];
+       /* String[] words = new String[numWords];
 
 
         for (int i = 0; i < numWords; i++) {
             //words[i] = Character.toString((char) ('a' + i % numChars));
             words[i] = i + ":"
                     + RandomStringUtils.randomAlphabetic(maxWordLength);
-        }
-        //String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
+        }*/
+        String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
         builder.addPellet("words", new WordPellet(words)).setParallelism
                 (numMappers);

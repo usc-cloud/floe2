@@ -74,9 +74,12 @@ public final class StateManagerFactory {
             manager =  new GenericPelletStateManager(metricRegistry,
                     flakeId, componentName, ctx, port);
         }*/
-
-        manager =  new GenericPelletStateManager(metricRegistry,
-                flakeId, componentName, ctx, port);
+        switch (pellet.getConf().getStateType()) {
+            case LocalOnly:
+            manager = new GenericPelletStateManager(metricRegistry,
+                    flakeId, componentName, ctx, port);
+                break;
+        }
         return manager;
     }
 }

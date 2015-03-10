@@ -19,6 +19,7 @@ package edu.usc.pgroup.floe.examples.pellets;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.Signallable;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -33,7 +34,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class PrintPellet implements Pellet, Signallable {
+public class PrintPellet extends Pellet implements Signallable {
 
     /**
      * Pellet's instance id.
@@ -47,6 +48,16 @@ public class PrintPellet implements Pellet, Signallable {
             LoggerFactory.getLogger(PrintPellet.class);
 
     /**
+     * Use to configure different aspects of the pellet,such as state type etc.
+     *
+     * @param conf pellet configurer
+     */
+    @Override
+    public void configure(PelletConfiguration conf) {
+
+    }
+
+    /**
      * The setup function is called once to let the pellet initialize.
      * @param appContext Application's context. Some data related to
      *                   application's deployment.
@@ -54,23 +65,9 @@ public class PrintPellet implements Pellet, Signallable {
      *                      particular pellet instance.
      */
     @Override
-    public final void setup(final AppContext appContext,
+    public final void onStart(final AppContext appContext,
                       final PelletContext pelletContext) {
         this.peInstanceId = pelletContext.getPelletInstanceId();
-    }
-
-    /**
-     * The onStart function is called once just before executing the pellet
-     * and after the setup function. Typically, this is used by a data source
-     * pellet which does not depend on external data source but generates
-     * tuples on its own.
-     *
-     * @param emitter An ouput emitter which may be used by the user to emmit
-     *                results.
-     */
-    @Override
-    public void onStart(final Emitter emitter) {
-
     }
 
 

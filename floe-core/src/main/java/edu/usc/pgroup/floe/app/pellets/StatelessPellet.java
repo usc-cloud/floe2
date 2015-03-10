@@ -25,7 +25,12 @@ import edu.usc.pgroup.floe.flake.statemanager.PelletState;
  *
  * @author kumbhare
  */
-public abstract class StatelessPellet implements Pellet {
+public abstract class StatelessPellet extends Pellet {
+
+    @Override
+    public void configure(PelletConfiguration conf) {
+        conf.setStateType(StateType.None);
+    }
 
     /**
      * The execute method which is called for each tuple.
