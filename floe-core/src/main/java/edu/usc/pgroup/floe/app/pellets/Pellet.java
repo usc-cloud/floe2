@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
+package edu.usc.pgroup.floe.app.pellets;
 
+import edu.usc.pgroup.floe.app.AppContext;
+import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 
 import java.io.Serializable;

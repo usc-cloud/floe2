@@ -20,11 +20,11 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.ganglia.GangliaReporter;
-import edu.usc.pgroup.floe.app.Pellet;
+import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
-import edu.usc.pgroup.floe.flake.coordination.CoordinationComponent;
-import edu.usc.pgroup.floe.flake.coordination.CoordinationManagerFactory;
-import edu.usc.pgroup.floe.flake.coordination.ReducerCoordinationComponent;
+import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationComponent;
+import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationManagerFactory;
+import edu.usc.pgroup.floe.flake.coordination.ReducerPeerCoordinationComponent;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
@@ -82,41 +82,10 @@ public class Flake {
     private final String appJar;
 
     /**
-     *
+     * The Resource Mapping's flake instance with all the associated
+     * properties such as ports to use etc.
      */
-    //private final int[] ports;
-
-    /**
-     * the map of pellet to ports to start the zmq sockets.
-     * one for each edge in the application graph.
-     */
-    private final Map<String, Integer> pelletPortMap;
-
-    /**
-     * the map of pellet to ports to start the zmq sockets for the dispersion.
-     * one for each edge in the application graph.
-     */
-    private final Map<String, Integer> pelletBackChannelPortMap;
-
-    /**
-     * the map of pellet to list of streams that pellet is subscribed to.
-     */
-    private final Map<String, List<String>> pelletStreamsMap;
-
-    /**
-     * Map of target pellet to channel type (one per edge).
-     */
-    private final Map<String, String> pelletChannelTypeMap;
-
-    /**
-     * Map of src pellet to channel type (one per edge).
-     */
-    private final Map<String, String> predPelletChannelTypeMap;
-
-    /**
-     * Port to be used for sending checkpoint data.
-     */
-    private final int stateChkptPort;
+    private final ResourceMapping.FlakeInstance flakeInstance;
 
 
     /**
@@ -179,7 +148,7 @@ public class Flake {
     /**
      * The local coordination manager.
      */
-    private CoordinationComponent coordinationManager;
+    private PeerCoordinationComponent coordinationManager;
 
     /**
      * The user pellet object including all alternates.
@@ -221,60 +190,46 @@ public class Flake {
  *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param app application's name to which this flake belongs.
      * @param jar the application's jar file name.
-     * @param statePort       Port to be used for sending checkpoint data.
-     * @param portMap the map of ports on which this flake should
-*                       listen on. Note: This is fine here (and not as a
-*                       control signal) because this depends only on
-*                       static application configuration and not on
-     * @param backChannelPortMap map of port for the dispersion. One port
-*                           per target pellet.
-     * @param successorChannelTypeMap Map of target pellet to channel type
-*                                (one per edge)
-     * @param predChannelTypeMap Map of src pellet to channel type
-*                                (one per edge)
-     * @param streamsMap map from successor pellets to subscribed
-     * @param token token from container.
      */
     public Flake(final String pid,
                  final String fid,
                  final String cid,
                  final String app,
-                 final String jar,
-                 final int statePort,
-                 final Map<String, Integer> portMap,
-                 final Map<String, Integer> backChannelPortMap,
-                 final Map<String, String> successorChannelTypeMap,
-                 final Map<String, String> predChannelTypeMap,
-                 final Map<String, List<String>> streamsMap,
-                 final String token) {
+                 final String jar) {
+
+        ResourceMapping resourceMapping = ZKUtils.getResourceMapping(app);
+        ResourceMapping.ContainerInstance container
+                = resourceMapping.getContainer(cid);
+
+        flakeInstance = container.getFlake(pid);
+
         this.flakeId = Utils.generateFlakeId(cid, fid);
         this.containerId = cid;
-        this.pelletPortMap = portMap;
-        this.pelletBackChannelPortMap = backChannelPortMap;
-        this.pelletChannelTypeMap = successorChannelTypeMap;
-        this.predPelletChannelTypeMap = predChannelTypeMap;
-        this.pelletStreamsMap = streamsMap;
+        this.pelletId = pid;
         this.appName = app;
         this.appJar = jar;
+
+
+
         this.sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
-        this.pelletId = pid;
+
         this.runningPelletInstances = new ArrayList<>();
-        this.stateChkptPort = statePort;
+
 
         this.metricRegistry = new MetricRegistry();
 
 
-        if (token.equalsIgnoreCase("nan")) {
+        if (flakeInstance.getToken().equalsIgnoreCase("nan")) {
             initialToken = new Random(System.nanoTime()).nextInt();
         } else {
-            initialToken = Integer.parseInt(token);
+            initialToken = Integer.parseInt(flakeInstance.getToken());
         }
 
         ZKUtils.updateToken(appName,
                 pelletId,
                 flakeId,
                 initialToken,
-                stateChkptPort); //update it on the ZK.
+                flakeInstance.getStateCheckpointingPort()); //update on the ZK.
 
         final int reporterPeriod = 1;
 
@@ -283,7 +238,6 @@ public class Flake {
         if (!metricDir.exists()) {
             metricDir.mkdirs();
         }
-
 
         /*this.reporter = CsvReporter.forRegistry(metricRegistry)
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -441,7 +395,8 @@ public class Flake {
         LOGGER.info("Starting state manager.");
         stateManager = StateManagerFactory.getStateManager(metricRegistry,
                 pellet,
-                flakeId, "STATE-MANAGER", sharedContext, stateChkptPort);
+                flakeId, "STATE-MANAGER", sharedContext,
+                flakeInstance.getStateCheckpointingPort());
 
         if (stateManager != null) {
             stateManager.startAndWait();
@@ -455,10 +410,10 @@ public class Flake {
                 pelletId,
                 flakeId,
                 "FLAKE-SENDER",
-                pelletPortMap,
-                pelletBackChannelPortMap,
-                pelletChannelTypeMap,
-                pelletStreamsMap
+                flakeInstance.getPelletPortMapping(),
+                flakeInstance.getPelletBackChannelPortMapping(),
+                flakeInstance.getTargetPelletChannelTypeMapping(),
+                flakeInstance.getPelletStreamsMapping()
         );
         flakeSenderComponent.startAndWait();
 
@@ -466,12 +421,12 @@ public class Flake {
         flakeReceiverComponent
                 = new MsgReceiverComponent(
                 metricRegistry, flakeId, "MSG-RECEIVER",
-                sharedContext, predPelletChannelTypeMap);
+                sharedContext, flakeInstance.getSrcPelletChannelTypeMapping());
         flakeReceiverComponent.startAndWait();
 
         //Start the coordination manager.
         LOGGER.info("Starting coordination manager.");
-        coordinationManager = CoordinationManagerFactory
+        coordinationManager = PeerCoordinationManagerFactory
                 .getCoordinationManager(metricRegistry, appName,
                         pelletId,
                         pellet,
@@ -484,10 +439,10 @@ public class Flake {
 
 
         if (coordinationManager
-                instanceof ReducerCoordinationComponent
+                instanceof ReducerPeerCoordinationComponent
                 && runningPelletInstances.size() == 0) {
 
-            List<String> neighbors = ((ReducerCoordinationComponent)
+            List<String> neighbors = ((ReducerPeerCoordinationComponent)
                     coordinationManager).getNeighborsToBackupMsgsFor();
             FlakeControlCommand newCommand = new FlakeControlCommand(
                     FlakeControlCommand.Command.UPDATE_SUBSCRIPTION,

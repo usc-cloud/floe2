@@ -18,9 +18,9 @@ package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.StatefulPellet;
-import edu.usc.pgroup.floe.app.PelletContext;
-import edu.usc.pgroup.floe.app.Signallable;
+import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.app.pellets.PelletContext;
+import edu.usc.pgroup.floe.app.pellets.Signallable;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.signals.PelletSignal;
@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class PrintPellet extends StatefulPellet implements Signallable {
+public class PrintPellet implements Pellet, Signallable {
 
     /**
      * Pellet's instance id.
@@ -107,7 +107,7 @@ public class PrintPellet extends StatefulPellet implements Signallable {
         if (t == null) {
             LOGGER.info("Dummy execute PRINT.");
         } else {
-            Object value = state.getValue("count");
+            /*Object value = state.getValue("count");
             Integer count = 0;
             if (value != null) {
                 count = (Integer) value + 1;
@@ -116,6 +116,9 @@ public class PrintPellet extends StatefulPellet implements Signallable {
             LOGGER.info("{} : {} : Received: {}",
                     peInstanceId,
                     count,
+                    t.get("word"));*/
+            LOGGER.info("{} : Received: {}",
+                    peInstanceId,
                     t.get("word"));
             emitter.emit(t);
         }

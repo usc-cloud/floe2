@@ -18,8 +18,8 @@ package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.PelletContext;
-import edu.usc.pgroup.floe.app.ReducerPellet;
+import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import org.slf4j.Logger;
@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class WordCountReducer extends ReducerPellet {
+public class WordCountReducer implements Pellet {
 
     /**
      * Key to be used to extract word from tuple.
@@ -50,7 +50,7 @@ public class WordCountReducer extends ReducerPellet {
      *                used as the key for grouping tuples.
      */
     public WordCountReducer(final String keyName) {
-        super(keyName);
+        //super(keyName);
         tupleWordKey = keyName;
     }
 
@@ -71,8 +71,8 @@ public class WordCountReducer extends ReducerPellet {
             return;
         }
         String word = (String) t.get(tupleWordKey);
-        Object value = state.getValue("count");
         Integer count = 0;
+        Object value = state.getValue("count");
         if (value != null) {
             count = (Integer) value + count;
         }

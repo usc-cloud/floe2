@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.app;
 
+import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
 import edu.usc.pgroup.floe.thriftgen.TAlternate;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
@@ -173,29 +175,10 @@ public final class ApplicationBuilder {
         /**
          * Subscribe to a stream using a reducer pattern.
          * @param inputPelletName name of the preceding pellet.
-         * @return The builder pattern's object to further configure the pellet.
-         */
-        public final PelletBuilder reduce(
-                final String inputPelletName) {
-            Pellet inputPellet = userPellets.get(pellet.get_id());
-            if (!(inputPellet instanceof ReducerPellet)) {
-                throw new IncompatibleClassChangeError("Given pellet: "
-                        + inputPelletName + " is not a reducer.");
-            }
-            String keyFieldName
-                    = ((ReducerPellet) inputPellet).getKeyFieldName();
-            return reduce(inputPelletName,
-                    keyFieldName,
-                    Utils.Constants.DEFAULT_STREAM_NAME);
-        }
-
-        /**
-         * Subscribe to a stream using a reducer pattern.
-         * @param inputPelletName name of the preceding pellet.
          * @param fieldName field name used for grouping tuples to the reducers.
          * @return The builder pattern's object to further configure the pellet.
          */
-        private PelletBuilder reduce(
+        public PelletBuilder reduce(
                 final String inputPelletName,
                 final String fieldName) {
             return reduce(inputPelletName,

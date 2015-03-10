@@ -18,8 +18,8 @@ package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.StatelessPellet;
-import edu.usc.pgroup.floe.app.PelletContext;
+import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
+import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;

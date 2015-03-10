@@ -18,9 +18,9 @@ package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.MapperPellet;
-import edu.usc.pgroup.floe.app.PelletContext;
+import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class FileSourcePellet extends MapperPellet {
+public class FileSourcePellet extends StatelessPellet {
 
     /**
      * the global logger instance.
@@ -62,7 +62,7 @@ public class FileSourcePellet extends MapperPellet {
      */
     public FileSourcePellet(final String keyFieldName, final String filePath,
                             final long sleepTime) {
-        super(keyFieldName);
+        //super(keyFieldName);
         this.path = filePath;
         this.interval = sleepTime;
     }

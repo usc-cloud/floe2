@@ -23,7 +23,7 @@ import org.zeromq.ZMQ;
 /**
  * @author kumbhare
  */
-public abstract class CoordinationComponent extends FlakeComponent {
+public abstract class PeerCoordinationComponent extends FlakeComponent {
 
     /**
      * the application name.
@@ -44,12 +44,12 @@ public abstract class CoordinationComponent extends FlakeComponent {
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
      */
-    public CoordinationComponent(final MetricRegistry metricRegistry,
-                                 final String app,
-                                 final String pellet,
-                                 final String flakeId,
-                                 final String componentName,
-                                 final ZMQ.Context ctx) {
+    public PeerCoordinationComponent(final MetricRegistry metricRegistry,
+                                     final String app,
+                                     final String pellet,
+                                     final String flakeId,
+                                     final String componentName,
+                                     final ZMQ.Context ctx) {
         super(metricRegistry, flakeId, componentName, ctx);
         this.appName = app;
         this.pelletName = pellet;

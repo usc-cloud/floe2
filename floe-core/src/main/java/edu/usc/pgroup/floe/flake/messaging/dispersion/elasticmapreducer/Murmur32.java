@@ -14,49 +14,43 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
 
 /**
  * @author kumbhare
  */
-public abstract class ReducerPellet extends StatefulPellet
-        implements EmitterEnvelopeHook {
-
+public class Murmur32 implements HashingFunction {
 
     /**
      * the global logger instance.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(ReducerPellet.class);
+            LoggerFactory.getLogger(ElasticReducerDispersion.class);
 
     /**
-     * Key field name to be used for grouping tuples.
+     * The hashing function.
      */
-    private final String keyFieldName;
+    private final com.google.common.hash.HashFunction hash;
 
     /**
      * Constructor.
-     * @param keyName name of the field from the input tuple to be
-     *                     used as the key for grouping tuples.
      */
-    public ReducerPellet(final String keyName) {
-        this.keyFieldName = keyName;
+    public Murmur32() {
+        hash = Hashing.murmur3_32();
     }
 
     /**
-     * @return The field name which is to be used for grouping tuples.
+     * @param data byte serialized data.
+     * @return Returns a 32 bit integer hash.
      */
-    public final String getKeyFieldName() {
-        return keyFieldName;
-    }
-
     @Override
-    public final void addEnvelope(final ZMQ.Socket socket, final Tuple tuple) {
-        LOGGER.info("Adding envelope:{}", tuple.get(keyFieldName));
-        socket.sendMore((String) tuple.get(keyFieldName));
+    public final int hash(final byte[] data) {
+        HashCode code = hash.hashBytes(data);
+        return code.asInt();
     }
 }

@@ -18,4 +18,4 @@
  * Plugin for elastic reducer disspersion strategy. Both sender and flake local.
  * @author kumbhare
  */
-package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;

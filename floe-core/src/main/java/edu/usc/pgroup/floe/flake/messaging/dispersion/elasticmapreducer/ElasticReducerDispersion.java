@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
+import edu.usc.pgroup.floe.serialization.SerializerFactory;
+import edu.usc.pgroup.floe.serialization.TupleSerializer;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
@@ -34,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -82,6 +86,11 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     private ZKFlakeTokenCache flakeCache;
 
     /**
+     * Tuple serializer.
+     */
+    private TupleSerializer tupleSerializer;
+
+    /**
      * Initializes the strategy.
      * @param appName Application name.
      * @param destPelletName dest pellet name to be used to get data from ZK.
@@ -98,6 +107,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
         this.flakeIdToTokenMap = new HashMap<>();
         this.keyFieldName = args;
         this.hashingFunction = new Murmur32();
+        this.tupleSerializer = SerializerFactory.getSerializer();
 
         String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
                 appName, destPelletName);
@@ -145,7 +155,16 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     @Override
     public final void disperseMessage(final ZMQ.Socket middleendreceiver,
                                       final ZMQ.Socket backend) {
-        String key = middleendreceiver.recvStr(Charset.defaultCharset());
+
+        //NOTE>>ALOK>>>>>>>> CAN WE DERIVE KEY WITHOUT DESERIALIZE/SERIALIZE
+
+
+
+        /*String key = middleendreceiver.recvStr(Charset.defaultCharset());*/
+
+        byte[] msg = middleendreceiver.recv();
+        Tuple tuple = tupleSerializer.deserialize(msg);
+        Object key = tuple.get(keyFieldName);
 
         byte[] seralized = null;
         if (key instanceof  String) {
@@ -155,9 +174,6 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
             seralized = Utils.serialize(key);
         }
         Integer actualHash = hashingFunction.hash(seralized);
-
-
-
 
         Integer hash = getTargetFlakeHash(actualHash);
         String fid =  circle.get(hash);
@@ -172,6 +188,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
         backend.sendMore(fid.toString());
         backend.sendMore(actualHash.toString());
         backend.sendMore(String.valueOf(System.currentTimeMillis()));
+        backend.send(msg, 0);
         Utils.forwardCompleteMessage(middleendreceiver, backend);
     }
 

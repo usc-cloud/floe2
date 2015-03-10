@@ -18,9 +18,11 @@ package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.elasticreducer.ElasticReducerDispersion;
+        .dispersion.elasticmapreducer.ElasticReducerDispersion;
 import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.elasticreducer.ElasticReducerFlakeLocalDispersion;
+        .dispersion.elasticmapreducer.ElasticReducerFlakeLocalDispersion;
+import edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin.RRDispersionStrategy;
+import edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin.RRFlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import org.zeromq.ZMQ;
 

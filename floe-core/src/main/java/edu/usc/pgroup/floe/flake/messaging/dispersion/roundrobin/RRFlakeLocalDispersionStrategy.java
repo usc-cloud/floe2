@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging.dispersion;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin;
 
 import com.codahale.metrics.MetricRegistry;
+import edu.usc.pgroup.floe.flake.messaging.dispersion.FlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
