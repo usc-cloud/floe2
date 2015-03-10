@@ -17,7 +17,6 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +97,8 @@ public class RRFlakeLocalDispersionStrategy
     }
 
     @Override
-    public void sendToPellets(final ZMQ.Socket from, final ZMQ.Socket to) {
+    public final void sendToPellets(final ZMQ.Socket from, final ZMQ.Socket
+            to) {
         //do something.
         String peinstanceid = getTargetPelletInstances();
 

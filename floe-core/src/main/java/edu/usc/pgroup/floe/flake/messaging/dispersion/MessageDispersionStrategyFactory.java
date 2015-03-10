@@ -121,7 +121,8 @@ public final class MessageDispersionStrategyFactory {
      * @param context shared ZMQ context.
      * @param channelType channel type.
      * @param flakeId Current flake id.
-* param args Any arguments to be sent to the Strategy Class while
+     * @return returns the associated local dispersion strategy.
+     * @throws java.lang.ClassNotFoundException if the channel type is invalid
      */
     public static FlakeLocalDispersionStrategy
                     getFlakeLocalDispersionStrategy(

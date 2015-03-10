@@ -258,7 +258,7 @@ public class ReceiverME extends FlakeComponent {
                                  final ZMQ.Socket to,
                                  final ZMQ.Socket backup) {
         String fid = from.recvStr(0, Charset.defaultCharset());
-        
+
         /*int dummy = 0;
         LOGGER.info("dummy:{}", dummy);
         if (dummy == 0) {
@@ -323,7 +323,7 @@ public class ReceiverME extends FlakeComponent {
      * @param peInstanceId instance id of the newly added pellet.
      */
     public final void pelletAdded(final String peInstanceId) {
-        if(localDispersionStrat != null) {
+        if (localDispersionStrat != null) {
             localDispersionStrat.pelletAdded(peInstanceId);
         }
     }
@@ -333,7 +333,7 @@ public class ReceiverME extends FlakeComponent {
      * @param peInstanceId instance id of the removed pellet.
      */
     public final void pelletRemoved(final String peInstanceId) {
-        if(localDispersionStrat != null) {
+        if (localDispersionStrat != null) {
             localDispersionStrat.pelletRemoved(peInstanceId);
         }
     }
