@@ -56,7 +56,7 @@ public final class CoordinationManagerFactory {
      * @param ctx           Shared zmq context.
      * @return the instantiated (but not started) state manager object.
      */
-    public static CoordinationComponent getCoordinationManager(
+    public static PeerCoordinationComponent getCoordinationManager(
             final MetricRegistry metricRegistry,
             final String appName,
             final String pelletName,
@@ -65,12 +65,12 @@ public final class CoordinationManagerFactory {
             final String componentName,
             final StateManagerComponent stateManager,
             final ZMQ.Context ctx) {
-        CoordinationComponent manager = null;
+        PeerCoordinationComponent manager = null;
         if (pellet instanceof ReducerPellet) {
             LOGGER.info("Reducer pellet. Creating reducer state manager.");
             int tolerance = FloeConfig.getConfig().getInt(
                     ConfigProperties.FLAKE_TOLERANCE_LEVEL);
-            manager =  new ReducerCoordinationComponent(
+            manager =  new ReducerPeerCoordinationComponent(
                             metricRegistry,
                             appName,
                             pelletName,

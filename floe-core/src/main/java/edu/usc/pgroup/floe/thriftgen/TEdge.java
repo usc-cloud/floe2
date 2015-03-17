@@ -38,8 +38,7 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
 
   private static final org.apache.thrift.protocol.TField SRC_PELLET_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("srcPelletId", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField DEST_PELLET_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("destPelletId", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField CHANNEL_TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("channelType", org.apache.thrift.protocol.TType.I32, (short)3);
-  private static final org.apache.thrift.protocol.TField CHANNEL_TYPE_ARGS_FIELD_DESC = new org.apache.thrift.protocol.TField("channelTypeArgs", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField CHANNEL_FIELD_DESC = new org.apache.thrift.protocol.TField("channel", org.apache.thrift.protocol.TType.STRUCT, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -49,19 +48,13 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
 
   private String srcPelletId; // required
   private String destPelletId; // required
-  private TChannelType channelType; // required
-  private String channelTypeArgs; // optional
+  private TChannel channel; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     SRC_PELLET_ID((short)1, "srcPelletId"),
     DEST_PELLET_ID((short)2, "destPelletId"),
-    /**
-     * 
-     * @see TChannelType
-     */
-    CHANNEL_TYPE((short)3, "channelType"),
-    CHANNEL_TYPE_ARGS((short)4, "channelTypeArgs");
+    CHANNEL((short)3, "channel");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -80,10 +73,8 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
           return SRC_PELLET_ID;
         case 2: // DEST_PELLET_ID
           return DEST_PELLET_ID;
-        case 3: // CHANNEL_TYPE
-          return CHANNEL_TYPE;
-        case 4: // CHANNEL_TYPE_ARGS
-          return CHANNEL_TYPE_ARGS;
+        case 3: // CHANNEL
+          return CHANNEL;
         default:
           return null;
       }
@@ -124,7 +115,6 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.CHANNEL_TYPE_ARGS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -132,10 +122,8 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.DEST_PELLET_ID, new org.apache.thrift.meta_data.FieldMetaData("destPelletId", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.CHANNEL_TYPE, new org.apache.thrift.meta_data.FieldMetaData("channelType", org.apache.thrift.TFieldRequirementType.REQUIRED, 
-        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, TChannelType.class)));
-    tmpMap.put(_Fields.CHANNEL_TYPE_ARGS, new org.apache.thrift.meta_data.FieldMetaData("channelTypeArgs", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.CHANNEL, new org.apache.thrift.meta_data.FieldMetaData("channel", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TChannel.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TEdge.class, metaDataMap);
   }
@@ -146,12 +134,12 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
   public TEdge(
     String srcPelletId,
     String destPelletId,
-    TChannelType channelType)
+    TChannel channel)
   {
     this();
     this.srcPelletId = srcPelletId;
     this.destPelletId = destPelletId;
-    this.channelType = channelType;
+    this.channel = channel;
   }
 
   /**
@@ -164,11 +152,8 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
     if (other.is_set_destPelletId()) {
       this.destPelletId = other.destPelletId;
     }
-    if (other.is_set_channelType()) {
-      this.channelType = other.channelType;
-    }
-    if (other.is_set_channelTypeArgs()) {
-      this.channelTypeArgs = other.channelTypeArgs;
+    if (other.is_set_channel()) {
+      this.channel = new TChannel(other.channel);
     }
   }
 
@@ -180,8 +165,7 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
   public void clear() {
     this.srcPelletId = null;
     this.destPelletId = null;
-    this.channelType = null;
-    this.channelTypeArgs = null;
+    this.channel = null;
   }
 
   public String get_srcPelletId() {
@@ -230,57 +214,26 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
     }
   }
 
-  /**
-   * 
-   * @see TChannelType
-   */
-  public TChannelType get_channelType() {
-    return this.channelType;
+  public TChannel get_channel() {
+    return this.channel;
   }
 
-  /**
-   * 
-   * @see TChannelType
-   */
-  public void set_channelType(TChannelType channelType) {
-    this.channelType = channelType;
+  public void set_channel(TChannel channel) {
+    this.channel = channel;
   }
 
-  public void unset_channelType() {
-    this.channelType = null;
+  public void unset_channel() {
+    this.channel = null;
   }
 
-  /** Returns true if field channelType is set (has been assigned a value) and false otherwise */
-  public boolean is_set_channelType() {
-    return this.channelType != null;
+  /** Returns true if field channel is set (has been assigned a value) and false otherwise */
+  public boolean is_set_channel() {
+    return this.channel != null;
   }
 
-  public void set_channelType_isSet(boolean value) {
+  public void set_channel_isSet(boolean value) {
     if (!value) {
-      this.channelType = null;
-    }
-  }
-
-  public String get_channelTypeArgs() {
-    return this.channelTypeArgs;
-  }
-
-  public void set_channelTypeArgs(String channelTypeArgs) {
-    this.channelTypeArgs = channelTypeArgs;
-  }
-
-  public void unset_channelTypeArgs() {
-    this.channelTypeArgs = null;
-  }
-
-  /** Returns true if field channelTypeArgs is set (has been assigned a value) and false otherwise */
-  public boolean is_set_channelTypeArgs() {
-    return this.channelTypeArgs != null;
-  }
-
-  public void set_channelTypeArgs_isSet(boolean value) {
-    if (!value) {
-      this.channelTypeArgs = null;
+      this.channel = null;
     }
   }
 
@@ -302,19 +255,11 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
       }
       break;
 
-    case CHANNEL_TYPE:
+    case CHANNEL:
       if (value == null) {
-        unset_channelType();
+        unset_channel();
       } else {
-        set_channelType((TChannelType)value);
-      }
-      break;
-
-    case CHANNEL_TYPE_ARGS:
-      if (value == null) {
-        unset_channelTypeArgs();
-      } else {
-        set_channelTypeArgs((String)value);
+        set_channel((TChannel)value);
       }
       break;
 
@@ -329,11 +274,8 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
     case DEST_PELLET_ID:
       return get_destPelletId();
 
-    case CHANNEL_TYPE:
-      return get_channelType();
-
-    case CHANNEL_TYPE_ARGS:
-      return get_channelTypeArgs();
+    case CHANNEL:
+      return get_channel();
 
     }
     throw new IllegalStateException();
@@ -350,10 +292,8 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
       return is_set_srcPelletId();
     case DEST_PELLET_ID:
       return is_set_destPelletId();
-    case CHANNEL_TYPE:
-      return is_set_channelType();
-    case CHANNEL_TYPE_ARGS:
-      return is_set_channelTypeArgs();
+    case CHANNEL:
+      return is_set_channel();
     }
     throw new IllegalStateException();
   }
@@ -389,21 +329,12 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
         return false;
     }
 
-    boolean this_present_channelType = true && this.is_set_channelType();
-    boolean that_present_channelType = true && that.is_set_channelType();
-    if (this_present_channelType || that_present_channelType) {
-      if (!(this_present_channelType && that_present_channelType))
+    boolean this_present_channel = true && this.is_set_channel();
+    boolean that_present_channel = true && that.is_set_channel();
+    if (this_present_channel || that_present_channel) {
+      if (!(this_present_channel && that_present_channel))
         return false;
-      if (!this.channelType.equals(that.channelType))
-        return false;
-    }
-
-    boolean this_present_channelTypeArgs = true && this.is_set_channelTypeArgs();
-    boolean that_present_channelTypeArgs = true && that.is_set_channelTypeArgs();
-    if (this_present_channelTypeArgs || that_present_channelTypeArgs) {
-      if (!(this_present_channelTypeArgs && that_present_channelTypeArgs))
-        return false;
-      if (!this.channelTypeArgs.equals(that.channelTypeArgs))
+      if (!this.channel.equals(that.channel))
         return false;
     }
 
@@ -424,15 +355,10 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
     if (present_destPelletId)
       builder.append(destPelletId);
 
-    boolean present_channelType = true && (is_set_channelType());
-    builder.append(present_channelType);
-    if (present_channelType)
-      builder.append(channelType.getValue());
-
-    boolean present_channelTypeArgs = true && (is_set_channelTypeArgs());
-    builder.append(present_channelTypeArgs);
-    if (present_channelTypeArgs)
-      builder.append(channelTypeArgs);
+    boolean present_channel = true && (is_set_channel());
+    builder.append(present_channel);
+    if (present_channel)
+      builder.append(channel);
 
     return builder.toHashCode();
   }
@@ -465,22 +391,12 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(is_set_channelType()).compareTo(other.is_set_channelType());
+    lastComparison = Boolean.valueOf(is_set_channel()).compareTo(other.is_set_channel());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (is_set_channelType()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.channelType, other.channelType);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
-    lastComparison = Boolean.valueOf(is_set_channelTypeArgs()).compareTo(other.is_set_channelTypeArgs());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (is_set_channelTypeArgs()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.channelTypeArgs, other.channelTypeArgs);
+    if (is_set_channel()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.channel, other.channel);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -521,23 +437,13 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
     }
     first = false;
     if (!first) sb.append(", ");
-    sb.append("channelType:");
-    if (this.channelType == null) {
+    sb.append("channel:");
+    if (this.channel == null) {
       sb.append("null");
     } else {
-      sb.append(this.channelType);
+      sb.append(this.channel);
     }
     first = false;
-    if (is_set_channelTypeArgs()) {
-      if (!first) sb.append(", ");
-      sb.append("channelTypeArgs:");
-      if (this.channelTypeArgs == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.channelTypeArgs);
-      }
-      first = false;
-    }
     sb.append(")");
     return sb.toString();
   }
@@ -552,11 +458,14 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'destPelletId' is unset! Struct:" + toString());
     }
 
-    if (!is_set_channelType()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'channelType' is unset! Struct:" + toString());
+    if (!is_set_channel()) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'channel' is unset! Struct:" + toString());
     }
 
     // check for sub-struct validity
+    if (channel != null) {
+      channel.validate();
+    }
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -609,18 +518,11 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 3: // CHANNEL_TYPE
-            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
-              struct.channelType = TChannelType.findByValue(iprot.readI32());
-              struct.set_channelType_isSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
-          case 4: // CHANNEL_TYPE_ARGS
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.channelTypeArgs = iprot.readString();
-              struct.set_channelTypeArgs_isSet(true);
+          case 3: // CHANNEL
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.channel = new TChannel();
+              struct.channel.read(iprot);
+              struct.set_channel_isSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -648,17 +550,10 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
         oprot.writeString(struct.destPelletId);
         oprot.writeFieldEnd();
       }
-      if (struct.channelType != null) {
-        oprot.writeFieldBegin(CHANNEL_TYPE_FIELD_DESC);
-        oprot.writeI32(struct.channelType.getValue());
+      if (struct.channel != null) {
+        oprot.writeFieldBegin(CHANNEL_FIELD_DESC);
+        struct.channel.write(oprot);
         oprot.writeFieldEnd();
-      }
-      if (struct.channelTypeArgs != null) {
-        if (struct.is_set_channelTypeArgs()) {
-          oprot.writeFieldBegin(CHANNEL_TYPE_ARGS_FIELD_DESC);
-          oprot.writeString(struct.channelTypeArgs);
-          oprot.writeFieldEnd();
-        }
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -679,15 +574,7 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
       TTupleProtocol oprot = (TTupleProtocol) prot;
       oprot.writeString(struct.srcPelletId);
       oprot.writeString(struct.destPelletId);
-      oprot.writeI32(struct.channelType.getValue());
-      BitSet optionals = new BitSet();
-      if (struct.is_set_channelTypeArgs()) {
-        optionals.set(0);
-      }
-      oprot.writeBitSet(optionals, 1);
-      if (struct.is_set_channelTypeArgs()) {
-        oprot.writeString(struct.channelTypeArgs);
-      }
+      struct.channel.write(oprot);
     }
 
     @Override
@@ -697,13 +584,9 @@ public class TEdge implements org.apache.thrift.TBase<TEdge, TEdge._Fields>, jav
       struct.set_srcPelletId_isSet(true);
       struct.destPelletId = iprot.readString();
       struct.set_destPelletId_isSet(true);
-      struct.channelType = TChannelType.findByValue(iprot.readI32());
-      struct.set_channelType_isSet(true);
-      BitSet incoming = iprot.readBitSet(1);
-      if (incoming.get(0)) {
-        struct.channelTypeArgs = iprot.readString();
-        struct.set_channelTypeArgs_isSet(true);
-      }
+      struct.channel = new TChannel();
+      struct.channel.read(iprot);
+      struct.set_channel_isSet(true);
     }
   }
 

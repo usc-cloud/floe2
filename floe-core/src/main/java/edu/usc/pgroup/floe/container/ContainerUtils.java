@@ -20,6 +20,7 @@ import edu.usc.pgroup.floe.flake.FlakeInfo;
 import edu.usc.pgroup.floe.flake.FlakeService;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMappingDelta;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
 import edu.usc.pgroup.floe.utils.RetryLoop;
 import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
@@ -64,9 +65,9 @@ public final class ContainerUtils {
      *                      connections from the succeeding pellets.
      * @param backChannelPortMap map of port for the dispersion. One port
      *                           per target pellet.
-     * @param successorChannelTypeMap Map of target pellet to channel type
+     * @param successorChannelMap Map of target pellet to channel type
      *                                (one per edge)
-     * @param predChannelTypeMap Map of src pellet to channel type
+     * @param predChannelMap Map of src pellet to channel type
      *                                (one per edge)
      * @param pelletStreamsMap map of pellet name to list of stream names.
      * @param token token of the flake.
@@ -80,8 +81,8 @@ public final class ContainerUtils {
             final Integer statePort,
             final Map<String, Integer> pelletPortMap,
             final Map<String, Integer> backChannelPortMap,
-            final Map<String, String> successorChannelTypeMap,
-            final Map<String, String> predChannelTypeMap,
+            final Map<String, TChannel> successorChannelMap,
+            final Map<String, TChannel> predChannelMap,
             final Map<String, List<String>> pelletStreamsMap,
             final String token) {
 
@@ -117,12 +118,12 @@ public final class ContainerUtils {
         }
 
         args.add("-channeltype");
-        for (Map.Entry<String, String> p: successorChannelTypeMap.entrySet()) {
+        for (Map.Entry<String, String> p: successorChannelMap.entrySet()) {
             args.add(p.getKey() + ':' + p.getValue());
         }
 
         args.add("-predchanneltype");
-        for (Map.Entry<String, String> p: predChannelTypeMap.entrySet()) {
+        for (Map.Entry<String, String> p: predChannelMap.entrySet()) {
             args.add(p.getKey() + ':' + p.getValue());
         }
 

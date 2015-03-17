@@ -7,6 +7,10 @@
 package edu.usc.pgroup.floe.thriftgen;
 
 
+import java.util.Map;
+import java.util.HashMap;
+import org.apache.thrift.TEnum;
+
 /**
  * Enum for App Status.
  */
@@ -15,7 +19,7 @@ public enum AppStatus implements org.apache.thrift.TEnum {
    * Application status indicating that this is a new application
    * request and the request has been received.
    */
-  NEW_REQ_RECEIVED(0),
+  NEW_DEPLOYMENT_REQ_RECEIVED(0),
   /**
    * Application status indicating that currently the application is
    * being scheduled.
@@ -88,7 +92,7 @@ public enum AppStatus implements org.apache.thrift.TEnum {
   public static AppStatus findByValue(int value) { 
     switch (value) {
       case 0:
-        return NEW_REQ_RECEIVED;
+        return NEW_DEPLOYMENT_REQ_RECEIVED;
       case 1:
         return SCHEDULING;
       case 2:

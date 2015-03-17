@@ -51,13 +51,13 @@ import java.util.TreeMap;
 /**
  * @author kumbhare
  */
-public class ReducerCoordinationComponent extends CoordinationComponent {
+public class ReducerPeerCoordinationComponent extends PeerCoordinationComponent {
 
     /**
      * Logger.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(ReducerCoordinationComponent.class);
+            LoggerFactory.getLogger(ReducerPeerCoordinationComponent.class);
 
     /**
      * level of tolerance. (i.e. number of flake
@@ -122,14 +122,14 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
      *                       failures to tolerate).
      * @param stManager State manager associated with this flake.
      */
-    public ReducerCoordinationComponent(final MetricRegistry metricRegistry,
-                                        final String app,
-                                        final String pellet,
-                                        final String flakeId,
-                                        final String componentName,
-                                        final ZMQ.Context ctx,
-                                        final Integer tolerance,
-                                        final StateManagerComponent stManager) {
+    public ReducerPeerCoordinationComponent(final MetricRegistry metricRegistry,
+                                            final String app,
+                                            final String pellet,
+                                            final String flakeId,
+                                            final String componentName,
+                                            final ZMQ.Context ctx,
+                                            final Integer tolerance,
+                                            final StateManagerComponent stManager) {
         super(metricRegistry, app, pellet, flakeId, componentName, ctx);
         this.toleranceLevel = tolerance;
         //this.stateBackupNeighbors = new TreeMap<>();
