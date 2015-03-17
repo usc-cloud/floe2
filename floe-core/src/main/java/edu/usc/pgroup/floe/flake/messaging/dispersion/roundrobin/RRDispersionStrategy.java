@@ -17,17 +17,11 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin;
 
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.flake.FlakeToken;
-import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
-import edu.usc.pgroup.floe.utils.Utils;
-import edu.usc.pgroup.floe.zookeeper.ZKUtils;
-import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,8 +30,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class RRDispersionStrategy extends MessageDispersionStrategy
-         {
+public class RRDispersionStrategy extends MessageDispersionStrategy {
 
 
     /**
@@ -61,6 +54,9 @@ public class RRDispersionStrategy extends MessageDispersionStrategy
      */
     private List<String> targetFlakeIds;
 
+    /**
+     * Default constructor.
+     */
     public RRDispersionStrategy() {
         targetFlakeIds = new ArrayList<>();
         allTargetFlakes = new ArrayList<>();
@@ -73,7 +69,7 @@ public class RRDispersionStrategy extends MessageDispersionStrategy
       *             interface.
       */
      @Override
-     protected void initialize(String args) {
+     protected final void initialize(final String args) {
 
      }
 
@@ -99,12 +95,11 @@ public class RRDispersionStrategy extends MessageDispersionStrategy
     * Returns the list of target instances to send the given tuple using the
     * defined strategy.
     * param tuple tuple object.
-    * return the list of target instances to send the given tuple.
-    *
     * @param tuple tuple to be dispersed
+    * @return the list of target instances to send the given tuple.
     */
     @Override
-    public List<String> getTargetFlakeIds(Tuple tuple) {
+    public final List<String> getTargetFlakeIds(final Tuple tuple) {
         targetFlakeIds.clear();
         targetFlakeIds.add(getNextFlakeId());
         return targetFlakeIds;
@@ -118,7 +113,7 @@ public class RRDispersionStrategy extends MessageDispersionStrategy
      * @return list of arguments to be sent.
      */
     @Override
-    public List<String> getCustomArguments(String flakeId) {
+    public final List<String> getCustomArguments(final String flakeId) {
         return null;
     }
 

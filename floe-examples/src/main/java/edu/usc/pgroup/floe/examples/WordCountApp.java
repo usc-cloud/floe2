@@ -20,12 +20,10 @@ import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.client.AppSubmitter;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
-import edu.usc.pgroup.floe.examples.pellets.FileSourcePellet;
 import edu.usc.pgroup.floe.examples.pellets.WordCountReducer;
 import edu.usc.pgroup.floe.examples.pellets.WordPellet;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.Utils;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +94,7 @@ public final class WordCountApp {
         }*/
         String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
-        builder.addPellet("words", new WordPellet(words,wordInterval))
+        builder.addPellet("words", new WordPellet(words, wordInterval))
                 .setParallelism(numMappers);
 
         builder.addPellet("count", new WordCountReducer("word"))

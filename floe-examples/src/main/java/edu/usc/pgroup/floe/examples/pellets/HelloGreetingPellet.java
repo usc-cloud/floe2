@@ -18,11 +18,10 @@ package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
-import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.Signallable;
-import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
 import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -43,15 +42,6 @@ public class HelloGreetingPellet
      */
     private static final Logger LOGGER =
             LoggerFactory.getLogger(HelloGreetingPellet.class);
-
-    /**
-     * Use to configure different aspects of the pellet,such as state type etc.
-     * @param conf pellet configurer
-     */
-    @Override
-    public void configure(PelletConfiguration conf) {
-
-    }
 
     /**
      * The setup function is called once to let the pellet initialize.

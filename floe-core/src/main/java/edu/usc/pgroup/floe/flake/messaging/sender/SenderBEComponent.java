@@ -27,7 +27,6 @@ import edu.usc.pgroup.floe.flake.messaging
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
 import edu.usc.pgroup.floe.thriftgen.TChannel;
-import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,13 +147,12 @@ public class SenderBEComponent extends FlakeComponent {
             final ZMQ.Socket terminateSignalReceiver) {
 
 
-        LOGGER.info("type and args: {}, Channel type: {}",
-                channelType.get_channelType(),
-                channelType.get_channelArgs());
-
         this.dispersionStrategy = null;
 
-        if (channelType.get_channelType() != null) {
+        if (channelType != null && channelType.get_channelType() != null) {
+            LOGGER.info("type and args: {}, Channel type: {}",
+                    channelType.get_channelType(),
+                    channelType.get_channelArgs());
             try {
                 this.dispersionStrategy = MessageDispersionStrategyFactory
                         .getMessageDispersionStrategy(destPelletName,
@@ -179,8 +177,7 @@ public class SenderBEComponent extends FlakeComponent {
 
         LOGGER.info("Open data channel on: {}", port);
         final ZMQ.Socket backend  = getContext().socket(ZMQ.PUB);
-        backend.bind(
-                Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
+        backend.bind(Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
                         + port);
 
         LOGGER.info("Open back channel on: {}", backChannelPort);
@@ -199,9 +196,7 @@ public class SenderBEComponent extends FlakeComponent {
                 MetricRegistry.name(SenderBEComponent.class, "sent")
         );
 
-
         notifyStarted(true);
-
         int i = 0;
         byte[] message;
         String streamName;
@@ -211,7 +206,6 @@ public class SenderBEComponent extends FlakeComponent {
             if (pollerItems.pollin(0)) { //data messages
                 streamName = middleendreceiver
                         .recvStr(Charset.defaultCharset()); //read an ignore.
-
 
                 //dispersionStrategy.disperseMessage(middleendreceiver,
                 // backend);
@@ -227,10 +221,8 @@ public class SenderBEComponent extends FlakeComponent {
                 //FIXME: SERIALIZE/DESERIALIZE operations.
                 /*tuple.put(Utils.Constants.SYSTEM_TS_FIELD_NAME,
                         System.nanoTime());
-
                 tuple.put(Utils.Constants.SYSTEM_SRC_PELLET_NAME,
                         myPelletName);
-
                 message = tupleSerializer.serialize(tuple);*/
                 if (flakeIds != null
                         && flakeIds.size() > 0) {
@@ -271,12 +263,10 @@ public class SenderBEComponent extends FlakeComponent {
                         Charset.defaultCharset());
                 String toContinue = backendBackChannel.recvStr(
                         Charset.defaultCharset());
-
                 byte[] data = null;
                 if (backendBackChannel.hasReceiveMore()) {
                     data = backendBackChannel.recv();
                 }
-
                 if (data != null) {
                     LOGGER.debug("MSG ON BACKCHANNEL: {},{}",
                             data, toContinue);

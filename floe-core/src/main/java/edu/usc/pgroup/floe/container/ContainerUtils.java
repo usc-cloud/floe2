@@ -20,12 +20,10 @@ import edu.usc.pgroup.floe.flake.FlakeInfo;
 import edu.usc.pgroup.floe.flake.FlakeService;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMappingDelta;
-import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
 import edu.usc.pgroup.floe.utils.RetryLoop;
 import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +58,7 @@ public final class ContainerUtils {
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
      * @param cid container's id on which this flake resides.
+     * @param flakeInstance flake's instance object with corresponding pros.
      * @return the flake id of the launched flake.
      */
     public static synchronized String launchFlake(
@@ -68,7 +67,6 @@ public final class ContainerUtils {
             final String applicationJarPath,
             final String cid,
             final ResourceMapping.FlakeInstance flakeInstance) {
-
 
         final String fid  = String.valueOf(getUniqueFlakeId());
 

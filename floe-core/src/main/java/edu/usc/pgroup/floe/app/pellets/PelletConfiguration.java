@@ -27,6 +27,9 @@ public class PelletConfiguration implements Serializable {
      */
     private StateType stateType;
 
+    /**
+     * Default constructor. (sets the state type to localonly)
+     */
     public PelletConfiguration() {
         this.stateType = StateType.LocalOnly;
     }
@@ -34,7 +37,7 @@ public class PelletConfiguration implements Serializable {
     /**
      * @return State type configured for the pellet
      */
-    public StateType getStateType() {
+    public final StateType getStateType() {
         return stateType;
     }
 
@@ -42,7 +45,7 @@ public class PelletConfiguration implements Serializable {
      * Sets the state type for the pellet.
      * @param type state type enum
      */
-    public void setStateType(StateType type) {
+    public final void setStateType(final StateType type) {
         this.stateType = type;
     }
 }

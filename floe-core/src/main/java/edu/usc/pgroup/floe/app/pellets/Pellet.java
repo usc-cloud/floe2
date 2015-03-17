@@ -31,7 +31,10 @@ import java.util.List;
  */
 public abstract class Pellet implements Serializable {
 
-    PelletConfiguration conf;
+    /**
+     * Pellet configuration (such as number of parallel instances etc).
+     */
+    private PelletConfiguration conf;
 
     /**
      * Default constructor.
@@ -44,15 +47,15 @@ public abstract class Pellet implements Serializable {
     /**
      * @return the pellet configuration.
      */
-    public PelletConfiguration getConf() {
+    public final PelletConfiguration getConf() {
         return conf;
     }
 
     /**
      * Use to configure different aspects of the pellet,such as state type etc.
-     * @param conf pellet configurer
+     * @param pconf pellet configurer
      */
-    public abstract void configure(PelletConfiguration conf);
+    public abstract void configure(final PelletConfiguration pconf);
 
 
     /**
@@ -62,7 +65,8 @@ public abstract class Pellet implements Serializable {
      * @param pelletContext Pellet instance context. Related to this
      *                      particular pellet instance.
      */
-    public abstract void onStart(AppContext appContext, PelletContext pelletContext);
+    public abstract void onStart(final AppContext appContext,
+                                 final PelletContext pelletContext);
 
     /**
      * The teardown function, called when the topology is killed.
@@ -84,5 +88,7 @@ public abstract class Pellet implements Serializable {
      *                results.
      * @param state state associated with the current execution of the pellet.
      */
-    public abstract void execute(Tuple t, Emitter emitter, PelletState state);
+    public abstract void execute(final Tuple t,
+                                 final Emitter emitter,
+                                 final PelletState state);
 }

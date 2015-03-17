@@ -172,10 +172,10 @@ public final class ApplicationBuilder {
             TChannel channel = new TChannel();
 
             channel.set_channelType(TChannelType.ROUND_ROBIN);
-            channel.set_dispersionClass(FloeConfig.getConfig().getString
-                    (ConfigProperties.FLAKE_RR_DISPERSION));
-            channel.set_dispersionClass(FloeConfig.getConfig().getString
-                    (ConfigProperties.FLAKE_RR_LOCAL_DISPERSION));
+            channel.set_dispersionClass(FloeConfig.getConfig().getString(
+                    ConfigProperties.FLAKE_RR_DISPERSION));
+            channel.set_localDispersionClass(FloeConfig.getConfig().getString(
+                    ConfigProperties.FLAKE_RR_LOCAL_DISPERSION));
             channel.set_channelArgs(null);
 
             return subscribe(inputPelletName,
@@ -191,7 +191,7 @@ public final class ApplicationBuilder {
          * @param fieldName field name used for grouping tuples to the reducers.
          * @return The builder pattern's object to further configure the pellet.
          */
-        public PelletBuilder reduce(
+        public final PelletBuilder reduce(
                 final String inputPelletName,
                 final String fieldName) {
             return reduce(inputPelletName,
@@ -213,10 +213,10 @@ public final class ApplicationBuilder {
             TChannel channel = new TChannel();
 
             channel.set_channelType(TChannelType.REDUCE);
-            channel.set_dispersionClass(FloeConfig.getConfig().getString
-                    (ConfigProperties.FLAKE_REDUCER_DISPERSION));
-            channel.set_dispersionClass(FloeConfig.getConfig().getString
-                    (ConfigProperties.FLAKE_REDUCER__LOCAL_DISPERSION));
+            channel.set_dispersionClass(FloeConfig.getConfig().getString(
+                    ConfigProperties.FLAKE_REDUCER_DISPERSION));
+            channel.set_localDispersionClass(FloeConfig.getConfig().getString(
+                    ConfigProperties.FLAKE_REDUCER_LOCAL_DISPERSION));
             channel.set_channelArgs(fieldName);
             return subscribe(inputPelletName,
                     channel,

@@ -17,13 +17,9 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
-import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
-import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,8 +80,8 @@ public abstract class MessageDispersionStrategy implements BackChannelReceiver,
     /**
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
-     * param tuple tuple object.
-     * return the list of target instances to send the given tuple.
+     * @param tuple tuple object.
+     * @return the list of target instances to send the given tuple.
      */
     public abstract List<String> getTargetFlakeIds(Tuple tuple);
 

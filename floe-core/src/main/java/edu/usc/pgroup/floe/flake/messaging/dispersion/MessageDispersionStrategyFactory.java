@@ -17,20 +17,26 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.elasticmapreducer.ElasticReducerDispersion;
-import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.elasticmapreducer.ElasticReducerFlakeLocalDispersion;
-import edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin.RRDispersionStrategy;
 import edu.usc.pgroup.floe.thriftgen.TChannel;
-import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
+import org.omg.CORBA.INTERNAL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author kumbhare
  */
 public final class MessageDispersionStrategyFactory {
+
+
+    /**
+     * the global logger instance.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(MessageDispersionStrategyFactory.class);
 
     /**
      * Hiding default constructor.
@@ -156,9 +162,32 @@ public final class MessageDispersionStrategyFactory {
 
         FlakeLocalDispersionStrategy strategy
                 = (FlakeLocalDispersionStrategy) Utils.instantiateObject(
-                    channel.get_dispersionClass());;
+                    channel.get_localDispersionClass());
+
+        String fqdnClassName = channel.get_localDispersionClass();
+
+        /*final MetricRegistry metricRegistry,
+        final ZMQ.Context context,
+        final String flakeId)*/
+
+        try {
+            strategy = (FlakeLocalDispersionStrategy) Utils
+                    .getConstructor(fqdnClassName,
+                    MetricRegistry.class, ZMQ.Context.class, String.class).
+                    newInstance(metricRegistry, context, flakeId);
+        } catch (InstantiationException e) {
+            LOGGER.error("Could not create an instance of {}, Exception:{}",
+                fqdnClassName, e);
+        } catch (IllegalAccessException e) {
+            LOGGER.error("Could not create an instance of {}, Exception:{}",
+                    fqdnClassName, e);
+        } catch (InvocationTargetException e) {
+            LOGGER.error("Could not create an instance of {}, Exception:{}",
+                    fqdnClassName, e);
+        }
+
         if (strategy != null) {
-            strategy.initialize(null);
+            strategy.initialize(channel.get_channelArgs());
         }
         return strategy;
     }

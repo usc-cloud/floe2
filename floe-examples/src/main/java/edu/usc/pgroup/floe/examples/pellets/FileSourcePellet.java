@@ -18,9 +18,8 @@ package edu.usc.pgroup.floe.examples.pellets;
 
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
-import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,15 +167,6 @@ public class FileSourcePellet extends StatelessPellet {
                 LOGGER.error("Exception: {}", e);
             }
         }
-    }
-
-    /**
-     * Use to configure different aspects of the pellet,such as state type etc.
-     * @param conf pellet configurer
-     */
-    @Override
-    public void configure(PelletConfiguration conf) {
-
     }
 
     /**

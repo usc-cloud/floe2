@@ -19,10 +19,9 @@ package edu.usc.pgroup.floe.examples;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.app.Emitter;
-import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
-import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
-import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.pellets.PelletContext;
+import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
 import edu.usc.pgroup.floe.client.AppSubmitter;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
@@ -62,11 +61,6 @@ public final class SimpleLoop {
      * increments it and forwards it to the next pellet.
      */
     static class SendAndPrint extends StatelessPellet {
-
-        @Override
-        public void configure(PelletConfiguration conf) {
-
-        }
 
         /**
          * The setup function is called once to let the pellet initialize.

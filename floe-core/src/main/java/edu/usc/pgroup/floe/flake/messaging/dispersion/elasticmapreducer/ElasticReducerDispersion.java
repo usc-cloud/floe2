@@ -21,21 +21,16 @@ import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
-import edu.usc.pgroup.floe.zookeeper.ZKUtils;
-import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -92,7 +87,9 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
      */
     private ZKFlakeTokenCache flakeCache;
 
-
+    /**
+     * Default constructor.
+     */
     public ElasticReducerDispersion() {
         this.targetFlakeIds = new ArrayList<>();
         this.flakeArgs = new ArrayList<>();
@@ -144,7 +141,7 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
      *             interface.
      */
     @Override
-    protected void initialize(String args) {
+    protected final void initialize(final String args) {
         this.keyFieldName = args;
     }
 
@@ -152,12 +149,11 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
      * param tuple tuple object.
-     * return the list of target instances to send the given tuple.
-     *
-     * @param tuple
+     * @param tuple incoming tuple
+     * @return the list of target instances to send the given tuple
      */
     @Override
-    public List<String> getTargetFlakeIds(Tuple tuple) {
+    public final List<String> getTargetFlakeIds(final Tuple tuple) {
         Object key = tuple.get(keyFieldName);
 
         byte[] seralized = null;
@@ -186,7 +182,7 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
      * @return list of arguments to be sent.
      */
     @Override
-    public List<String> getCustomArguments(String flakeId) {
+    public final List<String> getCustomArguments(final String flakeId) {
         flakeArgs.clear();
         flakeArgs.add(actualHashes.get(flakeId).toString());
         flakeArgs.add(String.valueOf(System.currentTimeMillis()));

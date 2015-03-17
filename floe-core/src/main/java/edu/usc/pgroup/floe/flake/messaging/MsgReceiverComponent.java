@@ -64,15 +64,15 @@ public class MsgReceiverComponent extends FlakeComponent {
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
-     * @param predChannelMap the pred. to channel type map.
+     * @param pChannelMap the pred. to channel type map.
      */
     public MsgReceiverComponent(final MetricRegistry metricRegistry,
                                 final String flakeId,
                                 final String componentName,
                                 final ZMQ.Context ctx,
-                                final Map<String, TChannel> predChannelMap) {
+                                final Map<String, TChannel> pChannelMap) {
         super(metricRegistry, flakeId, componentName, ctx);
-        this.predChannelMap = predChannelMap;
+        this.predChannelMap = pChannelMap;
     }
 
     /**

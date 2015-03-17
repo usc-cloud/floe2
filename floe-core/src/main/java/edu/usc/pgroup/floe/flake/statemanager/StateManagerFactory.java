@@ -18,7 +18,6 @@ package edu.usc.pgroup.floe.flake.statemanager;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
-import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -79,6 +78,8 @@ public final class StateManagerFactory {
             manager = new GenericPelletStateManager(metricRegistry,
                     flakeId, componentName, ctx, port);
                 break;
+            default:
+                manager = null;
         }
         return manager;
     }

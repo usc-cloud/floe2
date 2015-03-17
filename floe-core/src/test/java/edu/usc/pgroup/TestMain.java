@@ -16,17 +16,11 @@
 
 package edu.usc.pgroup;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ganglia.GangliaReporter;
-import info.ganglia.gmetric4j.CoreSampler;
-import info.ganglia.gmetric4j.GMonitor;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GangliaException;
 
 import java.io.IOException;
 import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare

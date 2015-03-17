@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app.pellets;
-
 /**
+ * This package contains the user APIs required to create a FLOE app.
  * @author kumbhare
  */
-public enum StateType {
-    /**
-     * No state allowed.
-     */
-    None,
-    /**
-     * Each flake has it's local state only. No coomunication between
-     * different flakes.
-     */
-    LocalOnly
-}
+package edu.usc.pgroup.floe.app.pellets;

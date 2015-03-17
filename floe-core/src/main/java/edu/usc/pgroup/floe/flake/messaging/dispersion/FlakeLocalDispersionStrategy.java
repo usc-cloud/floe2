@@ -73,8 +73,8 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
      */
     public FlakeLocalDispersionStrategy(
             final MetricRegistry metricRegistry,
-                                        final ZMQ.Context context,
-                                        final String flakeId) {
+            final ZMQ.Context context,
+            final String flakeId) {
 
         super(metricRegistry, flakeId, "FL-LOCAL-STRATEGY", context);
 

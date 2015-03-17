@@ -18,9 +18,6 @@
 
 import os
 import sys
-import random
-import subprocess as sub
-import getopt
 import re
 
 

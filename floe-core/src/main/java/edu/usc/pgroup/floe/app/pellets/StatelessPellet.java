@@ -28,7 +28,7 @@ import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 public abstract class StatelessPellet extends Pellet {
 
     @Override
-    public void configure(PelletConfiguration conf) {
+    public final void configure(final PelletConfiguration conf) {
         conf.setStateType(StateType.None);
     }
 
@@ -55,5 +55,5 @@ public abstract class StatelessPellet extends Pellet {
      * @param emitter An output emitter which may be used by the user to emmit
      *                results.
      */
-    protected abstract void execute(Tuple t, Emitter emitter);
+    protected abstract void execute(final Tuple t, final Emitter emitter);
 }

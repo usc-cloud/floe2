@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging.dispersion;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.utils.Utils;
+import edu.usc.pgroup.floe.flake.messaging
+        .dispersion.FlakeLocalDispersionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -121,7 +122,9 @@ public class RRFlakeLocalDispersionStrategy
      * @return the list of target instances to send the given tuple.
      */
     @Override
-    public String getTargetPelletInstance(Tuple tuple, List<String> args) {
+    public final String getTargetPelletInstance(
+            final Tuple tuple,
+            final List<String> args) {
         return getTargetPelletInstances();
     }
 

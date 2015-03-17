@@ -16,9 +16,9 @@
 
 package edu.usc.pgroup.floe.coordinator;
 
-import edu.usc.pgroup.floe.signals.SignalHandler;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.signals.SignalHandler;
 import edu.usc.pgroup.floe.thriftgen.AppNotFoundException;
 import edu.usc.pgroup.floe.thriftgen.AppStatus;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
@@ -26,7 +26,6 @@ import edu.usc.pgroup.floe.thriftgen.TCoordinator;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TSignal;
 import edu.usc.pgroup.floe.utils.Utils;
-
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

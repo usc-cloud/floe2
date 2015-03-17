@@ -218,25 +218,25 @@ public final class ConfigProperties {
 
 
     /**
-     * Channel/dispersion classes for reducer
+     * Channel/dispersion classes for reducer.
      */
     public static final String FLAKE_REDUCER_DISPERSION = "floe.flake"
             + ".messaging.dispersion.reducer";
 
     /**
-     * Channel/dispersion classes for reducer (local)
+     * Channel/dispersion classes for reducer (local).
      */
-    public static final String FLAKE_REDUCER__LOCAL_DISPERSION = "floe.flake"
+    public static final String FLAKE_REDUCER_LOCAL_DISPERSION = "floe.flake"
             + ".messaging.dispersion.reducer.local";
 
     /**
-     * Channel/dispersion classes for round robin
+     * Channel/dispersion classes for round robin.
      */
     public static final String FLAKE_RR_DISPERSION = "floe.flake"
             + ".messaging.dispersion.rr";
 
     /**
-     * Channel/dispersion classes for reducer (local)
+     * Channel/dispersion classes for reducer (local).
      */
     public static final String FLAKE_RR_LOCAL_DISPERSION = "floe.flake"
             + ".messaging.dispersion.rr.local";

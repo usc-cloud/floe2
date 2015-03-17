@@ -28,7 +28,6 @@ import edu.usc.pgroup.floe.flake.messaging
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
 import edu.usc.pgroup.floe.thriftgen.TChannel;
-import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +35,6 @@ import org.zeromq.ZMQ;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -88,15 +86,15 @@ public class ReceiverME extends FlakeComponent {
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
-     * @param predChannelMap the pred. to channel type map.
+     * @param pChannelMap the pred. to channel type map.
      */
     public ReceiverME(final MetricRegistry registry,
                       final String flakeId,
                       final String componentName,
                       final ZMQ.Context ctx,
-                      final Map<String, TChannel> predChannelMap) {
+                      final Map<String, TChannel> pChannelMap) {
         super(registry, flakeId, componentName, ctx);
-        this.predChannelMap = predChannelMap;
+        this.predChannelMap = pChannelMap;
         //this.localDispersionStratMap = new HashMap<>();
         this.tupleSerializer = SerializerFactory.getSerializer();
         nwLatTimer = registry.timer(
@@ -182,11 +180,12 @@ public class ReceiverME extends FlakeComponent {
                 = predChannelMap.values().iterator().next();
 
 
-        LOGGER.info("type and args: {}, Channel type: {}",
-                channel.get_channelType(),
-                channel.get_channelArgs());
 
-        if (channel.get_channelType() != null) {
+
+        if (channel != null && channel.get_channelType() != null) {
+            LOGGER.info("type and args: {}, Channel type: {}",
+                    channel.get_channelType(),
+                    channel.get_channelArgs());
             try {
                 localDispersionStrat = MessageDispersionStrategyFactory
                         .getFlakeLocalDispersionStrategy(

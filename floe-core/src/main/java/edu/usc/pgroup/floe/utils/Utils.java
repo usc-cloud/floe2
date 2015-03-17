@@ -23,13 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
-
+import java.io.ObjectOutputStream;
+import java.lang.reflect.Constructor;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -217,6 +216,29 @@ public final class Utils {
         return instance;
     }
 
+
+    /**
+     * Use reflection to create an instance of the given class.
+     * @param fqdnClassName the fully qualified class name.
+     * @return a new instance of the given class. NULL if there was an error
+     * creating the instance.
+     */
+    public static Constructor<?> getConstructor(
+            final String fqdnClassName, Class<?> ...params) {
+        try {
+            Class<?> klass = Class.forName(fqdnClassName);
+
+            return klass.getConstructor(params);
+
+        } catch (ClassNotFoundException e) {
+            LOGGER.error("Could not create an instance of {}, Exception:{}",
+                    fqdnClassName, e);
+        } catch (NoSuchMethodException e) {
+            LOGGER.error("No such constructor found, Exception:{}",
+                    fqdnClassName, e);
+        }
+        return null;
+    }
 
     /**
      * Serializer used for storing data into zookeeper. We use the default

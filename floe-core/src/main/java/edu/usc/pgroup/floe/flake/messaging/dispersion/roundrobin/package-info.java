@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app.pellets;
-
 /**
+ * Plugin for elastic reducer disspersion strategy. Both sender and flake local.
  * @author kumbhare
  */
-public enum StateType {
-    /**
-     * No state allowed.
-     */
-    None,
-    /**
-     * Each flake has it's local state only. No coomunication between
-     * different flakes.
-     */
-    LocalOnly
-}
+package edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin;

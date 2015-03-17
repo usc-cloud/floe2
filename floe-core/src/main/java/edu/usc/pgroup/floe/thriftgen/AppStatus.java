@@ -7,10 +7,6 @@
 package edu.usc.pgroup.floe.thriftgen;
 
 
-import java.util.Map;
-import java.util.HashMap;
-import org.apache.thrift.TEnum;
-
 /**
  * Enum for App Status.
  */

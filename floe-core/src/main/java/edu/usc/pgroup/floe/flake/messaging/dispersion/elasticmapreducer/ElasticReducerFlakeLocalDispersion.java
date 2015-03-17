@@ -18,15 +18,13 @@ package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.FlakeLocalDispersionStrategy;
-import edu.usc.pgroup.floe.utils.Utils;
+import edu.usc.pgroup.floe.flake.messaging.dispersion
+        .FlakeLocalDispersionStrategy;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,7 +86,9 @@ public class ElasticReducerFlakeLocalDispersion
      * @return the list of target instances to send the given tuple.
      */
     @Override
-    public String getTargetPelletInstance(Tuple tuple, List<String> args) {
+    public final String getTargetPelletInstance(
+            final Tuple tuple,
+            final List<String> args) {
         String hashInt = args.get(0);
         LOGGER.info("HASH RECEIVED:{}", hashInt);
         Integer actualHash = Integer.parseInt(hashInt);

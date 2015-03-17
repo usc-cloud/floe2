@@ -16,11 +16,11 @@
 
 package edu.usc.pgroup.floe.processes.cpuaffinity.impl;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.PointerType;
-import com.sun.jna.LastErrorException;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import edu.usc.pgroup.floe.processes.cpuaffinity.Affinity;
