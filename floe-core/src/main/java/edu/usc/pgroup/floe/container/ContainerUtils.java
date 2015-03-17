@@ -60,17 +60,6 @@ public final class ContainerUtils {
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
      * @param cid container's id on which this flake resides.
-     * @param statePort       Port to be used for sending checkpoint data.
-     * @param pelletPortMap map of pellet name to ports to listen on for
-     *                      connections from the succeeding pellets.
-     * @param backChannelPortMap map of port for the dispersion. One port
-     *                           per target pellet.
-     * @param successorChannelMap Map of target pellet to channel type
-     *                                (one per edge)
-     * @param predChannelMap Map of src pellet to channel type
-     *                                (one per edge)
-     * @param pelletStreamsMap map of pellet name to list of stream names.
-     * @param token token of the flake.
      * @return the flake id of the launched flake.
      */
     public static synchronized String launchFlake(
@@ -78,13 +67,8 @@ public final class ContainerUtils {
             final String appName,
             final String applicationJarPath,
             final String cid,
-            final Integer statePort,
-            final Map<String, Integer> pelletPortMap,
-            final Map<String, Integer> backChannelPortMap,
-            final Map<String, TChannel> successorChannelMap,
-            final Map<String, TChannel> predChannelMap,
-            final Map<String, List<String>> pelletStreamsMap,
-            final String token) {
+            final ResourceMapping.FlakeInstance flakeInstance) {
+
 
         final String fid  = String.valueOf(getUniqueFlakeId());
 
@@ -103,36 +87,6 @@ public final class ContainerUtils {
         }
         args.add("-cid");
         args.add(cid);
-        args.add("-token");
-        args.add(token);
-        args.add("-stateport");
-        args.add(statePort.toString());
-        args.add("-ports");
-        for (Map.Entry<String, Integer> p: pelletPortMap.entrySet()) {
-            args.add(p.getKey() + ':' + p.getValue());
-        }
-
-        args.add("-backchannelports");
-        for (Map.Entry<String, Integer> p: backChannelPortMap.entrySet()) {
-            args.add(p.getKey() + ':' + p.getValue());
-        }
-
-        args.add("-channeltype");
-        for (Map.Entry<String, String> p: successorChannelMap.entrySet()) {
-            args.add(p.getKey() + ':' + p.getValue());
-        }
-
-        args.add("-predchanneltype");
-        for (Map.Entry<String, String> p: predChannelMap.entrySet()) {
-            args.add(p.getKey() + ':' + p.getValue());
-        }
-
-        args.add("-streams");
-        for (Map.Entry<String, List<String>> streams
-                : pelletStreamsMap.entrySet()) {
-            args.add(streams.getKey() + ':'
-                    + StringUtils.join(streams.getValue(), "|"));
-        }
 
         final String[] argsarr = new String[args.size()];
         args.toArray(argsarr);
@@ -507,44 +461,37 @@ public final class ContainerUtils {
     }
 
     /**
-     * Function to launch flakes within the container. This will launch
-     * flakes and wait for a heartbeat from each of them.
+     * Function to launch flakeInstances within the container. This will launch
+     * flakeInstances and wait for a heartbeat from each of them.
      *
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
      * @param containerId Container id.
-     * @param flakes list of flake instances from the resource mapping.
+     * @param flakeInstances list of flake instances from the resource mapping.
      * @return the pid to fid map.
      */
     public static Map<String, String> createFlakes(
             final String appName, final String applicationJarPath,
             final String containerId,
-            final Map<String, ResourceMapping.FlakeInstance> flakes) {
+            final Map<String, ResourceMapping.FlakeInstance> flakeInstances) {
 
         Map<String, String> pidToFidMap = new HashMap<>();
 
-
-
-
         for (Map.Entry<String, ResourceMapping.FlakeInstance> entry
-                : flakes.entrySet()) {
+                : flakeInstances.entrySet()) {
             final String pid = entry.getKey();
 
             ResourceMapping.FlakeInstance flakeInstance = entry.getValue();
-            LOGGER.error("Launching flake with token:{}",
+            LOGGER.info("Launching flake with token:{}",
                     flakeInstance.getToken());
+
             final String fid = ContainerUtils.launchFlake(
                     pid,
                     appName,
                     applicationJarPath,
                     containerId,
-                    flakeInstance.getStateCheckpointingPort(),
-                    flakeInstance.getPelletPortMapping(),
-                    flakeInstance.getPelletBackChannelPortMapping(),
-                    flakeInstance.getTargetPelletChannelTypeMapping(),
-                    flakeInstance.getSrcPelletChannelTypeMapping(),
-                    flakeInstance.getPelletStreamsMapping(),
-                    flakeInstance.getToken());
+                    flakeInstance
+                    );
 
             try {
                 FlakeInfo info = RetryLoop.callWithRetry(RetryPolicyFactory

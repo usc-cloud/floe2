@@ -27,6 +27,7 @@ import edu.usc.pgroup.floe.flake.messaging
         .dispersion.MessageDispersionStrategyFactory;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class ReceiverME extends FlakeComponent {
     /**
      * Predecessor to channel type map.
      */
-    private Map<String, String> predChannelMap;
+    private Map<String, TChannel> predChannelMap;
 
     /**
      * Map of pred. pellet name to local dispersion strategy.
@@ -87,15 +88,15 @@ public class ReceiverME extends FlakeComponent {
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
-     * @param predChannelTypeMap the pred. to channel type map.
+     * @param predChannelMap the pred. to channel type map.
      */
     public ReceiverME(final MetricRegistry registry,
                       final String flakeId,
                       final String componentName,
                       final ZMQ.Context ctx,
-                      final Map<String, String> predChannelTypeMap) {
+                      final Map<String, TChannel> predChannelMap) {
         super(registry, flakeId, componentName, ctx);
-        this.predChannelMap = predChannelTypeMap;
+        this.predChannelMap = predChannelMap;
         //this.localDispersionStratMap = new HashMap<>();
         this.tupleSerializer = SerializerFactory.getSerializer();
         nwLatTimer = registry.timer(
@@ -177,29 +178,21 @@ public class ReceiverME extends FlakeComponent {
     private void initializeLocalDispersionStrategyMap() {
 
 
-        String channel
+        TChannel channel
                 = predChannelMap.values().iterator().next();
 
 
-        String[] ctypesAndArgs = channel.split("__");
-        String ctype = ctypesAndArgs[0];
-        String args = null;
-        if (ctypesAndArgs.length > 1) {
-            args = ctypesAndArgs[1];
-        }
-        LOGGER.info("type and args: {}, Channel type: {}", channel,
-                ctype);
+        LOGGER.info("type and args: {}, Channel type: {}",
+                channel.get_channelType(),
+                channel.get_channelArgs());
 
-        TChannelType type = null;
-        if (!ctype.startsWith("NONE")) {
-            type = Enum.valueOf(TChannelType.class, ctype);
-
+        if (channel.get_channelType() != null) {
             try {
                 localDispersionStrat = MessageDispersionStrategyFactory
                         .getFlakeLocalDispersionStrategy(
                                 getMetricRegistry(),
                                 getContext(),
-                                type,
+                                channel,
                                 getFid()
                         );
                 localDispersionStrat.startAndWait();

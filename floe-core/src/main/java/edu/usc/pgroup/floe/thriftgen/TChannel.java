@@ -50,7 +50,7 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
   private TChannelType channelType; // required
   private String dispersionClass; // required
   private String localDispersionClass; // required
-  private String channelArgs; // required
+  private String channelArgs; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -124,6 +124,7 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.CHANNEL_ARGS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -133,7 +134,7 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.LOCAL_DISPERSION_CLASS, new org.apache.thrift.meta_data.FieldMetaData("localDispersionClass", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.CHANNEL_ARGS, new org.apache.thrift.meta_data.FieldMetaData("channelArgs", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.CHANNEL_ARGS, new org.apache.thrift.meta_data.FieldMetaData("channelArgs", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TChannel.class, metaDataMap);
@@ -145,14 +146,12 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
   public TChannel(
     TChannelType channelType,
     String dispersionClass,
-    String localDispersionClass,
-    String channelArgs)
+    String localDispersionClass)
   {
     this();
     this.channelType = channelType;
     this.dispersionClass = dispersionClass;
     this.localDispersionClass = localDispersionClass;
-    this.channelArgs = channelArgs;
   }
 
   /**
@@ -529,14 +528,16 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
       sb.append(this.localDispersionClass);
     }
     first = false;
-    if (!first) sb.append(", ");
-    sb.append("channelArgs:");
-    if (this.channelArgs == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.channelArgs);
+    if (is_set_channelArgs()) {
+      if (!first) sb.append(", ");
+      sb.append("channelArgs:");
+      if (this.channelArgs == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.channelArgs);
+      }
+      first = false;
     }
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -553,10 +554,6 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
 
     if (!is_set_localDispersionClass()) {
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'localDispersionClass' is unset! Struct:" + toString());
-    }
-
-    if (!is_set_channelArgs()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'channelArgs' is unset! Struct:" + toString());
     }
 
     // check for sub-struct validity
@@ -657,9 +654,11 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
         oprot.writeFieldEnd();
       }
       if (struct.channelArgs != null) {
-        oprot.writeFieldBegin(CHANNEL_ARGS_FIELD_DESC);
-        oprot.writeString(struct.channelArgs);
-        oprot.writeFieldEnd();
+        if (struct.is_set_channelArgs()) {
+          oprot.writeFieldBegin(CHANNEL_ARGS_FIELD_DESC);
+          oprot.writeString(struct.channelArgs);
+          oprot.writeFieldEnd();
+        }
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -681,7 +680,14 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
       oprot.writeI32(struct.channelType.getValue());
       oprot.writeString(struct.dispersionClass);
       oprot.writeString(struct.localDispersionClass);
-      oprot.writeString(struct.channelArgs);
+      BitSet optionals = new BitSet();
+      if (struct.is_set_channelArgs()) {
+        optionals.set(0);
+      }
+      oprot.writeBitSet(optionals, 1);
+      if (struct.is_set_channelArgs()) {
+        oprot.writeString(struct.channelArgs);
+      }
     }
 
     @Override
@@ -693,8 +699,11 @@ public class TChannel implements org.apache.thrift.TBase<TChannel, TChannel._Fie
       struct.set_dispersionClass_isSet(true);
       struct.localDispersionClass = iprot.readString();
       struct.set_localDispersionClass_isSet(true);
-      struct.channelArgs = iprot.readString();
-      struct.set_channelArgs_isSet(true);
+      BitSet incoming = iprot.readBitSet(1);
+      if (incoming.get(0)) {
+        struct.channelArgs = iprot.readString();
+        struct.set_channelArgs_isSet(true);
+      }
     }
   }
 

@@ -68,7 +68,8 @@ public class ScaleTransition extends BaseAppTransition {
 
         LOGGER.info("App Path to store the configuration:" + appPath);
         try {
-            ZKUtils.setAppStatus(appName, AppStatus.NEW_REQ_RECEIVED);
+            ZKUtils.setAppStatus(appName,
+                    AppStatus.NEW_DEPLOYMENT_REQ_RECEIVED);
 
         } catch (Exception e) {
             LOGGER.error("Could not update status");

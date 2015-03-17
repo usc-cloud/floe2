@@ -18,10 +18,13 @@ package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.elasticreducer.ElasticReducerDispersion;
+        .dispersion.elasticmapreducer.ElasticReducerDispersion;
 import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.elasticreducer.ElasticReducerFlakeLocalDispersion;
+        .dispersion.elasticmapreducer.ElasticReducerFlakeLocalDispersion;
+import edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin.RRDispersionStrategy;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
+import edu.usc.pgroup.floe.utils.Utils;
 import org.zeromq.ZMQ;
 
 /**
@@ -40,9 +43,7 @@ public final class MessageDispersionStrategyFactory {
      * Factory function for creating the MessageDispersionStrategy.
      * @param appName Application name.
      * @param destPelletName dest pellet name to be used to get data from ZK.
-     * @param channelType type of the channel (edge) in the application.
-     * @param args Any arguments to be sent to the Strategy Class while
-     *             initialization.
+     * @param channel type of the channel (edge) in the application.
      * @return new instance of MessageDispersionStrategy based on the edge type.
      * @throws java.lang.ClassNotFoundException if the given channel type is
      * invalid or the class for custom strategy is not found.
@@ -51,25 +52,28 @@ public final class MessageDispersionStrategyFactory {
             getMessageDispersionStrategy(
                 final String destPelletName,
                 final String appName,
-                final TChannelType channelType,
-                final String args) throws ClassNotFoundException {
+                final TChannel channel) throws ClassNotFoundException {
 
-        MessageDispersionStrategy strategy = null;
+        MessageDispersionStrategy strategy
+                = (MessageDispersionStrategy) Utils.instantiateObject(
+                channel.get_dispersionClass());
 
-        switch (channelType) {
-            case ROUND_ROBIN:
-                strategy = new RRDispersionStrategy();
-                break;
-            case REDUCE:
-                strategy = new ElasticReducerDispersion();
-                break;
-            case LOAD_BALANCED:
-            case CUSTOM:
-            default:
-                throw new ClassNotFoundException(channelType.toString());
+//        switch (channel.get_channelType()) {
+//            case ROUND_ROBIN:
+//                strategy = new RRDispersionStrategy();
+//                break;
+//            case REDUCE:
+//                strategy = new ElasticReducerDispersion();
+//                break;
+//            case LOAD_BALANCED:
+//            case CUSTOM:
+//            default:
+//                throw new ClassNotFoundException(channel.toString());
+//        }
+        if (strategy != null) {
+            strategy.initialize(
+                    appName, destPelletName, channel.get_channelArgs());
         }
-
-        strategy.initialize(appName, destPelletName, args);
         return strategy;
     }
 
@@ -119,7 +123,7 @@ public final class MessageDispersionStrategyFactory {
      * Factory function for creating the MessageDispersionStrategy.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param context shared ZMQ context.
-     * @param channelType channel type.
+     * @param channel channel type.
      * @param flakeId Current flake id.
      * @return returns the associated local dispersion strategy.
      * @throws java.lang.ClassNotFoundException if the channel type is invalid
@@ -128,28 +132,34 @@ public final class MessageDispersionStrategyFactory {
                     getFlakeLocalDispersionStrategy(
             final MetricRegistry metricRegistry,
             final ZMQ.Context context,
-            final TChannelType channelType, final String flakeId)
+            final TChannel channel, final String flakeId)
             throws ClassNotFoundException {
 
-        FlakeLocalDispersionStrategy strategy;
-        switch (channelType) {
-            case ROUND_ROBIN:
-                strategy = new RRFlakeLocalDispersionStrategy(metricRegistry,
-                        context, flakeId);
-                break;
-            case REDUCE:
-                strategy = new ElasticReducerFlakeLocalDispersion(
-                        metricRegistry,
-                        context,
-                        flakeId);
-                break;
-            case LOAD_BALANCED:
-            case CUSTOM:
-            default:
-                throw new ClassNotFoundException(channelType.toString());
-        }
 
-        strategy.initialize(null);
+//        switch (channel.get_channelType()) {
+//            case ROUND_ROBIN:
+//                strategy = new edu.usc.pgroup.floe.flake.messaging.dispersion
+//                        .RRFlakeLocalDispersionStrategy(metricRegistry,
+//                        context, flakeId);
+//                break;
+//            case REDUCE:
+//                strategy = new ElasticReducerFlakeLocalDispersion(
+//                        metricRegistry,
+//                        context,
+//                        flakeId);
+//                break;
+//            case LOAD_BALANCED:
+//            case CUSTOM:
+//            default:
+//                throw new ClassNotFoundException(channel.toString());
+//        }
+
+        FlakeLocalDispersionStrategy strategy
+                = (FlakeLocalDispersionStrategy) Utils.instantiateObject(
+                    channel.get_dispersionClass());;
+        if (strategy != null) {
+            strategy.initialize(null);
+        }
         return strategy;
     }
 }

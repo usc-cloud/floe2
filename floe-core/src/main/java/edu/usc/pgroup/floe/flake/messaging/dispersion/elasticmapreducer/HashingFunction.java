@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
-
-import edu.usc.pgroup.floe.flake.statemanager.PelletState;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
 /**
  * @author kumbhare
  */
-public abstract class StatefulPellet implements Pellet {
-
+public interface HashingFunction {
     /**
-     * Reducer specific execute function which is called for each input tuple
-     * with the state corresponding to the key. This state will be persisted
-     * across executes for each of the keys.
-     * @param t input tuple received from the preceding pellet.
-     * @param emitter An output emitter which may be used by the user to emmit.
-     * @param state State specific to the key value given in the tuple.
+     * @param data byte serialized data.
+     * @return Returns a 32 bit integer hash.
      */
-    public abstract void execute(Tuple t, Emitter emitter, PelletState state);
+    int hash(byte[] data);
 }

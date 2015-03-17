@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging.dispersion;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin;
 
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
+import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;

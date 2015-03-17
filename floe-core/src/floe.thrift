@@ -40,7 +40,7 @@ struct TChannel {
     1: required TChannelType channelType;
     2: required string dispersionClass;
     3: required string localDispersionClass;
-    4: required string channelArgs;
+    4: optional string channelArgs;
 }
 
 struct TEdge {

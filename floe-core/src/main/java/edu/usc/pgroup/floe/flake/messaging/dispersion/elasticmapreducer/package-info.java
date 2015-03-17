@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
-
 /**
+ * Plugin for elastic reducer disspersion strategy. Both sender and flake local.
  * @author kumbhare
  */
-public interface HashingFunction {
-    /**
-     * @param data byte serialized data.
-     * @return Returns a 32 bit integer hash.
-     */
-    int hash(byte[] data);
-}
+package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;

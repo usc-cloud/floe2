@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeToken;

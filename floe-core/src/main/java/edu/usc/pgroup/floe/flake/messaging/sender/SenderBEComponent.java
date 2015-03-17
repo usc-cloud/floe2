@@ -26,6 +26,7 @@ import edu.usc.pgroup.floe.flake.messaging
         .dispersion.MessageDispersionStrategyFactory;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -79,7 +80,7 @@ public class SenderBEComponent extends FlakeComponent {
     /**
      * Channel type for this backend.
      */
-    private final String channelTypeStr;
+    private final TChannel channelType;
 
     /**
      * Application name.
@@ -108,7 +109,7 @@ public class SenderBEComponent extends FlakeComponent {
      * @param bp dispersion port.
      * @param app Application name.
      * @param destPellet dest pellet name to be used to get data from ZK.
-     * @param channelType channel type (e.g. round robin, reduce,
+     * @param channel channel type (e.g. round robin, reduce,
      *                    load balanced, custom)
      * @param streams list of stream names to subscribe to.
      * @param pelletName Pellet's id/name.
@@ -121,7 +122,7 @@ public class SenderBEComponent extends FlakeComponent {
                              final int bp,
                              final String app,
                              final String destPellet,
-                             final String channelType,
+                             final TChannel channel,
                              final List<String> streams,
                              final String pelletName) {
         super(metricRegistry, flakeId, componentName, ctx);
@@ -130,7 +131,7 @@ public class SenderBEComponent extends FlakeComponent {
         this.streamNames = streams;
         this.myPelletName = pelletName;
         this.tupleSerializer = SerializerFactory.getSerializer();
-        this.channelTypeStr = channelType;
+        this.channelType = channel;
         this.appName = app;
         this.destPelletName = destPellet;
     }
@@ -146,26 +147,21 @@ public class SenderBEComponent extends FlakeComponent {
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
 
-        String[] ctypesAndArgs = channelTypeStr.split("__");
-        String ctype = ctypesAndArgs[0];
-        String args = null;
-        if (ctypesAndArgs.length > 1) {
-            args = ctypesAndArgs[1];
-        }
-        LOGGER.info("type and args: {}, Channel type: {}", channelTypeStr,
-                ctype);
+
+        LOGGER.info("type and args: {}, Channel type: {}",
+                channelType.get_channelType(),
+                channelType.get_channelArgs());
 
         this.dispersionStrategy = null;
 
-        if (!ctype.startsWith("NONE")) {
-            TChannelType type = Enum.valueOf(TChannelType.class, ctype);
+        if (channelType.get_channelType() != null) {
             try {
                 this.dispersionStrategy = MessageDispersionStrategyFactory
                         .getMessageDispersionStrategy(destPelletName,
-                                appName, type, args);
+                                appName, channelType);
             } catch (Exception ex) {
                 LOGGER.error("Invalid dispersion strategy: {}. "
-                        + "Using default RR", type);
+                        + "Using default RR", channelType.get_channelType());
             }
         }
 
@@ -252,6 +248,8 @@ public class SenderBEComponent extends FlakeComponent {
                             for (String arg: fargs) {
                                 backend.sendMore(arg);
                             }
+                        } else {
+                            backend.sendMore(String.valueOf(0));
                         }
 
                         backend.send(message, 0);

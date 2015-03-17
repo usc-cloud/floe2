@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
+package edu.usc.pgroup.floe.app.pellets;
 
+import edu.usc.pgroup.floe.app.AppContext;
+import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 
 import java.io.Serializable;
@@ -26,7 +29,32 @@ import java.util.List;
  * Stateful and stateless pellets are derived from this common.
  * @author kumbhare
  */
-public interface Pellet extends Serializable {
+public abstract class Pellet implements Serializable {
+
+    PelletConfiguration conf;
+
+    /**
+     * Default constructor.
+     */
+    public Pellet() {
+        conf = new PelletConfiguration();
+        configure(conf);
+    }
+
+    /**
+     * @return the pellet configuration.
+     */
+    public PelletConfiguration getConf() {
+        return conf;
+    }
+
+    /**
+     * Use to configure different aspects of the pellet,such as state type etc.
+     * @param conf pellet configurer
+     */
+    public abstract void configure(PelletConfiguration conf);
+
+
     /**
      * The setup function is called once to let the pellet initialize.
      * @param appContext Application's context. Some data related to
@@ -34,30 +62,19 @@ public interface Pellet extends Serializable {
      * @param pelletContext Pellet instance context. Related to this
      *                      particular pellet instance.
      */
-    void setup(AppContext appContext, PelletContext pelletContext);
-
-
-    /**
-     * The onStart function is called once just before executing the pellet
-     * and after the setup function. Typically, this is used by a data source
-     * pellet which does not depend on external data source but generates
-     * tuples on its own.
-     * @param emitter An output emitter which may be used by the user to emmit
-     *                results.
-     */
-    void onStart(Emitter emitter);
+    public abstract void onStart(AppContext appContext, PelletContext pelletContext);
 
     /**
      * The teardown function, called when the topology is killed.
      * Or when the Pellet instance is scaled down.
      */
-    void teardown();
+    public abstract void teardown();
 
     /**
      * @return The names of the streams to be used later during emitting
      * messages.
      */
-    List<String> getOutputStreamNames();
+    public abstract List<String> getOutputStreamNames();
 
     /**
      * The execute method which is called for each tuple.
@@ -67,5 +84,5 @@ public interface Pellet extends Serializable {
      *                results.
      * @param state state associated with the current execution of the pellet.
      */
-    void execute(Tuple t, Emitter emitter, PelletState state);
+    public abstract void execute(Tuple t, Emitter emitter, PelletState state);
 }

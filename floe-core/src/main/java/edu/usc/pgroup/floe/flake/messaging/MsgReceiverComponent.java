@@ -21,6 +21,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ public class MsgReceiverComponent extends FlakeComponent {
     /**
      * Predecessor to channel type map.
      */
-    private Map<String, String> predChannelMap;
+    private Map<String, TChannel> predChannelMap;
 
     /**
      * The neighbors currently subscribed for.
@@ -63,15 +64,15 @@ public class MsgReceiverComponent extends FlakeComponent {
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
-     * @param predChannelTypeMap the pred. to channel type map.
+     * @param predChannelMap the pred. to channel type map.
      */
     public MsgReceiverComponent(final MetricRegistry metricRegistry,
                                 final String flakeId,
                                 final String componentName,
                                 final ZMQ.Context ctx,
-                                final Map<String, String> predChannelTypeMap) {
+                                final Map<String, TChannel> predChannelMap) {
         super(metricRegistry, flakeId, componentName, ctx);
-        this.predChannelMap = predChannelTypeMap;
+        this.predChannelMap = predChannelMap;
     }
 
     /**

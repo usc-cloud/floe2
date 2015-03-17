@@ -100,7 +100,7 @@ public final class WordCountApp {
                 .setParallelism(numMappers);
 
         builder.addPellet("count", new WordCountReducer("word"))
-                .setParallelism(numReducers).reduce("words");
+                .setParallelism(numReducers).reduce("words", "word");
 
         TFloeApp app = builder.generateApp();
         try {

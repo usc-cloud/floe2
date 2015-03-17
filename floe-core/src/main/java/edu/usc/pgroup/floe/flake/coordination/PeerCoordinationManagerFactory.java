@@ -17,8 +17,7 @@
 package edu.usc.pgroup.floe.flake.coordination;
 
 import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.app.Pellet;
-import edu.usc.pgroup.floe.app.ReducerPellet;
+import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
@@ -29,17 +28,17 @@ import org.zeromq.ZMQ;
 /**
  * @author kumbhare
  */
-public final class CoordinationManagerFactory {
+public final class PeerCoordinationManagerFactory {
     /**
      * the global logger instance.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(CoordinationManagerFactory.class);
+            LoggerFactory.getLogger(PeerCoordinationManagerFactory.class);
 
     /**
      * Hiding default constructor.
      */
-    private CoordinationManagerFactory() {
+    private PeerCoordinationManagerFactory() {
 
     }
 
@@ -66,7 +65,7 @@ public final class CoordinationManagerFactory {
             final StateManagerComponent stateManager,
             final ZMQ.Context ctx) {
         PeerCoordinationComponent manager = null;
-        if (pellet instanceof ReducerPellet) {
+        /*if (pellet instanceof ReducerPellet) {
             LOGGER.info("Reducer pellet. Creating reducer state manager.");
             int tolerance = FloeConfig.getConfig().getInt(
                     ConfigProperties.FLAKE_TOLERANCE_LEVEL);
@@ -81,7 +80,7 @@ public final class CoordinationManagerFactory {
                             stateManager);
         } else  {
             manager = null;
-        }
+        }*/
 
         return manager;
     }

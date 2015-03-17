@@ -14,8 +14,30 @@
  * limitations under the License.
  */
 
+package edu.usc.pgroup.floe.app.pellets;
+
 /**
- * Plugin for elastic reducer disspersion strategy. Both sender and flake local.
  * @author kumbhare
  */
-package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
+public class PelletContext {
+
+    /**
+     * Pellet's instance id.
+     */
+    private final String pelletInstanceId;
+
+    /**
+     * Constructor.
+     * @param peInstanceId Pellet's instance id.
+     */
+    public PelletContext(final String peInstanceId) {
+        this.pelletInstanceId = peInstanceId;
+    }
+
+    /**
+     * @return the pellet's instance id.
+     */
+    public final String getPelletInstanceId() {
+        return pelletInstanceId;
+    }
+}

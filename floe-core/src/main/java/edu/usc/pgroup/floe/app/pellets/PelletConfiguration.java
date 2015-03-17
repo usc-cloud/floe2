@@ -14,17 +14,35 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
+package edu.usc.pgroup.floe.app.pellets;
 
-import edu.usc.pgroup.floe.signals.PelletSignal;
+import java.io.Serializable;
 
 /**
  * @author kumbhare
  */
-public interface Signallable {
+public class PelletConfiguration implements Serializable {
     /**
-     * Called when a signal is received for the component.
-     * @param signal the signal received for this pellet.
+     * the state type associated with the pellet.
      */
-    void onSignal(PelletSignal signal);
+    private StateType stateType;
+
+    public PelletConfiguration() {
+        this.stateType = StateType.LocalOnly;
+    }
+
+    /**
+     * @return State type configured for the pellet
+     */
+    public StateType getStateType() {
+        return stateType;
+    }
+
+    /**
+     * Sets the state type for the pellet.
+     * @param type state type enum
+     */
+    public void setStateType(StateType type) {
+        this.stateType = type;
+    }
 }

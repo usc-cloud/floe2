@@ -14,30 +14,17 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
+package edu.usc.pgroup.floe.app.pellets;
+
+import edu.usc.pgroup.floe.signals.PelletSignal;
 
 /**
  * @author kumbhare
  */
-public class PelletContext {
-
+public interface Signallable {
     /**
-     * Pellet's instance id.
+     * Called when a signal is received for the component.
+     * @param signal the signal received for this pellet.
      */
-    private final String pelletInstanceId;
-
-    /**
-     * Constructor.
-     * @param peInstanceId Pellet's instance id.
-     */
-    public PelletContext(final String peInstanceId) {
-        this.pelletInstanceId = peInstanceId;
-    }
-
-    /**
-     * @return the pellet's instance id.
-     */
-    public final String getPelletInstanceId() {
-        return pelletInstanceId;
-    }
+    void onSignal(PelletSignal signal);
 }
