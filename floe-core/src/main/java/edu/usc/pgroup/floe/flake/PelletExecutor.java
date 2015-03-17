@@ -321,8 +321,8 @@ public class PelletExecutor extends Thread {
                 pollerItems.poll();
                 if (pollerItems.pollin(0)) {
                     dataReceiver.recvStr(Charset.defaultCharset());
-                    String sentTime
-                            = dataReceiver.recvStr(Charset.defaultCharset());
+                    /*String sentTime
+                            = dataReceiver.recvStr(Charset.defaultCharset());*/
                     byte[] serializedTuple = dataReceiver.recv();
 
                     queLen.dec();
@@ -348,10 +348,10 @@ public class PelletExecutor extends Thread {
 
 
                     pellet.execute(tuple, emitter, state);
-                    if (state != null) {
+                    /*if (state != null) {
                         state.setLatestTimeStampAtomic(
                                 Long.parseLong(sentTime));
-                    }
+                    }*/
 
 
                     long processedTime = System.nanoTime();

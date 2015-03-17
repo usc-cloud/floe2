@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -34,8 +35,8 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class RRDispersionStrategy implements MessageDispersionStrategy,
-        PathChildrenUpdateListener {
+public class RRDispersionStrategy extends MessageDispersionStrategy
+         {
 
 
     /**
@@ -49,60 +50,31 @@ public class RRDispersionStrategy implements MessageDispersionStrategy,
      */
     private int currentIndex;
 
-
     /**
-     * Path cache to monitor the tokens.
-     */
-    private ZKFlakeTokenCache flakeCache;
+    * List of target pellet instances.
+    */
+    private List<String> allTargetFlakes;
 
     /**
      * List of target pellet instances.
      */
     private List<String> targetFlakeIds;
 
-    /**
-     * Initializes the strategy.
-     * @param appName Application name.
-     * @param destPelletName dest pellet name to be used to get data from ZK.
-     * @param args the arguments sent by the user. Fix Me: make this a better
-     *             interface.
-     */
-    @Override
-    public final void initialize(final String appName,
-                                  final String destPelletName,
-                                  final String args) {
+    public RRDispersionStrategy() {
         targetFlakeIds = new ArrayList<>();
+        allTargetFlakes = new ArrayList<>();
         currentIndex = 0;
-
-        String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
-                appName, destPelletName);
-        LOGGER.debug("Listening for flake tokens for dest pellet: {} at {}",
-                destPelletName, pelletTokenPath);
-        this.flakeCache = new ZKFlakeTokenCache(pelletTokenPath, this);
-
-        try {
-            //flakeCache.start();
-            //flakeCache.rebuild();
-            flakeCache.rebuild();
-            List<ChildData> childData = flakeCache.getCurrentCachedData();
-            for (ChildData child: childData) {
-                String destFid = ZKPaths.getNodeFromPath(child.getPath());
-                LOGGER.warn("Dest FID: {}", destFid);
-
-                /*Integer newPosition = (Integer) Utils.deserialize(
-                                                    child.getData());*/
-                FlakeToken token = (FlakeToken) Utils.deserialize(
-                        child.getData());
-
-                //updateCircle(destFid, token.getToken(), true);
-                targetFlakeIds.add(destFid);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.warn("Error occured while retreving flake information for "
-                    + "destination pellet: {}", e);
-        }
     }
+
+
+     /**
+      * @param args the arguments sent by the user. Fix Me: make this a better
+      *             interface.
+      */
+     @Override
+     protected void initialize(String args) {
+
+     }
 
     /**
      * Returns the list of target instances to send the given tuple using the
@@ -112,13 +84,41 @@ public class RRDispersionStrategy implements MessageDispersionStrategy,
      *
      * @param middleendreceiver middleend receiver to get the message.
      * @param backend backend sender to send message to the succeeding flakes.
-     */
+     *
     @Override
     public final void disperseMessage(final ZMQ.Socket middleendreceiver,
                                       final ZMQ.Socket backend) {
         backend.sendMore(getNextFlakeId());
         backend.sendMore(String.valueOf(System.currentTimeMillis()));
         Utils.forwardCompleteMessage(middleendreceiver, backend);
+    }*/
+
+
+    /**
+    * Returns the list of target instances to send the given tuple using the
+    * defined strategy.
+    * param tuple tuple object.
+    * return the list of target instances to send the given tuple.
+    *
+    * @param tuple tuple to be dispersed
+    */
+    @Override
+    public List<String> getTargetFlakeIds(Tuple tuple) {
+        targetFlakeIds.clear();
+        targetFlakeIds.add(getNextFlakeId());
+        return targetFlakeIds;
+    }
+
+    /**
+     * Should return a list of arguments/"envelopes" to be sent along with
+     * the message for the given target flake.
+     *
+     * @param flakeId one of the flake ids returned by getTargetFlakeIds
+     * @return list of arguments to be sent.
+     */
+    @Override
+    public List<String> getCustomArguments(String flakeId) {
+        return null;
     }
 
     /**
@@ -127,15 +127,15 @@ public class RRDispersionStrategy implements MessageDispersionStrategy,
      * @return the list of target instances to send the given tuple.
      */
     public final String getNextFlakeId() {
-        if (currentIndex >= targetFlakeIds.size()) {
+        if (currentIndex >= allTargetFlakes.size()) {
             currentIndex = 0;
         }
 
-        if (targetFlakeIds.size() == 0) {
+        if (allTargetFlakes.size() == 0) {
             return null;
         }
 
-        String fid = targetFlakeIds.get(currentIndex);
+        String fid = allTargetFlakes.get(currentIndex);
         currentIndex++;
         return fid;
     }
@@ -155,8 +155,8 @@ public class RRDispersionStrategy implements MessageDispersionStrategy,
     public final void backChannelMessageReceived(
             final String targetFlakeId,
             final byte[] message, final Boolean toContinue) {
-        if (!targetFlakeIds.contains(targetFlakeId)) {
-            targetFlakeIds.add(targetFlakeId);
+        if (!allTargetFlakes.contains(targetFlakeId)) {
+            allTargetFlakes.add(targetFlakeId);
         }
     }
 
@@ -171,7 +171,11 @@ public class RRDispersionStrategy implements MessageDispersionStrategy,
     @Override
     public final void childrenListInitialized(
             final Collection<ChildData> initialChildren) {
-
+        for (ChildData child: initialChildren) {
+            String destFid = ZKPaths.getNodeFromPath(child.getPath());
+            LOGGER.warn("Dest FID: {}", destFid);
+            allTargetFlakes.add(destFid);
+        }
     }
 
     /**
@@ -182,15 +186,9 @@ public class RRDispersionStrategy implements MessageDispersionStrategy,
      */
     @Override
     public final void childAdded(final ChildData addedChild) {
-
         String destFid = ZKPaths.getNodeFromPath(addedChild.getPath());
         LOGGER.error("Adding Dest FID: {}", destFid);
-
-        FlakeToken token = (FlakeToken) Utils.deserialize(
-                addedChild.getData());
-
-        targetFlakeIds.add(destFid);
-        //updateCircle(destFid, token.getToken(), true);
+        allTargetFlakes.add(destFid);
     }
 
     /**
@@ -203,12 +201,7 @@ public class RRDispersionStrategy implements MessageDispersionStrategy,
     public final void childRemoved(final ChildData removedChild) {
         String destFid = ZKPaths.getNodeFromPath(removedChild.getPath());
         LOGGER.error("Removing dest FID: {}", destFid);
-
-        FlakeToken token = (FlakeToken) Utils.deserialize(
-                removedChild.getData());
-
-        targetFlakeIds.remove(destFid);
-        //updateCircle(destFid, token.getToken(), false);
+        allTargetFlakes.remove(destFid);
     }
 
     /**
@@ -220,13 +213,6 @@ public class RRDispersionStrategy implements MessageDispersionStrategy,
      */
     @Override
     public final void childUpdated(final ChildData updatedChild) {
-        String destFid = ZKPaths.getNodeFromPath(updatedChild.getPath());
-        LOGGER.error("Updating dest FID: {}", destFid);
-
-        FlakeToken token = (FlakeToken) Utils.deserialize(
-                updatedChild.getData());
-
-        //updateCircle(destFid, token.getToken(), true);
-        //ignore token value changes.
+        //ignore token value changes in RR.
     }
 }

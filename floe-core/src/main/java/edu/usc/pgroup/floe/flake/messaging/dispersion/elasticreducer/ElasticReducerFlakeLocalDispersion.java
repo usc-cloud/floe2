@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
 
 import com.codahale.metrics.MetricRegistry;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -62,7 +63,7 @@ public class ElasticReducerFlakeLocalDispersion
      * Sends the tuple to the appropriate pellet.
      * @param from the middleend socket to retrieve the message
      * @param to the backend (PUB) socket to send it to (one or more) pellets.
-     */
+     *
     @Override
     public final void sendToPellets(final ZMQ.Socket from,
                                     final ZMQ.Socket to) {
@@ -76,6 +77,22 @@ public class ElasticReducerFlakeLocalDispersion
         } else {
             Utils.recvAndignore(from);
         }
+    }*/
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     *
+     * @param tuple tuple object.
+     * @param args custom arguments sent by the source flake with the tuple.
+     * @return the list of target instances to send the given tuple.
+     */
+    @Override
+    public String getTargetPelletInstance(Tuple tuple, List<String> args) {
+        String hashInt = args.get(0);
+        LOGGER.info("HASH RECEIVED:{}", hashInt);
+        Integer actualHash = Integer.parseInt(hashInt);
+        return getTargetPelletInstances(actualHash);
     }
 
     /**

@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import com.codahale.metrics.MetricRegistry;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +74,7 @@ public class RRFlakeLocalDispersionStrategy
         currentIndex = 0;
     }
 
+
     /**
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
@@ -96,7 +98,7 @@ public class RRFlakeLocalDispersionStrategy
         return peid;
     }
 
-    @Override
+    /*@Override
     public final void sendToPellets(final ZMQ.Socket from, final ZMQ.Socket
             to) {
         //do something.
@@ -108,6 +110,19 @@ public class RRFlakeLocalDispersionStrategy
         } else {
             Utils.recvAndignore(from);
         }
+    }*/
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     *
+     * @param tuple tuple object.
+     * @param args  custom arguments sent by the source flake with the tuple.
+     * @return the list of target instances to send the given tuple.
+     */
+    @Override
+    public String getTargetPelletInstance(Tuple tuple, List<String> args) {
+        return getTargetPelletInstances();
     }
 
     /**

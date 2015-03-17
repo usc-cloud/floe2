@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.flake.messaging.sender;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.MessageDispersionStrategy;
@@ -216,9 +217,10 @@ public class SenderBEComponent extends FlakeComponent {
                         .recvStr(Charset.defaultCharset()); //read an ignore.
 
 
-                dispersionStrategy.disperseMessage(middleendreceiver, backend);
+                //dispersionStrategy.disperseMessage(middleendreceiver,
+                // backend);
 
-                /*message = middleendreceiver.recv();
+                message = middleendreceiver.recv();
 
                 Tuple tuple = tupleSerializer.deserialize(message);
 
@@ -227,13 +229,13 @@ public class SenderBEComponent extends FlakeComponent {
 
                 //FIXME: CAN IMPROVE PERF. HERE BY NOT DOING MULTIPLE
                 //FIXME: SERIALIZE/DESERIALIZE operations.
-                tuple.put(Utils.Constants.SYSTEM_TS_FIELD_NAME,
+                /*tuple.put(Utils.Constants.SYSTEM_TS_FIELD_NAME,
                         System.nanoTime());
 
                 tuple.put(Utils.Constants.SYSTEM_SRC_PELLET_NAME,
                         myPelletName);
 
-                message = tupleSerializer.serialize(tuple);
+                message = tupleSerializer.serialize(tuple);*/
                 if (flakeIds != null
                         && flakeIds.size() > 0) {
                     for (String flakeId : flakeIds) {
@@ -241,13 +243,24 @@ public class SenderBEComponent extends FlakeComponent {
                         backend.sendMore(flakeId);
                         //backend.sendMore(myPelletName); Dont add pellet as
                         // envelope, instead add it to the tuple.
+
+                        List<String> fargs = dispersionStrategy
+                                .getCustomArguments(flakeId);
+
+                        if (fargs != null) {
+                            backend.sendMore(String.valueOf(fargs.size()));
+                            for (String arg: fargs) {
+                                backend.sendMore(arg);
+                            }
+                        }
+
                         backend.send(message, 0);
                     }
                 } else { //should queue up messages.
                     LOGGER.warn("Message dropped because no connection "
                             + "received");
                     //TODO: FIX THIS..
-                }*/
+                }
                 msgSendMeter.mark();
             } else if (pollerItems.pollin(1)) { //kill signal
                 LOGGER.warn("Terminating flake sender ME: {}", getFid());

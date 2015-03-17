@@ -298,7 +298,7 @@ public final class ZKClient {
         }
 
         try {
-            cache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+            cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
         } catch (Exception e) {
             e.printStackTrace();
             LOGGER.error("Could not start cache client.");

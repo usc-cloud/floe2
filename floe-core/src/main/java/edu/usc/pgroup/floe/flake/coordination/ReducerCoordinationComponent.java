@@ -258,10 +258,12 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                     LOGGER.error("NO CHECKPOINT "
                             + "RECEIVED YEEEEEEEEEEEEEEEEEEEEEEE");
                     LOGGER.error("Initiating recovery procedure");
-                    String nfid = neighborsToBackupMsgsFor
-                            .get(neighborsToBackupMsgsFor.firstKey());
-                    initiateScaleDownAndTakeOver(nfid, false);
-                    nowRecovering = true;
+                    if (neighborsToBackupMsgsFor.size() > 0) {
+                        String nfid = neighborsToBackupMsgsFor
+                                .get(neighborsToBackupMsgsFor.firstKey());
+                        initiateScaleDownAndTakeOver(nfid, false);
+                        nowRecovering = true;
+                    }
                 }
             }
         }

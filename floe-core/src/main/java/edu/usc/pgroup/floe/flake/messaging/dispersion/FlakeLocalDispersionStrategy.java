@@ -17,10 +17,13 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import com.codahale.metrics.MetricRegistry;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
+
+import java.util.List;
 
 /**
  * @author kumbhare
@@ -50,9 +53,11 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
      * @param tuple tuple object.
+     * @param args custom arguments sent by the source flake with the tuple.
      * @return the list of target instances to send the given tuple.
-     *
-    public abstract List<String> getTargetPelletInstances(Tuple tuple);*/
+     */
+    public abstract String getTargetPelletInstance(Tuple tuple,
+                                                   List<String> args);
 
     /**
      * @return the current backchannel data (e.g. for loadbalancing or the
@@ -104,8 +109,8 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
      * Sends the tuple to the appropriate pellet.
      * @param from the middleend socket to retrieve the message
      * @param to the backend (PUB) socket to send it to (one or more) pellets.
-     */
+     *
     public abstract void sendToPellets(final ZMQ.Socket from,
-                                       final ZMQ.Socket to);
+                                       final ZMQ.Socket to);*/
 }
 

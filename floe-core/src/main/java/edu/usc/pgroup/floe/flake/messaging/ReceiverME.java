@@ -19,6 +19,7 @@ package edu.usc.pgroup.floe.flake.messaging;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
@@ -33,6 +34,8 @@ import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -284,9 +287,18 @@ public class ReceiverME extends FlakeComponent {
             return;
         }
 
-        localDispersionStrat.sendToPellets(from, to);
+        //localDispersionStrat.sendToPellets(from, to);
 
-        //Tuple t = tupleSerializer.deserialize(message);
+        Integer numArgs = Integer.parseInt(
+                from.recvStr(0, Charset.defaultCharset()));
+
+        ArrayList<String> args = new ArrayList<>(); //DONT LIKE THIS>> :(
+        for (int i = 0; i < numArgs; i++) {
+            args.add(from.recvStr(0, Charset.defaultCharset()));
+        }
+
+        byte[] message = from.recv();
+        Tuple t = tupleSerializer.deserialize(message);
 
         //Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
 
@@ -297,23 +309,22 @@ public class ReceiverME extends FlakeComponent {
         /*FlakeLocalDispersionStrategy strategy
                 = localDispersionStratMap.get(src);*/
 
+        //BUG: SHOULD
+        // HAVE A DIFFERENT STRATEGY PER SRC PELLET NAME
+
 
         //LOGGER.debug("Forwarding to pellet: {}", t);
-        /*List<String> pelletInstancesIds =
-                strategy.getTargetPelletInstances(t);
+        String pelletInstanceId =
+                localDispersionStrat.getTargetPelletInstance(t, args);
 
-        if (pelletInstancesIds != null
-                && pelletInstancesIds.size() > 0) {
-            for (String pelletInstanceId : pelletInstancesIds) {
-                LOGGER.debug("Sending to:" + pelletInstanceId);
+        if (pelletInstanceId != null) {
                 to.sendMore(pelletInstanceId);
                 //to.sendMore(currentNano.toString());
                 to.send(message, 0);
-            }
         } else { //should queue up messages.
             LOGGER.warn("Message dropped because no pellet active.");
             //FIXME: FIX THIS..
-        }*/
+        }
 
         //LOGGER.debug("Received msg from:" + src);
     }
