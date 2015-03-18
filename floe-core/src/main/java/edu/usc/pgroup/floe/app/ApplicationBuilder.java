@@ -232,7 +232,7 @@ public final class ApplicationBuilder {
          * @param outputStreamName the name of the stream to subscribe.
          * @return The builder pattern's object to further configure the pellet.
          */
-        private PelletBuilder subscribe(
+        public final PelletBuilder subscribe(
                 final String inputPelletName,
                 final TChannel channel,
                 final String... outputStreamName
