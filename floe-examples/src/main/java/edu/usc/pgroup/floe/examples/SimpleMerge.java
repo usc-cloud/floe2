@@ -66,7 +66,7 @@ public final class SimpleMerge {
         builder.addPellet("girls", new WordPellet(girls)).setParallelism(1);
 
         builder.addPellet("print", new PrintPellet())
-                .subscribe("boys").subscribe("girls").setParallelism(1);
+                .subscribe("boys").reduce("girls", "word").setParallelism(2);
 
         try {
             AppSubmitter.submitApp("helloworld", builder.generateApp());

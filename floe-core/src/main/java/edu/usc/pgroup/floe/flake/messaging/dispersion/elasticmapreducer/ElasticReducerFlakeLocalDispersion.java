@@ -45,17 +45,23 @@ public class ElasticReducerFlakeLocalDispersion
             LoggerFactory.getLogger(ElasticReducerFlakeLocalDispersion.class);
 
     /**
+     * Default constructor.
+     */
+    public ElasticReducerFlakeLocalDispersion() {
+
+    }
+    /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param context       shared ZMQ context.
      * @param flakeId       Current flake id.
-     */
+     *
     public ElasticReducerFlakeLocalDispersion(final MetricRegistry
                                                       metricRegistry,
                                               final ZMQ.Context context,
                                               final String flakeId) {
         super(metricRegistry, context, flakeId);
-    }
+    }*/
 
     /**
      * Sends the tuple to the appropriate pellet.

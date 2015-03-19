@@ -229,8 +229,7 @@ public class SenderBEComponent extends FlakeComponent {
                     for (String flakeId : flakeIds) {
                         LOGGER.debug("Sending {} to: {}", tuple, flakeId);
                         backend.sendMore(flakeId);
-                        //backend.sendMore(myPelletName); Dont add pellet as
-                        // envelope, instead add it to the tuple.
+                        backend.sendMore(myPelletName);
 
                         List<String> fargs = dispersionStrategy
                                 .getCustomArguments(flakeId);

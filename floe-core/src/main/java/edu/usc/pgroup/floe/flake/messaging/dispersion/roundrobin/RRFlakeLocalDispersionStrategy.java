@@ -51,17 +51,23 @@ public class RRFlakeLocalDispersionStrategy
     private List<String> targetPelletInstances;
 
     /**
+     * Default constructor.
+     */
+    public RRFlakeLocalDispersionStrategy() {
+
+    }
+    /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
-     */
+     *
     public RRFlakeLocalDispersionStrategy(
                 final MetricRegistry metricRegistry,
                 final ZMQ.Context context,
                 final String flakeId) {
         super(metricRegistry, context, flakeId);
-    }
+    }*/
 
     /**
      * Initializes the strategy.

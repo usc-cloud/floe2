@@ -133,58 +133,26 @@ public final class MessageDispersionStrategyFactory {
      * @param flakeId Current flake id.
      * @return returns the associated local dispersion strategy.
      * @throws java.lang.ClassNotFoundException if the channel type is invalid
-     */
+     *
     public static FlakeLocalDispersionStrategy
                     getFlakeLocalDispersionStrategy(
             final MetricRegistry metricRegistry,
             final ZMQ.Context context,
             final TChannel channel, final String flakeId)
-            throws ClassNotFoundException {
+            throws ClassNotFoundException {*/
 
+    /**
+     * Factory function for creating the Local Message DispersionStrategy.
+     * @return returns the associated local dispersion strategy.
+     * @throws java.lang.ClassNotFoundException if the channel type is invalid.
+     */
+    public static FlakeLocalDispersionStrategy
+        getFlakeLocalDispersionStrategy(final TChannel channel) {
 
-//        switch (channel.get_channelType()) {
-//            case ROUND_ROBIN:
-//                strategy = new edu.usc.pgroup.floe.flake.messaging.dispersion
-//                        .RRFlakeLocalDispersionStrategy(metricRegistry,
-//                        context, flakeId);
-//                break;
-//            case REDUCE:
-//                strategy = new ElasticReducerFlakeLocalDispersion(
-//                        metricRegistry,
-//                        context,
-//                        flakeId);
-//                break;
-//            case LOAD_BALANCED:
-//            case CUSTOM:
-//            default:
-//                throw new ClassNotFoundException(channel.toString());
-//        }
+        FlakeLocalDispersionStrategy strategy = null;
 
-        FlakeLocalDispersionStrategy strategy
-                = (FlakeLocalDispersionStrategy) Utils.instantiateObject(
-                    channel.get_localDispersionClass());
-
-        String fqdnClassName = channel.get_localDispersionClass();
-
-        /*final MetricRegistry metricRegistry,
-        final ZMQ.Context context,
-        final String flakeId)*/
-
-        try {
-            strategy = (FlakeLocalDispersionStrategy) Utils
-                    .getConstructor(fqdnClassName,
-                    MetricRegistry.class, ZMQ.Context.class, String.class).
-                    newInstance(metricRegistry, context, flakeId);
-        } catch (InstantiationException e) {
-            LOGGER.error("Could not create an instance of {}, Exception:{}",
-                fqdnClassName, e);
-        } catch (IllegalAccessException e) {
-            LOGGER.error("Could not create an instance of {}, Exception:{}",
-                    fqdnClassName, e);
-        } catch (InvocationTargetException e) {
-            LOGGER.error("Could not create an instance of {}, Exception:{}",
-                    fqdnClassName, e);
-        }
+        strategy = (FlakeLocalDispersionStrategy) Utils.instantiateObject(
+                channel.get_localDispersionClass());
 
         if (strategy != null) {
             strategy.initialize(channel.get_channelArgs());
