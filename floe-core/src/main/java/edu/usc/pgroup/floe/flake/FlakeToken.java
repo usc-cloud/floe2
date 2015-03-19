@@ -57,6 +57,7 @@ public class FlakeToken implements Serializable {
      * @param tk the int token for the flake on the ring.
      * @param ipOrHostName ip or hostname for the flake to connect to.
      * @param port the port number to connect to.
+     * @param cdata custom data associated with the flake.
      */
     public FlakeToken(final int tk,
                       final String ipOrHostName,
@@ -90,5 +91,8 @@ public class FlakeToken implements Serializable {
         return stateCheckptPort;
     }
 
+    /**
+     * @return the custom data associated with the flake.
+     */
     public final byte[] getCustomData() { return customData; }
 }

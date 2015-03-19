@@ -16,15 +16,10 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
-import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.utils.Utils;
-import org.omg.CORBA.INTERNAL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
-
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author kumbhare
@@ -143,8 +138,8 @@ public final class MessageDispersionStrategyFactory {
 
     /**
      * Factory function for creating the Local Message DispersionStrategy.
+     * @param channel channel type associated with the given dataflow edge.
      * @return returns the associated local dispersion strategy.
-     * @throws java.lang.ClassNotFoundException if the channel type is invalid.
      */
     public static FlakeLocalDispersionStrategy
         getFlakeLocalDispersionStrategy(final TChannel channel) {

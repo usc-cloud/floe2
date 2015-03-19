@@ -16,14 +16,12 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
-import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.messaging.dispersion
         .FlakeLocalDispersionStrategy;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
 
 import java.util.ArrayList;
 import java.util.Collections;

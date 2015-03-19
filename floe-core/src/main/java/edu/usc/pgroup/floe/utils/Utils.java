@@ -220,11 +220,12 @@ public final class Utils {
     /**
      * Use reflection to create an instance of the given class.
      * @param fqdnClassName the fully qualified class name.
+     * @param params types of parameters to query for the constructor.
      * @return a new instance of the given class. NULL if there was an error
      * creating the instance.
      */
     public static Constructor<?> getConstructor(
-            final String fqdnClassName, Class<?> ...params) {
+            final String fqdnClassName, final Class<?> ...params) {
         try {
             Class<?> klass = Class.forName(fqdnClassName);
 

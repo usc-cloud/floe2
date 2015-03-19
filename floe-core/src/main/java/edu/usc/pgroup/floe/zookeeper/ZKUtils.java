@@ -376,7 +376,7 @@ public final class ZKUtils {
                                    final Integer flakeDataPort) {
         updateToken(appName, pelletName, flakeId, token, flakeDataPort, null);
     }
-    
+
     /**
      * Updates the token associated with the given app and flakeid.
      * Note: flake id is globally unique.
