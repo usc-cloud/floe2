@@ -42,41 +42,15 @@ public final class StateManagerFactory {
 
     /**
      * Constructs the state manager based on the pellet type.
-     * @param metricRegistry Metrics registry used to log various metrics.
      * @param pellet The pellet object, used to figure out type of state
      *               manager to create.
-     * @param flakeId       Flake's id to which this component belongs.
-     * @param componentName Unique name of the component.
-     * @param ctx           Shared zmq context.
-     * @param port          Port to be used for sending checkpoint data.
      * @return the instantiated (but not started) state manager object.
      */
-    public static StateManagerComponent getStateManager(
-            final MetricRegistry metricRegistry,
-            final Pellet pellet,
-            final String flakeId,
-            final String componentName,
-            final ZMQ.Context ctx,
-            final int port) {
-        StateManagerComponent manager = null;
-        /*if (pellet instanceof StatelessPellet) {
-            LOGGER.info("Stateless pellet. No state required.");
-            manager = null;
-        } else if (pellet instanceof ReducerPellet) {
-            LOGGER.info("Reducer pellet. Creating reducer state manager.");
-            String fieldName = ((ReducerPellet) pellet).getKeyFieldName();
-            manager =  new ReducerStateManager(metricRegistry,
-                    flakeId, componentName, ctx, fieldName, port);
-        } else if (pellet instanceof StatefulPellet) {
-            LOGGER.info("regular Statefull pellet. Creating pellet state "
-                    + "manager.");
-            manager =  new GenericPelletStateManager(metricRegistry,
-                    flakeId, componentName, ctx, port);
-        }*/
+    public static StateManager getStateManager(final Pellet pellet) {
+        StateManager manager = null;
         switch (pellet.getConf().getStateType()) {
             case LocalOnly:
-            manager = new GenericPelletStateManager(metricRegistry,
-                    flakeId, componentName, ctx, port);
+            manager = new GenericPelletStateManager();
                 break;
             default:
                 manager = null;

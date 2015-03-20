@@ -18,7 +18,7 @@ package edu.usc.pgroup.floe.flake.coordination;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
-import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
+import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -60,7 +60,7 @@ public final class PeerCoordinationManagerFactory {
             final Pellet pellet,
             final String flakeId,
             final String componentName,
-            final StateManagerComponent stateManager,
+            final StateManager stateManager,
             final ZMQ.Context ctx) {
         PeerCoordinationComponent manager = null;
         /*if (pellet instanceof ReducerPellet) {

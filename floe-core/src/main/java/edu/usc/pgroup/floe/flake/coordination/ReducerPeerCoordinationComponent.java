@@ -26,7 +26,7 @@ import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.flake.statemanager.PelletStateDelta;
-import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
+import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
@@ -92,7 +92,7 @@ public class ReducerPeerCoordinationComponent
     /**
      * State manager instance.
      */
-    private final StateManagerComponent stateManager;
+    private final StateManager stateManager;
 
     /**
      * Path cache to monitor the tokens.
@@ -129,7 +129,7 @@ public class ReducerPeerCoordinationComponent
                                             final String componentName,
                                             final ZMQ.Context ctx,
                                             final Integer tolerance,
-                                            final StateManagerComponent stMgr) {
+                                            final StateManager stMgr) {
         super(metricRegistry, app, pellet, flakeId, componentName, ctx);
         this.toleranceLevel = tolerance;
         //this.stateBackupNeighbors = new TreeMap<>();
@@ -231,7 +231,7 @@ public class ReducerPeerCoordinationComponent
                 List<PelletStateDelta> deltas
                         = extractPelletStateDeltas(serializedState);
 
-                stateManager.backupState(nfid, deltas);
+                stateManager.storeBackupState(nfid, deltas);
 
                 if (scalingDown) {
                     LOGGER.info("Scaling down NEIGHBOR flake: {}", nfid);
@@ -659,7 +659,7 @@ public class ReducerPeerCoordinationComponent
 
             //Key to pellet state delta mapping.
             Map<String, PelletStateDelta> flakeState
-                    = stateManager.getBackupState(neighborFid);
+                    = stateManager.retrieveBackupState(neighborFid);
 
 
             LOGGER.error("MOVING STATE FROM BACKUP TO PRIMARY");

@@ -27,7 +27,7 @@ import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationManagerFactory;
 import edu.usc.pgroup.floe.flake.coordination.ReducerPeerCoordinationComponent;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
-import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
+import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerFactory;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.signals.SystemSignal;
@@ -142,7 +142,7 @@ public class Flake {
     /**
      * The state manager component.
      */
-    private StateManagerComponent stateManager;
+    private StateManager stateManager;
 
     /**
      * The local coordination manager.

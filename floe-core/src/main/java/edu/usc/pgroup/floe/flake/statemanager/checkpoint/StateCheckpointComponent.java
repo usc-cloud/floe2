@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.statemanager;
+package edu.usc.pgroup.floe.flake.statemanager.checkpoint;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
@@ -28,6 +28,7 @@ import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.PelletExecutor;
 import edu.usc.pgroup.floe.flake.QueueLenMonitor;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
+import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class StateCheckpointComponent extends FlakeComponent {
     /**
      * State manager instance.
      */
-    private final StateManagerComponent stateManager;
+    private final StateManager stateManager;
 
     /**
      * Port to bind the socket to send periodic state checkpoints.
@@ -74,7 +75,7 @@ public class StateCheckpointComponent extends FlakeComponent {
                                     final String flakeId,
                                     final String componentName,
                                     final ZMQ.Context ctx,
-                                    final StateManagerComponent stateMgr,
+                                    final StateManager stateMgr,
                                     final int stateChkptPort) {
         super(metricRegistry, flakeId, componentName, ctx);
         this.stateManager = stateMgr;
@@ -185,7 +186,7 @@ public class StateCheckpointComponent extends FlakeComponent {
             }
 
             LOGGER.info("Checkpointing State");
-            byte[] checkpointdata = stateManager.checkpointState();
+            byte[] checkpointdata = stateManager.checkpointStateIncremental();
 
             stateSoc.sendMore(getFid());
             stateSoc.sendMore(done.toString());

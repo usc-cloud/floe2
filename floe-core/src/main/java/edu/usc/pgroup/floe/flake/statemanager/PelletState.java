@@ -68,12 +68,6 @@ public class PelletState {
     private final Lock mergeLock;
 
     /**
-     * The listener object which receives notification when a state is updated.
-     */
-    private PelletStateUpdateListener updateListener;
-
-
-    /**
      * The timestamp associated with the latest update. This is updated by
      * the pellet runner AFTER pellet execution.
      */
@@ -85,14 +79,10 @@ public class PelletState {
      *                     belongs.
      * @param customSubId A custom identifier that can be used to further
      *                 identify this state's owner. (e.g. the reducer key)
-     * @param listener The listener object which receives notification when a
-     *                 state is updated.
      */
     PelletState(//final String peInstanceId,
-                final String customSubId,
-                final PelletStateUpdateListener listener) {
+                final String customSubId) {
         this.pelletState = new HashMap<>();
-        this.updateListener = listener;
         //this.peId = peInstanceId;
         this.customId = customSubId;
 

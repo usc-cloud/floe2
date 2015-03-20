@@ -26,24 +26,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public abstract class StateManagerComponent extends FlakeComponent {
-
-
-    /**
-     * Constructor.
-     * @param metricRegistry Metrics registry used to log various metrics.
-     * @param flakeId       Flake's id to which this component belongs.
-     * @param componentName Unique name of the component.
-     * @param ctx           Shared zmq context.
-     * @param port          Port to be used for sending checkpoint data.
-     */
-    public StateManagerComponent(final MetricRegistry metricRegistry,
-                                 final String flakeId,
-                                 final String componentName,
-                                 final ZMQ.Context ctx,
-                                 final int port) {
-        super(metricRegistry, flakeId, componentName, ctx);
-    }
+public interface StateManager {
 
     /**
      * Returns the object (state) associated with the given local pe instance.
@@ -62,9 +45,11 @@ public abstract class StateManagerComponent extends FlakeComponent {
     /**
      * Returns the object (state) associated with the given local pe instance.
      * The tuple may be used to further divide the state (e.g. in case of
-     * reducer pellet, the tuple's key will be used to divide the state).
+     * reducer pellet, the State's key will be used to divide the state).
+     * NOTE: This is a state specific key, AND NOT NECESSARILY SAME AS THE
+     * MESSAGE KEY.
      * @param peId Pellet's instance id.
-     * @param key The value associated with the correspnding field name (this
+     * @param key The value associated with the corresponding field name (this
      *            is used during recovery since we do not have access to the
      *            entire tuple, but just the key).
      * @return pellet state corresponding to the given peId and key value
@@ -78,7 +63,7 @@ public abstract class StateManagerComponent extends FlakeComponent {
      * nodes.
      * @return serialized delta to send to the backup nodes.
      */
-    public abstract byte[] checkpointState();
+    public abstract byte[] getIncrementalStateCheckpoint();
 
     /**
      * Used to backup the states received from the neighbor flakes.
@@ -86,15 +71,15 @@ public abstract class StateManagerComponent extends FlakeComponent {
      *             received.
      * @param deltas a list of pellet state deltas received from the flake.
      */
-    public abstract void backupState(final String nfid,
-                                     final List<PelletStateDelta> deltas);
+    public abstract void storeBackupState(final String nfid,
+                                          final List<PelletStateDelta> deltas);
 
     /**
-     * Get the state backed up for the given neighbor flake id.
+     * Retrieve the state backed up for the given neighbor flake id.
      * @param neighborFid neighbor's flake id.
      * @return the backedup state assocuated with the given fid
      */
-    public abstract java.util.Map<String, PelletStateDelta> getBackupState(
+    public abstract java.util.Map<String, PelletStateDelta> retrieveBackupState(
             final String neighborFid);
 
     /**

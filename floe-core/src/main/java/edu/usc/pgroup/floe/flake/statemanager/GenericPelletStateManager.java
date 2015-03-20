@@ -29,8 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author kumbhare
  */
-public class GenericPelletStateManager extends StateManagerComponent
-        implements PelletStateUpdateListener {
+public class GenericPelletStateManager implements StateManager {
 
     /**
      * the global logger instance.
@@ -44,19 +43,9 @@ public class GenericPelletStateManager extends StateManagerComponent
     private ConcurrentHashMap<String, PelletState> pelletStateMap;
 
     /**
-     * Constructor.
-     * @param metricRegistry Metrics registry used to log various metrics.
-     * @param flakeId       Flake's id to which this component belongs.
-     * @param componentName Unique name of the component.
-     * @param ctx           Shared zmq context.
-     * @param port          Port to be used for sending checkpoint data.
+     * Default Constructor.
      */
-    public GenericPelletStateManager(final MetricRegistry metricRegistry,
-                                     final String flakeId,
-                                     final String componentName,
-                                     final ZMQ.Context ctx,
-                                     final int port) {
-        super(metricRegistry, flakeId, componentName, ctx, port);
+    public GenericPelletStateManager() {
         pelletStateMap = new ConcurrentHashMap<>(); //fixme. add size to
         // optimize
         // loadfactor
@@ -79,7 +68,7 @@ public class GenericPelletStateManager extends StateManagerComponent
                                                    final Tuple tuple) {
         if (!pelletStateMap.containsKey(peId)) {
             LOGGER.info("Creating new state for peid: {}", peId);
-            pelletStateMap.put(peId, new PelletState(peId, this));
+            pelletStateMap.put(peId, new PelletState(peId));
         }
         return pelletStateMap.get(peId);
     }
@@ -108,7 +97,7 @@ public class GenericPelletStateManager extends StateManagerComponent
      * @return serialized delta to send to the backup nodes.
      */
     @Override
-    public final byte[] checkpointState() {
+    public final byte[] getIncrementalStateCheckpoint() {
         return new byte[0];
     }
 
@@ -119,8 +108,8 @@ public class GenericPelletStateManager extends StateManagerComponent
      * @param deltas a list of pellet state deltas received from the flake.
      */
     @Override
-    public final void backupState(final String nfid,
-                                  final List<PelletStateDelta> deltas) {
+    public final void storeBackupState(final String nfid,
+                                       final List<PelletStateDelta> deltas) {
         //FIXME.. later. not requrired for the paper.
     }
 
@@ -132,7 +121,7 @@ public class GenericPelletStateManager extends StateManagerComponent
      */
     @Override
     public final Map<String, PelletStateDelta>
-                        getBackupState(final String neighborFid) {
+                    retrieveBackupState(final String neighborFid) {
         //FIXME.. later. not required for the paper.
         return null;
     }
@@ -146,37 +135,5 @@ public class GenericPelletStateManager extends StateManagerComponent
     @Override
     public void startMsgRecovery(final String nfid) {
         //FIXEME.. later.. not required for the paper.
-    }
-
-    /**
-     * Starts all the sub parts of the given component and notifies when
-     * components starts completely. This will be in a different thread,
-     * so no need to worry.. block as much as you want.
-     *
-     * @param terminateSignalReceiver terminate signal receiver.
-     */
-    @Override
-    protected final void runComponent(
-            final ZMQ.Socket terminateSignalReceiver) {
-        notifyStarted(true);
-        terminateSignalReceiver.recv();
-        notifyStopped(true);
-    }
-
-    /**
-     * @param srcPeId  pellet instance id which resulted in this update
-     * @param customId A custom identifier that can be used to further
-     *                 identify this state's owner.
-     * @param key      the key for the state update.
-     * @param value    the updated value.
-     * NOTE: THIS HAS TO BE THREAD SAFE....
-     */
-    @Override
-    public final void stateUpdated(final String srcPeId,
-                             final Object customId,
-                             final String key,
-                             final Object value) {
-        LOGGER.info("State updated for: {}, key:{}, new value:{}",
-                srcPeId, key, value);
     }
 }

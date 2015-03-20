@@ -27,7 +27,7 @@ import edu.usc.pgroup.floe.app.pellets.Signallable;
 import edu.usc.pgroup.floe.flake.messaging.MessageEmitter;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
-import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
+import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
 import edu.usc.pgroup.floe.signals.PelletSignal;
@@ -79,7 +79,7 @@ public class PelletExecutor extends Thread {
      *                     flake and common fro all pellet instances. Should
      *                     be thread safe.
      */
-    private final StateManagerComponent pelletStateManager;
+    private final StateManager pelletStateManager;
 
     /**
      * Metric registyr.
@@ -145,7 +145,7 @@ public class PelletExecutor extends Thread {
             final ZMQ.Context sharedContext,
             final String fid,
             final String pid,
-            final StateManagerComponent stateManager) {
+            final StateManager stateManager) {
         this.context = sharedContext;
         this.tupleSerializer = SerializerFactory.getSerializer();
         this.flakeId = fid;
@@ -175,7 +175,7 @@ public class PelletExecutor extends Thread {
                           final int pelletIndex,
                     final String fqdnClass, final String fid, final String pid,
                     final ZMQ.Context sharedContext,
-                    final StateManagerComponent stateManager) {
+                    final StateManager stateManager) {
         this(registry, pelletIndex, sharedContext, fid, fid, stateManager);
         this.pelletClass = fqdnClass;
         this.pellet = (Pellet) Utils.instantiateObject(pelletClass);
@@ -203,7 +203,7 @@ public class PelletExecutor extends Thread {
                           final Pellet p,
                           final String fid, final String pid,
                           final ZMQ.Context sharedContext,
-                          final StateManagerComponent stateManager) {
+                          final StateManager stateManager) {
         this(registry, pelletIndex, sharedContext, fid, pid, stateManager);
         this.pellet = p;
         //this.pellet.setup(null, new PelletContext(pelletInstanceId));
