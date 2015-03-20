@@ -228,10 +228,8 @@ public class ReducerPeerCoordinationComponent
                 LOGGER.info("State delta received from:{}", nfid);
                 byte[] serializedState = stateSoc.recv();
 
-                List<PelletStateDelta> deltas
-                        = extractPelletStateDeltas(serializedState);
-
-                stateManager.storeBackupState(nfid, deltas);
+                stateManager.storeNeighborCheckpointToBackup(nfid,
+                        serializedState);
 
                 if (scalingDown) {
                     LOGGER.info("Scaling down NEIGHBOR flake: {}", nfid);
@@ -658,8 +656,9 @@ public class ReducerPeerCoordinationComponent
             // already?
 
             //Key to pellet state delta mapping.
+            //ALOK::::::::::::::::LOOK AT THIS LATER
             Map<String, PelletStateDelta> flakeState
-                    = stateManager.retrieveBackupState(neighborFid);
+                    = stateManager.copyBackupToPrimary(neighborFid, null);
 
 
             LOGGER.error("MOVING STATE FROM BACKUP TO PRIMARY");
@@ -694,7 +693,7 @@ public class ReducerPeerCoordinationComponent
 
             //STEP 2: Send the messages in the queue to the pellet.
             LOGGER.error("Starting msg recovery.");
-            stateManager.startMsgRecovery(neighborFid);
+            //stateManager.startMsgRecovery(neighborFid);
 
             //STEP 3: Remove the neighbor fid from the ring.
             //3a. remove from ZK.

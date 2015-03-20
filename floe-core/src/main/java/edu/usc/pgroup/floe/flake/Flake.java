@@ -344,9 +344,9 @@ public class Flake {
             flakeReceiverComponent.stopAndWait();
         }
 
-        if (stateManager != null) {
+        /*if (stateManager != null) {
             stateManager.stopAndWait();
-        }
+        }*/
 
         if (coordinationManager != null) {
             coordinationManager.stopAndWait();
@@ -389,9 +389,10 @@ public class Flake {
         Pellet pellet = deserializePellet(activeAlternate);
 
 
+        stateManager = StateManagerFactory.getStateManager(pellet);
 
         //Start the state manager.
-        LOGGER.info("Starting state manager.");
+        /*LOGGER.info("Starting state manager.");
         stateManager = StateManagerFactory.getStateManager(metricRegistry,
                 pellet,
                 flakeId, "STATE-MANAGER", sharedContext,
@@ -399,7 +400,7 @@ public class Flake {
 
         if (stateManager != null) {
             stateManager.startAndWait();
-        }
+        }*/
 
         LOGGER.info("Start the command receiver.");
         flakeSenderComponent = new SenderFEComponent(
@@ -451,7 +452,7 @@ public class Flake {
                     Utils.serialize(newCommand), 0);
             msgReceivercontrolForwardSocket.recv();
         }
-        LOGGER.info("Finished flake execution. {}", flakeId);
+        LOGGER.info("Finished flake initialization. {}", flakeId);
     }
 
     /**

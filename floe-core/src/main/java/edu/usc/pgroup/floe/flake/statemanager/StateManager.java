@@ -16,12 +16,10 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
-import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.flake.FlakeComponent;
-import org.zeromq.ZMQ;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author kumbhare
@@ -39,7 +37,7 @@ public interface StateManager {
      * @return pellet state corresponding to the given peId and tuple
      * combination.
      */
-    public abstract PelletState getState(final String peId,
+    PelletState getState(final String peId,
                                          final Tuple tuple);
 
     /**
@@ -55,7 +53,7 @@ public interface StateManager {
      * @return pellet state corresponding to the given peId and key value
      * combination.
      */
-    public abstract PelletState getState(final String peId,
+    PelletState getState(final String peId,
                                          final String key);
 
     /**
@@ -63,29 +61,41 @@ public interface StateManager {
      * nodes.
      * @return serialized delta to send to the backup nodes.
      */
-    public abstract byte[] getIncrementalStateCheckpoint();
+    byte[] getIncrementalStateCheckpoint();
 
     /**
      * Used to backup the states received from the neighbor flakes.
      * @param nfid flake id of the neighbor from which the state update is
      *             received.
-     * @param deltas a list of pellet state deltas received from the flake.
+     * @param checkpointdata the checkpoint data received from the
+     *                       neighbor flake.
      */
-    public abstract void storeBackupState(final String nfid,
-                                          final List<PelletStateDelta> deltas);
+    void storeNeighborCheckpointToBackup(
+            final String nfid,
+            final byte[] checkpointdata);
 
     /**
      * Retrieve the state backed up for the given neighbor flake id.
      * @param neighborFid neighbor's flake id.
+     * @param keys List of keys to be moved from the backup to the primary.
      * @return the backedup state assocuated with the given fid
      */
-    public abstract java.util.Map<String, PelletStateDelta> retrieveBackupState(
-            final String neighborFid);
+    Map<String, PelletStateDelta> copyBackupToPrimary(
+            final String neighborFid, List<String> keys);
+
 
     /**
-     * Starts the msg recovery process for the given neighbor.
-     * @param nfid flake id of the neighbor for which the msg recovery is to
-     *             start.
+     * Repartitions the state. Is used during state migrations for
+     * loadbalance, scale in/out etc.
+     * @param selfFid Flake id for the current flake.
+     * @param neighborFids list of neighbor flake ids that hold the backup
+     *                     for the current flake.
+     * @return a map for neighbor/self fids to the list of state keys to be
+     * transferred to that neighbor.
+     * NOTE: THESE NEIGHBORS ARE ONLY THOSE WHO ALREADY HOLD THE "BACKUP",
+     * the number of such neighbors depend on the "replication" factor.
+     * Typically 1.
      */
-    public abstract void startMsgRecovery(final String nfid);
+    Map<String, List<String>> repartitionState(String selfFid,
+            List<String> neighborFids);
 }

@@ -16,12 +16,9 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
-import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,35 +102,49 @@ public class GenericPelletStateManager implements StateManager {
      * Used to backup the states received from the neighbor flakes.
      *  @param nfid   flake id of the neighbor from which the state update is
      *               received.
-     * @param deltas a list of pellet state deltas received from the flake.
+     * @param checkpointdata the checkpoint data received from the
+     *                       neighbor flake.
      */
     @Override
-    public final void storeBackupState(final String nfid,
-                                       final List<PelletStateDelta> deltas) {
+    public final void storeNeighborCheckpointToBackup(
+            final String nfid,
+            final byte[] checkpointdata) {
         //FIXME.. later. not requrired for the paper.
     }
 
     /**
-     * Get the state backed up for the given neighbor flake id.
+     * Retrieve the state backed up for the given neighbor flake id.
      *
      * @param neighborFid neighbor's flake id.
+     * @param keys      List of keys to be moved from the backup to the primary.
      * @return the backedup state assocuated with the given fid
      */
     @Override
-    public final Map<String, PelletStateDelta>
-                    retrieveBackupState(final String neighborFid) {
-        //FIXME.. later. not required for the paper.
+    public final Map<String, PelletStateDelta> copyBackupToPrimary(
+            final String neighborFid,
+            final List<String> keys) {
         return null;
     }
 
     /**
-     * Starts the msg recovery process for the given neighbor.
+     * Repartitions the state. Is used during state migrations for
+     * loadbalance, scale in/out etc.
      *
-     * @param nfid flake id of the neighbor for which the msg recovery is to
-     *             start.
+     * @param selfFid      Flake id for the current flake.
+     * @param neighborFids list of neighbor flake ids that hold the backup
+     *                     for the current flake.
+     * @return a map for neighbor/self fids to the list of state keys to be
+     * transferred to that neighbor.
+     * NOTE: THESE NEIGHBORS ARE ONLY THOSE WHO ALREADY HOLD THE "BACKUP",
+     * the number of such neighbors depend on the "replication" factor.
+     * Typically 1.
      */
     @Override
-    public void startMsgRecovery(final String nfid) {
-        //FIXEME.. later.. not required for the paper.
+    public final Map<String, List<String>> repartitionState(
+            final String selfFid,
+            final List<String> neighborFids) {
+        return null;
     }
+
+
 }

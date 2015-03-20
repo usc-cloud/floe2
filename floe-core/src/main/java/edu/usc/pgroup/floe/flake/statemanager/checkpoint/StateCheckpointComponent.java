@@ -186,12 +186,12 @@ public class StateCheckpointComponent extends FlakeComponent {
             }
 
             LOGGER.info("Checkpointing State");
-            byte[] checkpointdata = stateManager.checkpointStateIncremental();
+            byte[] chkpointdata = stateManager.getIncrementalStateCheckpoint();
 
             stateSoc.sendMore(getFid());
             stateSoc.sendMore(done.toString());
             stateSoc.sendMore(reqLB.toString());
-            stateSoc.send(checkpointdata, 0);
+            stateSoc.send(chkpointdata, 0);
         }
 
         stateSoc.close();
