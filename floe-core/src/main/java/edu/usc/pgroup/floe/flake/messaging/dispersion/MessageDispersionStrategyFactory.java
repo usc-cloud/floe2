@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -55,9 +57,18 @@ public final class MessageDispersionStrategyFactory {
                 final String appName,
                 final TChannel channel) throws ClassNotFoundException {
 
+        String pluginJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
+
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
+        }
+
         MessageDispersionStrategy strategy
                 = (MessageDispersionStrategy) Utils.instantiateObject(
-                channel.get_dispersionClass());
+                channel.get_dispersionClass(), loader);
 
 //        switch (channel.get_channelType()) {
 //            case ROUND_ROBIN:
@@ -72,6 +83,7 @@ public final class MessageDispersionStrategyFactory {
 //                throw new ClassNotFoundException(channel.toString());
 //        }
         if (strategy != null) {
+
             strategy.initialize(
                     appName, destPelletName, channel.get_channelArgs());
         }
@@ -146,8 +158,17 @@ public final class MessageDispersionStrategyFactory {
 
         FlakeLocalDispersionStrategy strategy = null;
 
+        String pluginJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
+
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
+        }
+
         strategy = (FlakeLocalDispersionStrategy) Utils.instantiateObject(
-                channel.get_localDispersionClass());
+                channel.get_localDispersionClass(), loader);
 
         if (strategy != null) {
             strategy.initialize(channel.get_channelArgs());

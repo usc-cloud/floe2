@@ -39,8 +39,18 @@ public final class SerializerFactory {
     public static TupleSerializer getSerializer() {
         String serializerClass = FloeConfig.getConfig().getString(
                 ConfigProperties.TUPLE_SERIALIZER);
+
+        String pluginJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
+
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
+        }
+
         TupleSerializer serializer = (TupleSerializer) Utils.
-                instantiateObject(serializerClass);
+                instantiateObject(serializerClass, loader);
 
         return serializer;
     }

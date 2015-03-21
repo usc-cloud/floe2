@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.utils;
 
+import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import org.apache.commons.lang.StringUtils;
@@ -25,14 +26,18 @@ import org.zeromq.ZMQ;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Enumeration;
@@ -194,14 +199,32 @@ public final class Utils {
 
     /**
      * Use reflection to create an instance of the given class.
-     * @param fqdnClassName the fully qualified class name.
+     * @param fqdnClassName the fully qualified class name in the default
+     *                      class loader.
      * @return a new instance of the given class. NULL if there was an error
      * creating the instance.
      */
     public static Object instantiateObject(final String fqdnClassName) {
+        return instantiateObject(fqdnClassName, null);
+    }
+
+    /**
+     * Use reflection to create an instance of the given class.
+     * @param fqdnClassName the fully qualified class name.
+     * @param loader class loader to be used.
+     * @return a new instance of the given class. NULL if there was an error
+     * creating the instance.
+     */
+    public static Object instantiateObject(final String fqdnClassName,
+                                           final ClassLoader loader) {
         Object instance = null;
         try {
-            Class<?> klass = Class.forName(fqdnClassName);
+            Class<?> klass;
+            if (loader == null) {
+                klass = Class.forName(fqdnClassName);
+            } else {
+                klass = Class.forName(fqdnClassName, true, loader);
+            }
             instance = klass.newInstance();
         } catch (ClassNotFoundException e) {
             LOGGER.error("Could not create an instance of {}, Exception:{}",
@@ -393,6 +416,33 @@ public final class Utils {
                 break;
             }
         }
+    }
+
+    /**
+     * Creates and returns a class loader with the given jar file.
+     * @param path path to the jar file.
+     * @param parent parent class loader.
+     * @return a new child class loader
+     */
+    public static ClassLoader getClassLoader(final String path,
+                                             final ClassLoader parent) {
+        ClassLoader loader = null;
+        try {
+            File relativeJarLoc = new File(path);
+
+            URL jarLoc = new URL(
+                    "file://" + relativeJarLoc.getAbsolutePath());
+
+            LOGGER.info("Loading jar: {} into class loader.", jarLoc);
+            loader = URLClassLoader.newInstance(
+                    new URL[]{jarLoc},
+                    parent
+            );
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            LOGGER.error("Invalid Jar URL Exception: {}", e);
+        }
+        return loader;
     }
 
     /**
