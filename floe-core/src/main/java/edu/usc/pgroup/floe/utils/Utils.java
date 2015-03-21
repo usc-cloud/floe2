@@ -16,7 +16,6 @@
 
 package edu.usc.pgroup.floe.utils;
 
-import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import org.apache.commons.lang.StringUtils;

@@ -241,6 +241,9 @@ public final class ConfigProperties {
     public static final String FLAKE_RR_LOCAL_DISPERSION = "floe.flake"
             + ".messaging.dispersion.rr.local";
 
+    /**
+     * Jar containing various custom floe plugins.
+     */
     public static final String FLOE_PLUGIN_JAR = "floe.flake.plugins.jar";
 
     /**
