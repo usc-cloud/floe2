@@ -25,8 +25,16 @@ public enum StateType {
      */
     None,
     /**
-     * Each flake has it's local state only. No coomunication between
+     * Each flake has it's local state only. No communication between
      * different flakes.
      */
-    LocalOnly
+    LocalOnly,
+    /**
+     * State semantics similar to map reduce.
+     */
+    Reduce,
+    /**
+     * Partitioned state.
+     */
+    Partitioned
 }

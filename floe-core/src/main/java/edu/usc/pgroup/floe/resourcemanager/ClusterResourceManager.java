@@ -169,8 +169,8 @@ public class ClusterResourceManager extends ResourceManager {
             //THE FOLLOWING IS TO RESTRICT ONE CONTAINTER TO SINGLE PELLET
             // TYPE> WE DID THIS FOR IPDPS EXPERIMENTS. DONT NEED THIS NOW>
 
-            /*
-            ResourceMapping.ContainerInstance cmapping
+
+            /*ResourceMapping.ContainerInstance cmapping
                     = mapping.getContainer(container.getContainerId());
             if (cmapping != null) {
                 LOGGER.info("Resource mapping, but not deployed flakes {} on "
@@ -186,14 +186,17 @@ public class ClusterResourceManager extends ResourceManager {
         }
 
         //Find the container Most cores used.
-        int min = -1;
+        //int min = -1;
+
+        //Find the container Least cores used.
+        int max = Integer.MAX_VALUE;
         ContainerInfo best = null;
         for (ContainerInfo c: feasible) {
             int usedCores = mapping.getUsedCores(c.getContainerId());
-            if (usedCores > min) {
+            if (usedCores < max) {
                 LOGGER.info("best: {}", c.getContainerId());
                 best = c;
-                min = usedCores;
+                max = usedCores;
             }
         }
         return best;

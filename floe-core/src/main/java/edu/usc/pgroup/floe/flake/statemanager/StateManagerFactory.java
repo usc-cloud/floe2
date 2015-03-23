@@ -48,9 +48,10 @@ public final class StateManagerFactory {
         StateManager manager = null;
         switch (pellet.getConf().getStateType()) {
             case LocalOnly:
-            manager = new GenericPelletStateManager();
+                manager = new GenericPelletStateManager();
                 break;
             default:
+                LOGGER.error("No Appropriate state manager found.");
                 manager = null;
         }
         return manager;

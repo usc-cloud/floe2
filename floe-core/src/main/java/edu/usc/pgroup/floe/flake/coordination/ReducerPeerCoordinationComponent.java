@@ -27,6 +27,8 @@ import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.flake.statemanager.PelletStateDelta;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
+import edu.usc.pgroup.floe.flake
+        .statemanager.checkpoint.StateCheckpointComponent;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
@@ -105,6 +107,12 @@ public class ReducerPeerCoordinationComponent
      */
     private final String tokenListenerSockPrefix = "inproc://flake-token-";
 
+
+    /**
+     * Periodic state checkpointer.
+     */
+    private StateCheckpointComponent checkpointer;
+
     /**
      * my data backchannel port.
      */
@@ -139,6 +147,9 @@ public class ReducerPeerCoordinationComponent
                 // HERE.
         this.flakeToDataPortMap = new HashMap<>();
         this.stateManager = stMgr;
+        /*this.checkpointer = new StateCheckpointComponent(metricRegistry,
+                flakeId,
+                componentName + "-CHECKPOINTER", ctx, this, port);*/
     }
 
     /**

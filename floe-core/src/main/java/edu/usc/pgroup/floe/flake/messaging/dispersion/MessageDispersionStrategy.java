@@ -17,8 +17,6 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
-import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +36,7 @@ public abstract class MessageDispersionStrategy implements BackChannelReceiver,
     private static final Logger LOGGER =
             LoggerFactory.getLogger(MessageDispersionStrategy.class);
 
-    /**
-     * Path cache to monitor the tokens.
-     */
-    private ZKFlakeTokenCache flakeCache;
+
 
     /**
      *
@@ -62,19 +57,7 @@ public abstract class MessageDispersionStrategy implements BackChannelReceiver,
                                  final String args) {
         initialize(args);
 
-        String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
-                appName, destPelletName);
-        LOGGER.debug("Listening for flake tokens for dest pellet: {} at {}",
-                destPelletName, pelletTokenPath);
-        this.flakeCache = new ZKFlakeTokenCache(pelletTokenPath, this);
 
-        try {
-            flakeCache.rebuild();
-        } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.warn("Error occured while retreving flake information for "
-                    + "destination pellet: {}", e);
-        }
     }
 
     /**

@@ -397,6 +397,7 @@ public final class ZKUtils {
                 appName, pelletName, flakeId);
 
         FlakeToken ftoken = new FlakeToken(
+                flakeId,
                 token,
                 Utils.getHostNameOrIpAddress(),
                 flakeDataPort,

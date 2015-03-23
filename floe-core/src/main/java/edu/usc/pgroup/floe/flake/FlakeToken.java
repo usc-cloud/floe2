@@ -22,6 +22,12 @@ import java.io.Serializable;
  * @author kumbhare
  */
 public class FlakeToken implements Serializable {
+
+    /**
+     * Flake's id.
+     */
+    private final String flakeID;
+
     /**
      * the flake's current token on the ring.
      */
@@ -41,28 +47,31 @@ public class FlakeToken implements Serializable {
     private byte[] customData;
 
     /**
-     *
+     * @param fid flake id.
      * @param tk the int token for the flake on the ring.
      * @param ipOrHostName ip or hostname for the flake to connect to.
      * @param port the port number to connect to.
      */
-    public FlakeToken(final int tk,
+    public FlakeToken(final String fid,
+                      final int tk,
                       final String ipOrHostName,
                       final int port) {
-        this(tk, ipOrHostName, port, null);
+        this(fid, tk, ipOrHostName, port, null);
     }
 
     /**
-     *
+     * @param fid flake id.
      * @param tk the int token for the flake on the ring.
      * @param ipOrHostName ip or hostname for the flake to connect to.
      * @param port the port number to connect to.
      * @param cdata custom data associated with the flake.
      */
-    public FlakeToken(final int tk,
+    public FlakeToken(final String fid,
+                      final int tk,
                       final String ipOrHostName,
                       final int port,
                       final byte[] cdata) {
+        this.flakeID = fid;
         this.token = tk;
         this.ipOrHost = ipOrHostName;
         this.stateCheckptPort = port;
@@ -95,4 +104,9 @@ public class FlakeToken implements Serializable {
      * @return the custom data associated with the flake.
      */
     public final byte[] getCustomData() { return customData; }
+
+    /**
+     * @return get the flake id.
+     */
+    public final String getFlakeID() { return flakeID; }
 }

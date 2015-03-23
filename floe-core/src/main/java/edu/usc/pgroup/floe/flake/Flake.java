@@ -93,11 +93,6 @@ public class Flake {
     private Timer heartBeatTimer;
 
     /**
-     * Flake heartbeat task.
-     */
-    private FlakeHeartbeatComponent flakeHeartbeatComponent;
-
-    /**
      * the flakeInfo object sent during heartbeats.
      */
     private FlakeInfo flakeInfo;
@@ -145,24 +140,9 @@ public class Flake {
     private StateManager stateManager;
 
     /**
-     * The local coordination manager.
-     */
-    private PeerCoordinationComponent coordinationManager;
-
-    /**
      * The user pellet object including all alternates.
      */
     private TPellet tPellet;
-
-    /**
-     * The flake's message sender component's frontend.
-     */
-    private SenderFEComponent flakeSenderComponent;
-
-    /**
-     * Flake's message receiver component.
-     */
-    private MsgReceiverComponent flakeReceiverComponent;
 
     /**
      * Metric registry for this flake.
@@ -178,6 +158,32 @@ public class Flake {
      * The initial token assigned (randomly) to the flake.
      */
     private Integer initialToken;
+
+
+    /**
+     * Flake Components..
+     */
+
+    /**
+     * Flake heartbeat component.
+     */
+    private FlakeHeartbeatComponent flakeHeartbeatComponent;
+
+    /**
+     * The local coordination manager.
+     */
+    private PeerCoordinationComponent coordinationManager;
+
+    /**
+     * The flake's message sender component's frontend.
+     */
+    private SenderFEComponent flakeSenderComponent;
+
+    /**
+     * Flake's message receiver component.
+     */
+    private MsgReceiverComponent flakeReceiverComponent;
+
 
     /**
      * Constructor.

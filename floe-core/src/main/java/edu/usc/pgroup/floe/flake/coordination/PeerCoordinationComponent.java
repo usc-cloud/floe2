@@ -35,6 +35,7 @@ public abstract class PeerCoordinationComponent extends FlakeComponent {
      */
     private final String pelletName;
 
+
     /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.

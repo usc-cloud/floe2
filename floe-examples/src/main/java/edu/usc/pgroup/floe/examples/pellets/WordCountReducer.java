@@ -22,6 +22,7 @@ import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
+import edu.usc.pgroup.floe.app.pellets.StateType;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,7 @@ public class WordCountReducer extends Pellet {
 
     @Override
     public final void configure(final PelletConfiguration conf) {
-
+        conf.setStateType(StateType.LocalOnly);
     }
 
     /**
