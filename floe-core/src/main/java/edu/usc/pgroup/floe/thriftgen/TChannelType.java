@@ -7,6 +7,10 @@
 package edu.usc.pgroup.floe.thriftgen;
 
 
+import java.util.Map;
+import java.util.HashMap;
+import org.apache.thrift.TEnum;
+
 public enum TChannelType implements org.apache.thrift.TEnum {
   ROUND_ROBIN(0),
   REDUCE(1),

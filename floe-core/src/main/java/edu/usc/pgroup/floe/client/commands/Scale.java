@@ -29,6 +29,9 @@ import org.apache.commons.cli.ParseException;
 import org.apache.thrift.TException;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author kumbhare
  */
@@ -76,10 +79,17 @@ public final class Scale {
                 .withDescription("Number of instances to scale up/down")
                 .create("cnt");
 
+        Option tokenOption = OptionBuilder.withArgName("token_list")
+                .hasArgs().withType(new String())
+                .withDescription("optional list of tokens to be used while "
+                        + "scaling up.")
+                .create("token");
+
         options.addOption(dirOption);
         options.addOption(appOption);
         options.addOption(pelletNameOption);
         options.addOption(cntOption);
+        options.addOption(tokenOption);
 
         CommandLineParser parser = new BasicParser();
         CommandLine line;
@@ -98,6 +108,7 @@ public final class Scale {
         String app = line.getOptionValue("app");
         String pellet = line.getOptionValue("pellet");
         String cnt = line.getOptionValue("cnt");
+        String[] stokens = line.getOptionValues("token");
 
         LOGGER.info("direction: {}", dir);
         LOGGER.info("Application: {}", app);
@@ -107,9 +118,19 @@ public final class Scale {
         ScaleDirection direction = Enum.valueOf(ScaleDirection.class, dir);
         int count = Integer.parseInt(cnt);
         try {
-            FloeClient.getInstance().getClient().scale(
-                    direction, app, pellet, count
-            );
+            if (stokens == null) {
+                FloeClient.getInstance().getClient().scale(
+                        direction, app, pellet, count
+                );
+            } else {
+                List<Integer> tokens = new ArrayList();
+                for (String tok: stokens) {
+                    tokens.add(Integer.parseInt(tok));
+                }
+                FloeClient.getInstance().getClient().scaleWithTokens(
+                        direction, app, pellet, count, tokens
+                );
+            }
         } catch (TException e) {
             LOGGER.error("Error while connecting to the coordinator: {}", e);
         }

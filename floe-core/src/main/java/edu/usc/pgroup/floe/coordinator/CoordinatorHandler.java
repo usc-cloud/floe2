@@ -43,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -360,6 +361,44 @@ public class CoordinatorHandler implements TCoordinator.Iface {
                 count
         );
     }
+
+    /**
+     * Service call to handle Scale up or down event at runtime with ability
+     * to start flakes with given flake id.
+     * @param direction direction of scaling
+     * @param appName name of the app
+     * @param pelletName name of the pellet
+     * @param count number of instances to be scaled up or down.
+     * @param tokens list of tokens to be used for the new flakes to be
+     *               created while scaling up.
+     * throws InsufficientResourcesException if enough containers are not
+     * available.
+     * throws AppNotFoundException if the given appName does is not running.
+     * throws PelletNotFoundException if the application does not contain a
+     * pellet with the given name.
+     * @throws TException Any other exceptions wrapped into TException.
+     */
+    @Override
+    public final void scaleWithTokens(final ScaleDirection direction,
+                                final String appName,
+                                final String pelletName,
+                                final int count,
+                                final List<Integer> tokens)
+            throws
+            //InsufficientResourcesException,
+            //AppNotFoundException,
+            //PelletNotFoundException,
+            TException {
+
+            Coordinator.getInstance().scale(
+                    direction,
+                    appName,
+                    pelletName,
+                    count,
+                    tokens
+            );
+    }
+
 
     /**
      * Service call to handle the signal event at runtime.

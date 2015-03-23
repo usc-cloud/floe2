@@ -195,6 +195,12 @@ service TCoordinator
     2: AppNotFoundException anfe,
     3: PelletNotFoundException pnfe);
 
+    void scale_with_tokens(1: ScaleDirection direction, 2: string appName,
+    3: string pelletName, 4: i32 count, 5: list<i32> tokens) throws
+    (1: InsufficientResourcesException ire,
+    2: AppNotFoundException anfe,
+    3: PelletNotFoundException pnfe);
+
     void signal(1: TSignal signal) throws
       (1: AppNotFoundException anfe, 2: PelletNotFoundException pnfe);
 

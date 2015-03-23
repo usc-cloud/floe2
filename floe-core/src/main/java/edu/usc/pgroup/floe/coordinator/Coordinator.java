@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -231,6 +232,29 @@ public final class Coordinator {
                       final String appName,
                       final String pelletName,
                       final int count) throws TException {
+        scale(direction, appName, pelletName, count, null);
+    }
+
+    /**
+     * Service call to handle the scale event at runtime.
+     * @param direction direction of scaling
+     * @param appName name of the app
+     * @param pelletName name of the pellet
+     * @param count number of instances to be scaled up or down.
+     * @param tokens list of tokens to be assigned to newly created flakes
+     *               (if any)
+     * throws InsufficientResourcesException if enough containers are not
+     * available.
+     * throws AppNotFoundException if the given appName does is not running.
+     * throws PelletNotFoundException if the application does not contain a
+     * pellet with the given name.
+     * @throws TException Any exceptions wrapped into TException.
+     */
+    public void scale(final ScaleDirection direction,
+                      final String appName,
+                      final String pelletName,
+                      final int count,
+                      final List<Integer> tokens) throws TException {
         LOGGER.info("Received scale app request for: {}", appName);
 
         Map<String, Object> args = new HashMap<>();
@@ -238,6 +262,9 @@ public final class Coordinator {
         args.put("appName", appName);
         args.put("pelletName", pelletName);
         args.put("count", count);
+        if (tokens != null) {
+            args.put("token", tokens);
+        }
         try {
             Transitions.execute(new ScaleTransition(),
                     args);

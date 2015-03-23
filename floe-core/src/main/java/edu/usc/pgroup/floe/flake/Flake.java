@@ -230,10 +230,10 @@ public class Flake {
         this.metricRegistry = new MetricRegistry();
 
 
-        if (flakeInstance.getToken().equalsIgnoreCase("nan")) {
+        if (flakeInstance.getToken() == null) {
             initialToken = new Random(System.nanoTime()).nextInt();
         } else {
-            initialToken = Integer.parseInt(flakeInstance.getToken());
+            initialToken = flakeInstance.getToken();
         }
 
         ZKUtils.updateToken(appName,

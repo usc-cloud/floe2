@@ -226,15 +226,20 @@ public class ClusterResourceManager extends ResourceManager {
      * @param direction  direction of scaling.
      * @param pelletName name of the pellet to scale.
      * @param count      the number of instances to scale up/down.
+     * @param tokens list of tokens to be assigned to newly created flakes
+     *               (if any)
      * @return the updated resource mapping with the ResourceMappingDelta set
      * appropriately.
      */
     @Override
     public final ResourceMapping scale(final ResourceMapping current,
-                                 final ScaleDirection direction,
-                                 final String pelletName, final int count) {
+                                       final ScaleDirection direction,
+                                       final String pelletName, final int count,
+                                       final List<Integer> tokens) {
 
         current.resetDelta();
+
+        int tidx = 0;
 
         if (direction == ScaleDirection.up) {
             List<ContainerInfo> containers = getAvailableContainersWithRetry();
@@ -257,7 +262,15 @@ public class ClusterResourceManager extends ResourceManager {
                                                 pelletName,
                                                 containers,
                                                 current);
-                current.createNewInstance(pelletName, container, null);
+                Integer token = null;
+                if (tokens != null && tidx < tokens.size()) {
+                    token = tokens.get(tidx);
+                }
+                boolean newFlake = current.createNewInstance(
+                                                pelletName, container, token);
+                if (newFlake) {
+                    tidx++;
+                }
             }
         } else if (direction == ScaleDirection.down) {
 

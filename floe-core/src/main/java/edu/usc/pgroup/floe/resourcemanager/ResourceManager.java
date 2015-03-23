@@ -135,13 +135,15 @@ public abstract class ResourceManager {
      * @param direction direction of scaling.
      * @param pelletName name of the pellet to scale.
      * @param count the number of instances to scale up/down.
+     * @param tokens list of tokens to be assigned to newly created flakes
+     *               (if any)
      * @return the updated resource mapping with the ResourceMappingDelta set
      * appropriately.
      */
     public abstract ResourceMapping scale(ResourceMapping current,
                                           ScaleDirection direction,
                                           String pelletName,
-                                          int count);
+                                          int count, List<Integer> tokens);
 
     /**
      * Switches the active alternate for the pellet.

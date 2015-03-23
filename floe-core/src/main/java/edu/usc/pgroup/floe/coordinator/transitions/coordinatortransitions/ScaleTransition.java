@@ -25,6 +25,7 @@ import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -109,9 +110,10 @@ public class ScaleTransition extends BaseAppTransition {
         ScaleDirection direction = (ScaleDirection) args.get("direction");
         String pelletName = (String) args.get("pelletName");
         Integer count = (Integer) args.get("count");
+        List<Integer> tokens = (List<Integer>) args.get("token");
 
         ResourceMapping newMapping = ResourceManagerFactory.getResourceManager()
-                .scale(currentMapping, direction, pelletName, count);
+                .scale(currentMapping, direction, pelletName, count, tokens);
 
         /*for (String containerId: newMapping.getAllContainers()) {
 
