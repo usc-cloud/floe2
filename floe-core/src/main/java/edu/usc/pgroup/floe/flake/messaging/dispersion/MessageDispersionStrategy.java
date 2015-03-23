@@ -17,48 +17,31 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import edu.usc.pgroup.floe.flake.FlakesTracker;
 
 import java.util.List;
 
 /**
  * @author kumbhare
  */
-public abstract class MessageDispersionStrategy implements BackChannelReceiver,
-        PathChildrenUpdateListener {
-
+public abstract class MessageDispersionStrategy extends FlakesTracker {
 
     /**
-     * the global logger instance.
+     * @param appName Application name.
+     * @param pelletName dest pellet name to be used to get data from ZK.
      */
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(MessageDispersionStrategy.class);
-
-
+    public MessageDispersionStrategy(final String appName,
+                                     final String pelletName) {
+        super(appName, pelletName);
+        start();
+    }
 
     /**
-     *
+     * Initializes the strategy.
      * @param args the arguments sent by the user. Fix Me: make this a better
      *             interface.
      */
     protected abstract void initialize(String args);
-
-    /**
-     * Initializes the strategy.
-     * @param appName Application name.
-     * @param destPelletName dest pellet name to be used to get data from ZK.
-     * @param args the arguments sent by the user. Fix Me: make this a better
-     *             interface.
-     */
-    public final void initialize(final String appName,
-                                 final String destPelletName,
-                                 final String args) {
-        initialize(args);
-
-
-    }
 
     /**
      * Returns the list of target instances to send the given tuple using the
@@ -76,15 +59,4 @@ public abstract class MessageDispersionStrategy implements BackChannelReceiver,
      * @return list of arguments to be sent.
      */
     public abstract List<String> getCustomArguments(String flakeId);
-
-    /**
-     * Returns the list of target instances to send the given tuple using the
-     * defined strategy.
-     * param tuple tuple object.
-     * return the list of target instances to send the given tuple.
-     *
-     * @param middleendreceiver middleend receiver to get the message.
-     * @param backend backend sender to send message to the succeeding flakes.
-     */
-    //void disperseMessage(ZMQ.Socket middleendreceiver, ZMQ.Socket backend);
 }

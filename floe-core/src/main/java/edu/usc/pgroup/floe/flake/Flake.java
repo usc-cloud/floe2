@@ -24,6 +24,7 @@ import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationComponent;
 import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationManagerFactory;
+import edu.usc.pgroup.floe.flake.coordination.PeerMonitor;
 import edu.usc.pgroup.floe.flake.coordination.ReducerPeerCoordinationComponent;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
@@ -183,6 +184,11 @@ public class Flake {
      * Flake's message receiver component.
      */
     private MsgReceiverComponent flakeReceiverComponent;
+
+    /**
+     * Peer Monitor (temporary).
+     */
+    private PeerMonitor monitor;
 
 
     /**
@@ -397,6 +403,7 @@ public class Flake {
 
         stateManager = StateManagerFactory.getStateManager(pellet);
 
+        monitor = new PeerMonitor(appName, pelletId, flakeId);
         //Start the state manager.
         /*LOGGER.info("Starting state manager.");
         stateManager = StateManagerFactory.getStateManager(metricRegistry,

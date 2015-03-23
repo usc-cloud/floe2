@@ -17,14 +17,12 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
-import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -55,16 +53,19 @@ public class RRDispersionStrategy extends MessageDispersionStrategy {
     private List<String> targetFlakeIds;
 
     /**
-     * Default constructor.
+     * @param appName    Application name.
+     * @param pelletName dest pellet name to be used to get data from ZK.
      */
-    public RRDispersionStrategy() {
+    public RRDispersionStrategy(final String appName,
+                                final String pelletName) {
+        super(appName, pelletName);
         targetFlakeIds = new ArrayList<>();
         allTargetFlakes = new ArrayList<>();
         currentIndex = 0;
     }
 
 
-     /**
+    /**
       * @param args the arguments sent by the user. Fix Me: make this a better
       *             interface.
       */
@@ -137,78 +138,50 @@ public class RRDispersionStrategy extends MessageDispersionStrategy {
     }
 
     /**
-     * Call back whenever a message is received from a target pellet instance
-     * on the back channel. This can be used by dispersion strategy to choose
-     * the target instance to send the message to.
-     *  @param targetFlakeId pellet instance id from which the
-     *                               message is received.
-     * @param message                message body.
-     * @param toContinue true if the flake is sending a regular backchannel
-     *                   msg. False if the message is sent on scaling down i
-     *                   .e. 'terminate' is called on the target flake.
-     */
-    @Override
-    public final void backChannelMessageReceived(
-            final String targetFlakeId,
-            final byte[] message, final Boolean toContinue) {
-        if (!allTargetFlakes.contains(targetFlakeId)) {
-            allTargetFlakes.add(targetFlakeId);
-        }
-    }
-
-
-
-    /**
-     * Triggered when initial list of children is cached.
-     * This is retrieved synchronously.
+     * This function is called exactly once when the initial flake list is
+     * fetched.
      *
-     * @param initialChildren initial list of children.
+     * @param flakes list of currently initialized flakes.
      */
     @Override
-    public final void childrenListInitialized(
-            final Collection<ChildData> initialChildren) {
-        for (ChildData child: initialChildren) {
-            String destFid = ZKPaths.getNodeFromPath(child.getPath());
-            LOGGER.warn("Dest FID: {}", destFid);
-            allTargetFlakes.add(destFid);
+    protected final void initialFlakeList(final List<FlakeToken> flakes) {
+        for (FlakeToken flake: flakes) {
+            allTargetFlakes.add(flake.getFlakeID());
         }
     }
 
     /**
-     * Triggered when a new child is added.
-     * Note: this is not recursive.
+     * This function is called whenever a new flake is created for the
+     * correspondong pellet.
      *
-     * @param addedChild newly added child's data.
+     * @param token flake token corresponding to the added flake.
      */
     @Override
-    public final void childAdded(final ChildData addedChild) {
-        String destFid = ZKPaths.getNodeFromPath(addedChild.getPath());
-        LOGGER.error("Adding Dest FID: {}", destFid);
-        allTargetFlakes.add(destFid);
+    protected final void flakeAdded(final FlakeToken token) {
+        if (!allTargetFlakes.contains(token.getFlakeID())) {
+            allTargetFlakes.add(token.getFlakeID());
+        }
     }
 
     /**
-     * Triggered when an existing child is removed.
-     * Note: this is not recursive.
+     * This function is called whenever a flake is removed for the
+     * correspondong pellet.
      *
-     * @param removedChild removed child's data.
+     * @param token flake token corresponding to the added flake.
      */
     @Override
-    public final void childRemoved(final ChildData removedChild) {
-        String destFid = ZKPaths.getNodeFromPath(removedChild.getPath());
-        LOGGER.error("Removing dest FID: {}", destFid);
-        allTargetFlakes.remove(destFid);
+    protected final void flakeRemoved(final FlakeToken token) {
+        allTargetFlakes.remove(token.getFlakeID());
     }
 
     /**
-     * Triggered when a child is updated.
-     * Note: This is called only when Children data is also cached in
-     * addition to stat information.
+     * This function is called whenever a data associated with a flake
+     * corresponding to the given pellet is updated.
      *
-     * @param updatedChild update child's data.
+     * @param token updated flake token.
      */
     @Override
-    public final void childUpdated(final ChildData updatedChild) {
-        //ignore token value changes in RR.
+    protected final void flakeDataUpdated(final FlakeToken token) {
+
     }
 }

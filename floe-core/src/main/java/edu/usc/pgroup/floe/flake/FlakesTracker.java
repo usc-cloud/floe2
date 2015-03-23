@@ -22,6 +22,11 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
     private static final Logger LOGGER =
             LoggerFactory.getLogger(FlakesTracker.class);
 
+    /**
+     * zk path for the flakes tracker.
+     */
+    private final String pelletTokenPath;
+
 
     /**
      * Path cache to monitor the tokens.
@@ -34,12 +39,16 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
      * @param pelletName name of the pellet whose flakes has to be tracked.
      */
     public FlakesTracker(final String appName, final String pelletName) {
-
-        String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
+        pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
                 appName, pelletName);
         LOGGER.debug("Listening for flake tokens for dest pellet: {} at {}",
                 pelletName, pelletTokenPath);
+    }
 
+    /**
+     * Start the tracker.
+     */
+    protected final void start() {
         this.flakeCache = new ZKFlakeTokenCache(pelletTokenPath, this);
     }
 

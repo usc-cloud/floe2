@@ -280,8 +280,10 @@ public class SenderBEComponent extends FlakeComponent {
                     LOGGER.warn("TERMINATE MSG ON BACKCHANNEL: {}",
                             btoContinue);
                 }
-                dispersionStrategy.backChannelMessageReceived(
-                        flakeId, data, btoContinue);
+                //NOTE: WE ARE NOT USING BACKCHANNEL ANY MORE!!! CLEANUP REST
+                // OF THE CODE AS WELL.
+                /*dispersionStrategy.backChannelMessageReceived(
+                        flakeId, data, btoContinue);*/
             }
         }
 

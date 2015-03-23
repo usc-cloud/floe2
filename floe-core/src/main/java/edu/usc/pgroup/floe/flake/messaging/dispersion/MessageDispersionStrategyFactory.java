@@ -21,6 +21,8 @@ import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * @author kumbhare
  */
@@ -55,9 +57,20 @@ public final class MessageDispersionStrategyFactory {
                 final String appName,
                 final TChannel channel) throws ClassNotFoundException {
 
-        MessageDispersionStrategy strategy
-                = (MessageDispersionStrategy) Utils.instantiateObject(
-                channel.get_dispersionClass());
+        MessageDispersionStrategy strategy = null;
+
+        try {
+            strategy = (MessageDispersionStrategy) Utils.
+                    getConstructor(channel.get_dispersionClass(),
+                    String.class, String.class).newInstance(appName,
+                                                           destPelletName);
+        } catch (InstantiationException e) {
+            LOGGER.error("Cannot create dispersion strategy: {}", e);
+        } catch (IllegalAccessException e) {
+            LOGGER.error("Cannot create dispersion strategy: {}", e);
+        } catch (InvocationTargetException e) {
+            LOGGER.error("Cannot create dispersion strategy: {}", e);
+        }
 
 //        switch (channel.get_channelType()) {
 //            case ROUND_ROBIN:
@@ -72,8 +85,7 @@ public final class MessageDispersionStrategyFactory {
 //                throw new ClassNotFoundException(channel.toString());
 //        }
         if (strategy != null) {
-            strategy.initialize(
-                    appName, destPelletName, channel.get_channelArgs());
+            strategy.initialize(channel.get_channelArgs());
         }
         return strategy;
     }
