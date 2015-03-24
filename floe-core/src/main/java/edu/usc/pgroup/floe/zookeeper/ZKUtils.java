@@ -378,6 +378,42 @@ public final class ZKUtils {
     }
 
     /**
+     * Updates the data associated with the given flake.
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @param flakeId flake id.
+     * @param cdata flake's custom data
+     */
+    public static void updateFlakeCustomData(final String appName,
+                                             final String pelletName,
+                                             final String flakeId,
+                                             final byte[] cdata) {
+        String flakeTokenPath = getApplicationFlakeTokenPath(
+                appName, pelletName, flakeId);
+
+        try {
+            if (ZKClient.getInstance().getCuratorClient()
+                    .checkExists().forPath(flakeTokenPath) == null) {
+                throw new IllegalArgumentException("Given flakeid not found.");
+            }
+
+            byte[] bfToken = ZKClient.getInstance().getCuratorClient().getData()
+                    .forPath(flakeTokenPath);
+
+            FlakeToken flakeToken = (FlakeToken) Utils.deserialize(bfToken);
+
+            updateToken(
+                    appName, pelletName, flakeId, flakeToken.getToken(),
+                    flakeToken.getStateCheckptPort(), flakeToken.getCustomData()
+            );
+
+        } catch (Exception e) {
+            LOGGER.error("Error occurred: {}", e);
+        }
+    }
+
+    
+    /**
      * Updates the token associated with the given app and flakeid.
      * Note: flake id is globally unique.
      * @param appName the application name.
