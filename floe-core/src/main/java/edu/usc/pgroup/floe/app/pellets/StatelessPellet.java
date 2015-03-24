@@ -29,7 +29,7 @@ public abstract class StatelessPellet extends Pellet {
 
     @Override
     public final void configure(final PelletConfiguration conf) {
-        conf.setStateType(StateType.None);
+        conf.setStateType(StateType.None, null);
     }
 
     /**

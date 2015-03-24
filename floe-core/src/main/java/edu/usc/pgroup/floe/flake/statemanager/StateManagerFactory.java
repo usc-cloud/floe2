@@ -17,6 +17,9 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.flake.coordination.ReducerPeerCoordinationComponent;
+import edu.usc.pgroup.floe.flake.messaging.dispersion.FlakeLocalDispersionStrategy;
+import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,14 +48,16 @@ public final class StateManagerFactory {
      * @return the instantiated (but not started) state manager object.
      */
     public static StateManager getStateManager(final Pellet pellet) {
+
         StateManager manager = null;
-        switch (pellet.getConf().getStateType()) {
-            case LocalOnly:
-                manager = new GenericPelletStateManager();
-                break;
-            default:
-                LOGGER.error("No Appropriate state manager found.");
-                manager = null;
+        String stateManagerClass = pellet.getConf().getStateManagerClass();
+        if (stateManagerClass != null) {
+            LOGGER.error("State manager: " + stateManagerClass);
+            manager = (StateManager) Utils.instantiateObject(stateManagerClass);
+        }
+
+        if (manager != null) {
+            manager.init(pellet.getConf().getStateParams());
         }
         return manager;
     }

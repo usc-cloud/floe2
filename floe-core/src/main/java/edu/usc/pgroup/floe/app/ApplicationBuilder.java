@@ -66,6 +66,8 @@ public final class ApplicationBuilder {
     public PelletBuilder addPellet(final String pelletId,
                                          final Pellet p) {
 
+        p.init();
+
         TPellet tPellet = initializePellet(pelletId);
 
         TAlternate alternate = new TAlternate();
@@ -308,8 +310,9 @@ public final class ApplicationBuilder {
         public final DynamicPelletBuilder addAlternate(
                 final String alternateName,
                 final Double value,
-                final StatelessPellet p) {
+                final Pellet p) {
 
+            p.init();
             TAlternate alternate = new TAlternate();
             alternate.set_serializedPellet(Utils.serialize(p));
             alternate.set_value(value);

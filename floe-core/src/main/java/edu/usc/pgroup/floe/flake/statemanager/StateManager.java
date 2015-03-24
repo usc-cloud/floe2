@@ -27,6 +27,12 @@ import java.util.Map;
 public interface StateManager {
 
     /**
+     * Initialize the state manager
+     * @param args string encoded list of arguments.
+     */
+    void init(String args);
+
+    /**
      * Returns the object (state) associated with the given local pe instance.
      * The tuple may be used to further divide the state (e.g. in case of
      * reducer pellet, the tuple's key will be used to divide the state).
@@ -59,9 +65,10 @@ public interface StateManager {
     /**
      * Checkpoint state and return the serialized delta to send to the backup
      * nodes.
+     * @param neighborFlakeId the flake id to which the checkpoint is to be backed up.
      * @return serialized delta to send to the backup nodes.
      */
-    byte[] getIncrementalStateCheckpoint();
+    byte[] getIncrementalStateCheckpoint(String neighborFlakeId);
 
     /**
      * Used to backup the states received from the neighbor flakes.

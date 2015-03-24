@@ -348,7 +348,7 @@ public class PelletExecutor extends Thread {
                     try {
                         state = getPelletState(tuple);
                     } catch (Exception ex) {
-                        LOGGER.error("Exception on T:{}", tuple);
+                        LOGGER.error("Exception on T:{}", ex);
                     }
 
 

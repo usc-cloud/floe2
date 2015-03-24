@@ -16,6 +16,9 @@
 
 package edu.usc.pgroup.floe.app.pellets;
 
+import edu.usc.pgroup.floe.flake.statemanager.GenericPelletStateManager;
+import edu.usc.pgroup.floe.flake.statemanager.ReducerStateManager;
+
 import java.io.Serializable;
 
 /**
@@ -26,6 +29,16 @@ public class PelletConfiguration implements Serializable {
      * the state type associated with the pellet.
      */
     private StateType stateType;
+
+    /**
+     * Additional state parameters that can be set.
+     */
+    private String stateParams;
+
+    /**
+     * State manager Class
+     */
+    private String stateManagerClass;
 
     /**
      * Default constructor. (sets the state type to localonly)
@@ -45,7 +58,41 @@ public class PelletConfiguration implements Serializable {
      * Sets the state type for the pellet.
      * @param type state type enum
      */
-    public final void setStateType(final StateType type) {
+    public final void setStateType(final StateType type,
+                                   final String stateParams) {
         this.stateType = type;
+        this.stateParams = stateParams;
+        switch (stateType) {
+            case LocalOnly:
+                this.stateManagerClass
+                        = GenericPelletStateManager.class.getCanonicalName();
+                break;
+            case Reduce:
+                this.stateManagerClass
+                        = ReducerStateManager.class.getCanonicalName();
+                break;
+            default:
+                this.stateManagerClass = null;
+
+        }
+    }
+
+    public final void setCustomStateType(
+            final String stateManagerClass,
+            final String stateParams) {
+        this.stateType = StateType.Custom;
+        this.stateManagerClass = stateManagerClass;
+        this.stateParams = stateParams;
+    }
+
+    /**
+     * @return additional state parameters.
+     */
+    public String getStateParams() {
+        return stateParams;
+    }
+
+    public String getStateManagerClass() {
+        return stateManagerClass;
     }
 }

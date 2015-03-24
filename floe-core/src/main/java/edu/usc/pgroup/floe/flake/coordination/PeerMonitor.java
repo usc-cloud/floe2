@@ -211,4 +211,18 @@ public class PeerMonitor extends FlakesTracker {
             neighborsToBackupFor.putAll(result);
         }
     }
+
+    /**
+     * @return a list of k neighbors (as a sorted map)
+     */
+    public final SortedMap<Integer, FlakeToken> getNeighborsToBackupFor() {
+        return neighborsToBackupFor;
+    }
+
+    /**
+     * @return the current fid to token map.
+     */
+    public final Map<String, Integer> getFidToTokenMap() {
+        return fidToTokenMap;
+    }
 }

@@ -49,6 +49,16 @@ public class GenericPelletStateManager implements StateManager {
     }
 
     /**
+     * Initialize the state manager
+     *
+     * @param args string encoded list of arguments.
+     */
+    @Override
+    public void init(String args) {
+
+    }
+
+    /**
      * Returns the object (state) associated with the given local pe instance.
      * The tuple may be used to further divide the state (e.g. in case of
      * reducer pellet, the tuple's key will be used to divide the state).
@@ -94,7 +104,7 @@ public class GenericPelletStateManager implements StateManager {
      * @return serialized delta to send to the backup nodes.
      */
     @Override
-    public final byte[] getIncrementalStateCheckpoint() {
+    public final byte[] getIncrementalStateCheckpoint(String neighborId) {
         return new byte[0];
     }
 

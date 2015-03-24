@@ -67,7 +67,7 @@ public class WordCountReducer extends Pellet {
 
     @Override
     public final void configure(final PelletConfiguration conf) {
-        conf.setStateType(StateType.LocalOnly);
+        conf.setStateType(StateType.Reduce, tupleWordKey);
     }
 
     /**

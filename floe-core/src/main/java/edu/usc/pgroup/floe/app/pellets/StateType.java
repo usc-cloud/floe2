@@ -33,8 +33,14 @@ public enum StateType {
      * State semantics similar to map reduce.
      */
     Reduce,
+
     /**
      * Partitioned state.
      */
-    Partitioned
+    Partitioned,
+
+    /**
+     * Custom, user define state type
+     */
+    Custom
 }
