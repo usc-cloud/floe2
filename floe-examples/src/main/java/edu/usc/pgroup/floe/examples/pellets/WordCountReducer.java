@@ -16,6 +16,9 @@
 
 package edu.usc.pgroup.floe.examples.pellets;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -46,6 +49,12 @@ public class WordCountReducer extends Pellet {
             LoggerFactory.getLogger(PrintPellet.class);
 
     /**
+     * The global metric registry that can be used by the pellet to track
+     * application level metrics.
+     */
+    private Counter counter;
+
+    /**
      * Constructor.
      *
      * @param keyName name of the field from the input tuple to be
@@ -71,7 +80,12 @@ public class WordCountReducer extends Pellet {
     @Override
     public void onStart(final AppContext appContext,
                       final PelletContext pelletContext) {
-
+        MetricRegistry metricRegistry = pelletContext.getMetricRegistry();
+        counter = metricRegistry.counter(MetricRegistry.name(
+                WordCountReducer.class, "counter"));
+        //use pelletContext.getPelletInstanceId() + "counter" if you need
+        // pellet instance specific metric. Or just use "counter" if you want
+        // flake level metrics.
     }
 
     /**
@@ -109,6 +123,10 @@ public class WordCountReducer extends Pellet {
         if (t == null) {
             return;
         }
+
+        /*Counter*/
+        counter.inc();
+
         String word = (String) t.get(tupleWordKey);
         Integer count = 0;
         Object value = state.getValue("count");
@@ -116,10 +134,9 @@ public class WordCountReducer extends Pellet {
             count = (Integer) value + count;
         }
         count++;
-        if (count == 1 && word.equals("the")) {
-            LOGGER.error("I have 'the'");
-        }
+
         state.setValue("count", count);
         LOGGER.info("Count for {}: {}", word, count);
+        LOGGER.error("Counter Metric:{}",  counter.getCount());
     }
 }

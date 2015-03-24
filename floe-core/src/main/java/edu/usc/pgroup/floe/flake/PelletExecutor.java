@@ -125,6 +125,11 @@ public class PelletExecutor extends Thread {
      */
     private URLClassLoader loader;
 
+    /**
+     * Pellet context
+     */
+    private final PelletContext pelletContext;
+
 
     /**
      * hiding default constructor.
@@ -155,6 +160,8 @@ public class PelletExecutor extends Thread {
         this.pelletStateManager = stateManager;
         this.metricRegistry = registry;
         this.pelletId = pid;
+        this.pelletContext = new PelletContext(pelletInstanceId,
+                                                metricRegistry);
     }
 
     /**
@@ -261,8 +268,7 @@ public class PelletExecutor extends Thread {
     public final void run() {
         final ZMQ.Socket dataReceiver = context.socket(ZMQ.SUB);
         dataReceiver.subscribe(pelletInstanceId.getBytes());
-        dataReceiver.connect(Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
-                + flakeId);
+        //DO NOT CONNECT HERE.. INSTEAD CONNECT ON START..
 
         final ZMQ.Socket signalReceiver = context.socket(ZMQ.SUB);
         signalReceiver.connect(
@@ -367,7 +373,8 @@ public class PelletExecutor extends Thread {
                             serializedSignal);
 
                     if (signal instanceof SystemSignal) {
-                        processSystemSignal((SystemSignal) signal);
+                        processSystemSignal((SystemSignal) signal,
+                                dataReceiver);
                     } else {
                         if (pellet instanceof Signallable) {
                             ((Signallable) pellet).onSignal(signal);
@@ -426,8 +433,10 @@ public class PelletExecutor extends Thread {
     /**
      * processes the system signal for the pellet.
      * @param signal system signal.
+     * @param dataReceiver
      */
-    private void processSystemSignal(final SystemSignal signal) {
+    private void processSystemSignal(final SystemSignal signal,
+                                     final ZMQ.Socket dataReceiver) {
         LOGGER.warn("System signal received: ");
         switch (signal.getSystemSignalType()) {
             case SwitchAlternate:
@@ -439,7 +448,10 @@ public class PelletExecutor extends Thread {
                 break;
             case StartInstance:
                 LOGGER.info("Starting pellets.");
-                this.pellet.onStart(null, new PelletContext(pelletInstanceId));
+                this.pellet.onStart(null, pelletContext);
+                dataReceiver.connect(
+                        Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
+                        + flakeId);
                 //FIXME..
                 PelletState state = getPelletState(null);
                 this.pellet.execute(null, emitter, state);

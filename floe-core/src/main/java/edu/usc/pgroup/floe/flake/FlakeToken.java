@@ -46,6 +46,13 @@ public class FlakeToken implements Serializable {
      */
     private byte[] customData;
 
+
+    /**
+     * indicates whether the flake is ready to be inserted in the ring.
+     * This is false untill state transfer etc. has completed. TODOX:
+     */
+
+
     /**
      * @param fid flake id.
      * @param tk the int token for the flake on the ring.

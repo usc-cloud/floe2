@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.app.pellets;
 
+import com.codahale.metrics.MetricRegistry;
+
 /**
  * @author kumbhare
  */
@@ -27,11 +29,21 @@ public class PelletContext {
     private final String pelletInstanceId;
 
     /**
+     * The global metric registry that can be used by the pellet to track
+     * application level metrics.
+     */
+    private final MetricRegistry metricRegistry;
+
+    /**
      * Constructor.
      * @param peInstanceId Pellet's instance id.
+     * @param registry The global metric registry that can be used by the
+     *                 pellet to track application level metrics.
      */
-    public PelletContext(final String peInstanceId) {
+    public PelletContext(final String peInstanceId,
+                         final MetricRegistry registry) {
         this.pelletInstanceId = peInstanceId;
+        this.metricRegistry = registry;
     }
 
     /**
@@ -40,4 +52,10 @@ public class PelletContext {
     public final String getPelletInstanceId() {
         return pelletInstanceId;
     }
+
+    /**
+     * @return The global metric registry that can be used by the pellet to
+     * track application level metrics.
+     */
+    public final MetricRegistry getMetricRegistry() { return metricRegistry; }
 }
