@@ -55,10 +55,12 @@ public class RRDispersionStrategy extends MessageDispersionStrategy {
     /**
      * @param appName    Application name.
      * @param pelletName dest pellet name to be used to get data from ZK.
+     * @param myFlakeId Current flake's id.
      */
     public RRDispersionStrategy(final String appName,
-                                final String pelletName) {
-        super(appName, pelletName);
+                                final String pelletName,
+                                final String myFlakeId) {
+        super(appName, pelletName, myFlakeId);
         targetFlakeIds = new ArrayList<>();
         allTargetFlakes = new ArrayList<>();
         currentIndex = 0;

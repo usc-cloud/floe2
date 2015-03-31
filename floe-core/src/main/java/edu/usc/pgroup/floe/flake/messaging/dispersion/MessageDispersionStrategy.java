@@ -27,12 +27,20 @@ import java.util.List;
 public abstract class MessageDispersionStrategy extends FlakesTracker {
 
     /**
+     *  Current flake's id.
+     */
+    private final String flakeId;
+
+    /**
      * @param appName Application name.
      * @param pelletName dest pellet name to be used to get data from ZK.
+     * @param myFlakeId Current flake's id.
      */
     public MessageDispersionStrategy(final String appName,
-                                     final String pelletName) {
+                                     final String pelletName,
+                                     final String myFlakeId) {
         super(appName, pelletName);
+        this.flakeId = myFlakeId;
         start();
     }
 
@@ -59,4 +67,12 @@ public abstract class MessageDispersionStrategy extends FlakesTracker {
      * @return list of arguments to be sent.
      */
     public abstract List<String> getCustomArguments(String flakeId);
+
+    /**
+     *
+     * @return Current flake's id.
+     */
+    public String getFlakeId() {
+        return flakeId;
+    }
 }

@@ -156,7 +156,7 @@ public class SenderBEComponent extends FlakeComponent {
             try {
                 this.dispersionStrategy = MessageDispersionStrategyFactory
                         .getMessageDispersionStrategy(destPelletName,
-                                appName, channelType);
+                                appName,getFid(), channelType);
             } catch (Exception ex) {
                 LOGGER.error("Invalid dispersion strategy: {}. "
                         + "Using default RR", channelType.get_channelType());

@@ -46,6 +46,7 @@ public final class MessageDispersionStrategyFactory {
      * Factory function for creating the MessageDispersionStrategy.
      * @param appName Application name.
      * @param destPelletName dest pellet name to be used to get data from ZK.
+     * @param flakeId Current flake's id.
      * @param channel type of the channel (edge) in the application.
      * @return new instance of MessageDispersionStrategy based on the edge type.
      * @throws java.lang.ClassNotFoundException if the given channel type is
@@ -55,6 +56,7 @@ public final class MessageDispersionStrategyFactory {
             getMessageDispersionStrategy(
                 final String destPelletName,
                 final String appName,
+                final String flakeId,
                 final TChannel channel) throws ClassNotFoundException {
 
         MessageDispersionStrategy strategy = null;
@@ -62,8 +64,8 @@ public final class MessageDispersionStrategyFactory {
         try {
             strategy = (MessageDispersionStrategy) Utils.
                     getConstructor(channel.get_dispersionClass(),
-                    String.class, String.class).newInstance(appName,
-                                                           destPelletName);
+                    String.class, String.class, String.class).newInstance(appName,
+                                                           destPelletName, flakeId);
         } catch (InstantiationException e) {
             LOGGER.error("Cannot create dispersion strategy: {}", e);
         } catch (IllegalAccessException e) {

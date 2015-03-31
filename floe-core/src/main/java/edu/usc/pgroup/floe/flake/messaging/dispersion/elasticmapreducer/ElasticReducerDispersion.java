@@ -87,10 +87,12 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
     /**
      * @param appName    Application name.
      * @param pelletName dest pellet name to be used to get data from ZK.
+     * @param myFlakeId Current flake's id.
      */
     public ElasticReducerDispersion(final String appName,
-                                    final String pelletName) {
-        super(appName, pelletName);
+                                    final String pelletName,
+                                    final String myFlakeId) {
+        super(appName, pelletName, myFlakeId);
         this.targetFlakeIds = new ArrayList<>();
         this.flakeArgs = new ArrayList<>();
         this.circle = new TreeMap<>(Collections.reverseOrder());
