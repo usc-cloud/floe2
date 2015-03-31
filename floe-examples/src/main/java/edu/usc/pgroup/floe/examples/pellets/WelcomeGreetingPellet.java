@@ -19,6 +19,7 @@ package edu.usc.pgroup.floe.examples.pellets;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.Signallable;
 import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
@@ -57,6 +58,16 @@ public class WelcomeGreetingPellet
     @Override
     public void onStart(final AppContext appContext,
                       final PelletContext pelletContext) {
+
+    }
+
+    /**
+     * Should use the conf object to configure different pellet configuration.
+     *
+     * @param conf pellet configuration.
+     */
+    @Override
+    protected void configureStateLessPellet(PelletConfiguration conf) {
 
     }
 

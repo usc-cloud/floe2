@@ -63,16 +63,16 @@ public abstract class MessageDispersionStrategy extends FlakesTracker {
     /**
      * Should return a list of arguments/"envelopes" to be sent along with
      * the message for the given target flake.
-     * @param flakeId one of the flake ids returned by getTargetFlakeIds
+     * @param fId one of the flake ids returned by getTargetFlakeIds
      * @return list of arguments to be sent.
      */
-    public abstract List<String> getCustomArguments(String flakeId);
+    public abstract List<String> getCustomArguments(final String fId);
 
     /**
      *
      * @return Current flake's id.
      */
-    public String getFlakeId() {
+    public final String getFlakeId() {
         return flakeId;
     }
 }

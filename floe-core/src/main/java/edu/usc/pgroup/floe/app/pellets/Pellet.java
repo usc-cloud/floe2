@@ -16,76 +16,24 @@
 
 package edu.usc.pgroup.floe.app.pellets;
 
-import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
-
-import java.io.Serializable;
-import java.util.List;
+import edu.usc.pgroup.floe.flake.statemanager.StateManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Pellet common interface which is the basic unit of user code.
  * Stateful and stateless pellets are derived from this common.
  * @author kumbhare
  */
-public abstract class Pellet implements Serializable {
-
+public abstract class Pellet extends IteratorPellet {
     /**
-     * Pellet configuration (such as number of parallel instances etc).
+     * the global logger instance.
      */
-    private PelletConfiguration conf;
-
-    /**
-     * Default constructor.
-     */
-    public Pellet() {
-        conf = new PelletConfiguration();
-    }
-
-
-    /**
-     * Initializes the pellet.
-     */
-    public final void init() {
-        configure(this.conf);
-    }
-
-    /**
-     * @return the pellet configuration.
-     */
-    public final PelletConfiguration getConf() {
-        return conf;
-    }
-
-    /**
-     * Use to configure different aspects of the pellet,such as state type etc.
-     * @param pconf pellet configurer
-     */
-    public abstract void configure(final PelletConfiguration pconf);
-
-
-    /**
-     * The setup function is called once to let the pellet initialize.
-     * @param appContext Application's context. Some data related to
-     *                   application's deployment.
-     * @param pelletContext Pellet instance context. Related to this
-     *                      particular pellet instance.
-     */
-    public abstract void onStart(final AppContext appContext,
-                                 final PelletContext pelletContext);
-
-    /**
-     * The teardown function, called when the topology is killed.
-     * Or when the Pellet instance is scaled down.
-     */
-    public abstract void teardown();
-
-    /**
-     * @return The names of the streams to be used later during emitting
-     * messages.
-     */
-    public abstract List<String> getOutputStreamNames();
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(TupleItertaor.class);
 
     /**
      * The execute method which is called for each tuple.
@@ -98,4 +46,30 @@ public abstract class Pellet implements Serializable {
     public abstract void execute(final Tuple t,
                                  final Emitter emitter,
                                  final PelletState state);
+
+    /**
+     * The execute method which is called for each tuple.
+     *
+     * @param tupleItertaor       input tuple received from the preceding
+     *                            pellet.
+     * @param emitter An output emitter which may be used by the user to emmit
+     *                results.
+     * @param stateMgr state associated manager associated with the pellet.
+     *                     It is the executor's responsiblity to get the state
+     *              associated with the tuple.
+     */
+    @Override
+    public final void execute(final TupleItertaor tupleItertaor,
+                        final Emitter emitter,
+                        final StateManager stateMgr) {
+        Tuple t = null;
+        if (tupleItertaor != null && !getConf().isSourcePellet()) {
+            t = tupleItertaor.next();
+        }
+        PelletState state = null;
+        if (stateMgr != null) {
+            stateMgr.getState(tupleItertaor.getPeId(), t);
+        }
+        execute(t, emitter, state);
+    }
 }

@@ -64,8 +64,8 @@ public final class MessageDispersionStrategyFactory {
         try {
             strategy = (MessageDispersionStrategy) Utils.
                     getConstructor(channel.get_dispersionClass(),
-                    String.class, String.class, String.class).newInstance(appName,
-                                                           destPelletName, flakeId);
+                    String.class, String.class, String.class)
+                            .newInstance(appName, destPelletName, flakeId);
         } catch (InstantiationException e) {
             LOGGER.error("Cannot create dispersion strategy: {}", e);
         } catch (IllegalAccessException e) {

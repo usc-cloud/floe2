@@ -16,6 +16,7 @@
 
 package edu.usc.pgroup.floe.flake.statemanager;
 
+import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ public final class StateManagerFactory {
      *               manager to create.
      * @return the instantiated (but not started) state manager object.
      */
-    public static StateManager getStateManager(final Pellet pellet) {
+    public static StateManager getStateManager(final IteratorPellet pellet) {
 
         StateManager manager = null;
         String stateManagerClass = pellet.getConf().getStateManagerClass();

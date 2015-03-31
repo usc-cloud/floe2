@@ -20,6 +20,7 @@ import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
 import edu.usc.pgroup.floe.client.AppSubmitter;
@@ -72,6 +73,16 @@ public final class SimpleLoop {
         @Override
         public void onStart(final AppContext appContext,
                           final PelletContext pelletContext) {
+
+        }
+
+        /**
+         * Should use the conf object to configure different pellet configuration.
+         *
+         * @param conf pellet configuration.
+         */
+        @Override
+        protected void configureStateLessPellet(PelletConfiguration conf) {
 
         }
 

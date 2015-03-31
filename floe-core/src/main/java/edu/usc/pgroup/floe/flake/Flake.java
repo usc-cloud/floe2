@@ -20,6 +20,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.ganglia.GangliaReporter;
+import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationComponent;
@@ -398,7 +399,7 @@ public class Flake {
 
         //deserialize the active alternate and get the runnable pellet object
         // out of it.
-        Pellet pellet = deserializePellet(activeAlternate);
+        IteratorPellet pellet = deserializePellet(activeAlternate);
 
 
         stateManager = StateManagerFactory.getStateManager(pellet);
@@ -483,7 +484,7 @@ public class Flake {
                     .getPelletInstanceIndex() + 1;
         }
 
-        Pellet pellet = deserializePellet(p);
+        IteratorPellet pellet = deserializePellet(p);
 
         PelletExecutor pe = new PelletExecutor(metricRegistry, nextPEIdx,
                 pellet, flakeId, pelletId, sharedContext, stateManager);
@@ -503,9 +504,9 @@ public class Flake {
      * @param p the serialized pellet.
      * @return THe deserialized pellet.
      */
-    private Pellet deserializePellet(final byte[] p) {
+    private IteratorPellet deserializePellet(final byte[] p) {
         URLClassLoader loader;
-        Pellet pellet = null;
+        IteratorPellet pellet = null;
         try {
             File relativeJarLoc = new File(
                     Utils.getContainerJarDownloadPath(appName, appJar));
@@ -519,7 +520,7 @@ public class Flake {
                     getClass().getClassLoader()
             );
 
-            pellet = (Pellet) Utils.deserialize(p, loader);
+            pellet = (IteratorPellet) Utils.deserialize(p, loader);
         } catch (MalformedURLException e) {
             e.printStackTrace();
             LOGGER.error("Invalid Jar URL Exception: {}", e);

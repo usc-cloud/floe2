@@ -30,7 +30,14 @@ public abstract class StatelessPellet extends Pellet {
     @Override
     public final void configure(final PelletConfiguration conf) {
         conf.setStateType(StateType.None, null);
+        configureStateLessPellet(conf);
     }
+
+    /**
+     * Should use the conf object to configure different pellet configuration.
+     * @param conf pellet configuration.
+     */
+    protected abstract void configureStateLessPellet(PelletConfiguration conf);
 
     /**
      * The execute method which is called for each tuple.

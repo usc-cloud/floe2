@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.coordination;
 
 import com.codahale.metrics.MetricRegistry;
+import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import org.slf4j.Logger;
@@ -57,7 +58,7 @@ public final class PeerCoordinationManagerFactory {
             final MetricRegistry metricRegistry,
             final String appName,
             final String pelletName,
-            final Pellet pellet,
+            final IteratorPellet pellet,
             final String flakeId,
             final String componentName,
             final StateManager stateManager,

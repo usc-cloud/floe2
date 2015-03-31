@@ -16,7 +16,7 @@
 
 package edu.usc.pgroup.floe.app;
 
-import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.thriftgen.TAlternate;
@@ -45,7 +45,7 @@ public final class ApplicationBuilder {
     /**
      * Map from pellet name to user pellet.
      */
-    private Map<String, Pellet> userPellets;
+    private Map<String, IteratorPellet> userPellets;
 
     /**
      * Default constructor.
@@ -63,7 +63,7 @@ public final class ApplicationBuilder {
      * streams etc.)
      */
     public PelletBuilder addPellet(final String pelletId,
-                                         final Pellet p) {
+                                         final IteratorPellet p) {
 
         p.init();
 
@@ -309,7 +309,7 @@ public final class ApplicationBuilder {
         public final DynamicPelletBuilder addAlternate(
                 final String alternateName,
                 final Double value,
-                final Pellet p) {
+                final IteratorPellet p) {
 
             p.init();
             TAlternate alternate = new TAlternate();

@@ -20,13 +20,12 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.EmitterEnvelopeHook;
-import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.Signallable;
+import edu.usc.pgroup.floe.app.pellets.TupleItertaor;
 import edu.usc.pgroup.floe.flake.messaging.MessageEmitter;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
-import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
@@ -82,9 +81,19 @@ public class PelletExecutor extends Thread {
     private final StateManager pelletStateManager;
 
     /**
+     * Tuple iterator used by the pellets.
+     */
+    private final TupleItertaor tupleIterator;
+
+    /**
      * Metric registyr.
      */
     private final MetricRegistry metricRegistry;
+
+    /**
+     * Data receiver object.
+     */
+    private final ZMQ.Socket dataReceiver;
 
 
     /**
@@ -96,7 +105,7 @@ public class PelletExecutor extends Thread {
     /**
      * Instance of the pellet class.
      */
-    private Pellet pellet;
+    private IteratorPellet pellet;
 
 
     /**
@@ -162,6 +171,11 @@ public class PelletExecutor extends Thread {
         this.pelletId = pid;
         this.pelletContext = new PelletContext(pelletInstanceId,
                                                 metricRegistry);
+        this.dataReceiver = context.socket(ZMQ.SUB);
+        this.dataReceiver.subscribe(pelletInstanceId.getBytes());
+        //DO NOT CONNECT HERE.. INSTEAD CONNECT ON START..
+        this.tupleIterator = new TupleItertaor(pelletInstanceId,
+                pelletStateManager, tupleSerializer, dataReceiver);
     }
 
     /**
@@ -185,7 +199,7 @@ public class PelletExecutor extends Thread {
                     final StateManager stateManager) {
         this(registry, pelletIndex, sharedContext, fid, fid, stateManager);
         this.pelletClass = fqdnClass;
-        this.pellet = (Pellet) Utils.instantiateObject(pelletClass);
+        this.pellet = (IteratorPellet) Utils.instantiateObject(pelletClass);
         //this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
 
@@ -207,7 +221,7 @@ public class PelletExecutor extends Thread {
      */
     public PelletExecutor(final MetricRegistry registry,
                           final int pelletIndex,
-                          final Pellet p,
+                          final IteratorPellet p,
                           final String fid, final String pid,
                           final ZMQ.Context sharedContext,
                           final StateManager stateManager) {
@@ -266,10 +280,6 @@ public class PelletExecutor extends Thread {
      */
     @Override
     public final void run() {
-        final ZMQ.Socket dataReceiver = context.socket(ZMQ.SUB);
-        dataReceiver.subscribe(pelletInstanceId.getBytes());
-        //DO NOT CONNECT HERE.. INSTEAD CONNECT ON START..
-
         final ZMQ.Socket signalReceiver = context.socket(ZMQ.SUB);
         signalReceiver.connect(
                 Utils.Constants.FLAKE_RECEIVER_SIGNAL_BACKEND_SOCK_PREFIX
@@ -325,46 +335,11 @@ public class PelletExecutor extends Thread {
             LOGGER.debug("POLLING: ");
             //try {
                 pollerItems.poll();
+
                 if (pollerItems.pollin(0)) {
-                    dataReceiver.recvStr(Charset.defaultCharset());
-                    /*String sentTime
-                            = dataReceiver.recvStr(Charset.defaultCharset());*/
-                    byte[] serializedTuple = dataReceiver.recv();
-
-                    queLen.dec();
-
-                    //long queueAddedTimeL = Long.parseLong(queueAddedTime);
-                    //long queueRemovedTime = System.nanoTime();
-                    //queueTimer.update(queueRemovedTime - queueAddedTimeL
-                    //        , TimeUnit.NANOSECONDS);
-
-                    msgDequeuedMeter.mark();
-
-                    Tuple tuple = tupleSerializer.deserialize(serializedTuple);
-
-
-                    //Run pellet.execute here.
-                    PelletState state = null;
-                    try {
-                        state = getPelletState(tuple);
-                    } catch (Exception ex) {
-                        LOGGER.error("Exception on T:{}", ex);
-                    }
-
-
-
-                    pellet.execute(tuple, emitter, state);
-                    /*if (state != null) {
-                        state.setLatestTimeStampAtomic(
-                                Long.parseLong(sentTime));
-                    }*/
-
-
-                    long processedTime = System.nanoTime();
-                    //processTimer.update(processedTime - queueRemovedTime,
-                    //        TimeUnit.NANOSECONDS);
-                    msgProcessedMeter.mark();
-
+                    this.pellet.execute(tupleIterator,
+                            emitter,
+                            pelletStateManager);
                 } else if (pollerItems.pollin(1)) {
                     String envelope = signalReceiver
                             .recvStr(Charset.defaultCharset());
@@ -417,45 +392,33 @@ public class PelletExecutor extends Thread {
     }
 
     /**
-     * Gets the state associated with the combination of the pellet instance
-     * and the current tuple.
-     * @param tuple current tuple to be processed.
-     * @return associated state.
-     */
-    private PelletState getPelletState(final Tuple tuple) {
-        if (pelletStateManager != null) {
-            return pelletStateManager.getState(pelletInstanceId, tuple);
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * processes the system signal for the pellet.
      * @param signal system signal.
-     * @param dataReceiver data receiver socket to connect to in order to
+     * @param receiver data receiver socket to connect to in order to
      *                     receive data.
      */
     private void processSystemSignal(final SystemSignal signal,
-                                     final ZMQ.Socket dataReceiver) {
+                                     final ZMQ.Socket receiver) {
         LOGGER.warn("System signal received: ");
         switch (signal.getSystemSignalType()) {
             case SwitchAlternate:
                 LOGGER.warn("Switching pellet alternate.");
-                this.pellet = (Pellet) Utils.deserialize(
+                this.pellet = (IteratorPellet) Utils.deserialize(
                                                 signal.getSignalData(),
                                                 loader);
                 //this.pellet.setup(null, new PelletContext(pelletInstanceId));
                 break;
             case StartInstance:
                 LOGGER.info("Starting pellets.");
+
                 this.pellet.onStart(null, pelletContext);
-                dataReceiver.connect(
+                receiver.connect(
                         Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
-                        + flakeId);
+                                + flakeId);
                 //FIXME..
-                PelletState state = getPelletState(null);
-                this.pellet.execute(null, emitter, state);
+                //PelletState state = getPelletState(null);
+                //this.pellet.execute(null, emitter, state);
+                this.pellet.execute(tupleIterator, emitter, pelletStateManager);
                 break;
             case KillInstance:
                 LOGGER.warn("Kill Instance signal received. Terminating "
@@ -482,3 +445,41 @@ public class PelletExecutor extends Thread {
         return pelletInstanceId;
     }
 }
+
+/*** POLL 0 backup in run
+ dataReceiver.recvStr(Charset.defaultCharset());
+ /*String sentTime
+ = dataReceiver.recvStr(Charset.defaultCharset());*
+
+ byte[] serializedTuple = dataReceiver.recv();
+
+ queLen.dec();
+
+ //long queueAddedTimeL = Long.parseLong(queueAddedTime);
+ //long queueRemovedTime = System.nanoTime();
+ //queueTimer.update(queueRemovedTime - queueAddedTimeL
+ //        , TimeUnit.NANOSECONDS);
+
+ msgDequeuedMeter.mark();
+
+ Tuple tuple = tupleSerializer.deserialize(serializedTuple);
+
+
+ //Run pellet.execute here.
+ PelletState state = null;
+ try {
+ state = getPelletState(tuple);
+ } catch (Exception ex) {
+ LOGGER.error("Exception on T:{}", ex);
+ }
+ pellet.execute(tuple, emitter, state);
+ /*if (state != null) {
+ state.setLatestTimeStampAtomic(
+ Long.parseLong(sentTime));
+ }*
+
+
+ long processedTime = System.nanoTime();
+ //processTimer.update(processedTime - queueRemovedTime,
+ //        TimeUnit.NANOSECONDS);
+ msgProcessedMeter.mark();*/

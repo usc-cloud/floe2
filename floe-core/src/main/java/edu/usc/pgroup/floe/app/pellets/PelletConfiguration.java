@@ -41,6 +41,11 @@ public class PelletConfiguration implements Serializable {
     private String stateManagerClass;
 
     /**
+     * True if this is a source pellet, false otherwise.
+     */
+    private boolean sourcePellet;
+
+    /**
      * Default constructor. (sets the state type to localonly).
      */
     public PelletConfiguration() {
@@ -80,6 +85,13 @@ public class PelletConfiguration implements Serializable {
     }
 
     /**
+     * Marks the current pellet as source pellet. NOTE:: API CHANGE.
+     */
+    public final void markAsSourcePellet() {
+        this.sourcePellet = true;
+    }
+
+    /**
      * Sets the custom state manager for the pellet.
      * @param stManagerClass fully qualified name for the manager class
      * @param stParams string encoded parameters to be passed to the state
@@ -105,5 +117,14 @@ public class PelletConfiguration implements Serializable {
      */
     public final String getStateManagerClass() {
         return stateManagerClass;
+    }
+
+
+    /**
+     * @return returns true is this is a source pellet. The source pellet
+     * must configure itself as such.
+     */
+    public boolean isSourcePellet() {
+        return sourcePellet;
     }
 }

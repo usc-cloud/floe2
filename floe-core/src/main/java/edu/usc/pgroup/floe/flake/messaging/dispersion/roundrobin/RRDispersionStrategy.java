@@ -112,11 +112,11 @@ public class RRDispersionStrategy extends MessageDispersionStrategy {
      * Should return a list of arguments/"envelopes" to be sent along with
      * the message for the given target flake.
      *
-     * @param flakeId one of the flake ids returned by getTargetFlakeIds
+     * @param fId one of the flake ids returned by getTargetFlakeIds
      * @return list of arguments to be sent.
      */
     @Override
-    public final List<String> getCustomArguments(final String flakeId) {
+    public final List<String> getCustomArguments(final String fId) {
         return null;
     }
 
