@@ -10,13 +10,14 @@ import org.zeromq.ZMQ;
 import java.util.Arrays;
 import java.util.List;
 
+
 /**
  * @author kumbhare
  */
 public abstract class ScalingLoadBalancingComponent extends FlakeComponent {
 
     /**
-     * name of the application
+     * name of the application.
      */
     private final String app;
 
@@ -30,7 +31,7 @@ public abstract class ScalingLoadBalancingComponent extends FlakeComponent {
      *
      * @param registry      Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
-     * @param appName    Name of the application.
+     * @param appName       Name of the application.
      * @param pelletName    Name of the pellet.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
@@ -52,28 +53,21 @@ public abstract class ScalingLoadBalancingComponent extends FlakeComponent {
      * to transfer the load at a later point.
      * @param token token to be used while creating the new flake (which
      *              determines it's position on the ring).
-     * @throws Exception
+     * @throws Exception throws an excption if initiating the scale up
+     * process fails.
      */
-    public final void scaleUp(Integer token) throws Exception {
+    public final void scaleUp(final Integer token) throws Exception {
         try {
+
+            List<Integer> tokens = null;
+            if (token != null) {
+                tokens = Arrays.asList(token);
+            }
             FloeClient.getInstance().getClient().scaleWithTokens(
-                    ScaleDirection.up, app, pellet, 1, Arrays.asList(token)
+                    ScaleDirection.up, app, pellet, 1, tokens
             );
         } catch (TException e) {
             throw new Exception(e);
         }
-    }
-
-    public final void scaleDownSelf() {
-        /*
-        try {
-            FloeClient.getInstance().getClient().scaleWithTokens(
-                    ScaleDirection.down.down,
-                    app,
-                    pellet, 0, Arrays.asList(getFid())
-            );
-        } catch (TException e) {
-            throw new Exception(e);
-        }*/
     }
 }

@@ -40,7 +40,7 @@ public enum StateType {
     Partitioned,
 
     /**
-     * Custom, user define state type
+     * Custom, user define state type.
      */
     Custom
 }

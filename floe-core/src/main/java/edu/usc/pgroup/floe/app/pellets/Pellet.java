@@ -47,7 +47,7 @@ public abstract class Pellet implements Serializable {
     /**
      * Initializes the pellet.
      */
-    public void init() {
+    public final void init() {
         configure(this.conf);
     }
 

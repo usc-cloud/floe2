@@ -17,7 +17,6 @@
 package edu.usc.pgroup.floe.app;
 
 import edu.usc.pgroup.floe.app.pellets.Pellet;
-import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.thriftgen.TAlternate;

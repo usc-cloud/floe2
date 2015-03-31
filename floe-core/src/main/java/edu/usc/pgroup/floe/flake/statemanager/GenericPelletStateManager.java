@@ -49,12 +49,12 @@ public class GenericPelletStateManager implements StateManager {
     }
 
     /**
-     * Initialize the state manager
+     * Initialize the state manager.
      *
      * @param args string encoded list of arguments.
      */
     @Override
-    public void init(String args) {
+    public final void init(final String args) {
 
     }
 
@@ -100,11 +100,11 @@ public class GenericPelletStateManager implements StateManager {
     /**
      * Checkpoint state and return the serialized delta to send to the backup
      * nodes.
-     *
+     * @param neighborId neighbor's flake id.
      * @return serialized delta to send to the backup nodes.
      */
     @Override
-    public final byte[] getIncrementalStateCheckpoint(String neighborId) {
+    public final byte[] getIncrementalStateCheckpoint(final String neighborId) {
         return new byte[0];
     }
 

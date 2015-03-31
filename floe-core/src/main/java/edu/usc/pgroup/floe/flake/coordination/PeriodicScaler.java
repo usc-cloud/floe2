@@ -8,7 +8,6 @@ import com.codahale.metrics.Snapshot;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeToken;
-import edu.usc.pgroup.floe.flake.FlakesTracker;
 import edu.usc.pgroup.floe.flake.PelletExecutor;
 import edu.usc.pgroup.floe.flake.QueueLenMonitor;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -43,6 +42,7 @@ public class PeriodicScaler extends ScalingLoadBalancingComponent {
      * @param pelletName    Name of the pellet.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
+     * @param tracker       trackers the list of neighbor flakes.
      */
     public PeriodicScaler(final MetricRegistry registry,
                           final String flakeId,
@@ -63,7 +63,8 @@ public class PeriodicScaler extends ScalingLoadBalancingComponent {
      * @param terminateSignalReceiver terminate signal receiver.
      */
     @Override
-    protected void runComponent(ZMQ.Socket terminateSignalReceiver) {
+    protected final void runComponent(
+            final ZMQ.Socket terminateSignalReceiver) {
 
         int scalingPeriod = FloeConfig.getConfig().getInt(ConfigProperties
                 .FLAKE_STATE_CHECKPOINT_PERIOD) * Utils.Constants.MILLI;
@@ -73,7 +74,7 @@ public class PeriodicScaler extends ScalingLoadBalancingComponent {
         ZMQ.Poller pollerItems = new ZMQ.Poller(1);
         pollerItems.register(terminateSignalReceiver, ZMQ.Poller.POLLIN);
 
-        int windowlen = 30; //seconds.
+        final int windowlen = 30; //seconds.
 
         Histogram qhist
                 = getMetricRegistry() .register(
@@ -153,8 +154,9 @@ public class PeriodicScaler extends ScalingLoadBalancingComponent {
      * @param t2 second token
      * @return the mid point of the two flake tokens
      */
-    private Integer mid(Integer t1, int t2) {
-        return t1/2 + t2/2; //FIX THIS.. this is not really mid on the circle.
+    private Integer mid(final Integer t1, final Integer t2) {
+        return t1 / 2 + t2 / 2; //FIX THIS.. this is not really mid on the
+        // circle.
     }
 
 

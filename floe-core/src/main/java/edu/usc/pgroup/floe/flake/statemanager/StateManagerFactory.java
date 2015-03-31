@@ -17,8 +17,6 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import edu.usc.pgroup.floe.app.pellets.Pellet;
-import edu.usc.pgroup.floe.flake.coordination.ReducerPeerCoordinationComponent;
-import edu.usc.pgroup.floe.flake.messaging.dispersion.FlakeLocalDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

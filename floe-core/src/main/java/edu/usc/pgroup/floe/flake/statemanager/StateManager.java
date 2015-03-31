@@ -17,7 +17,6 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import edu.usc.pgroup.floe.app.Tuple;
-
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +26,7 @@ import java.util.Map;
 public interface StateManager {
 
     /**
-     * Initialize the state manager
+     * Initialize the state manager.
      * @param args string encoded list of arguments.
      */
     void init(String args);
@@ -43,8 +42,7 @@ public interface StateManager {
      * @return pellet state corresponding to the given peId and tuple
      * combination.
      */
-    PelletState getState(final String peId,
-                                         final Tuple tuple);
+    PelletState getState(final String peId, final Tuple tuple);
 
     /**
      * Returns the object (state) associated with the given local pe instance.
@@ -59,16 +57,16 @@ public interface StateManager {
      * @return pellet state corresponding to the given peId and key value
      * combination.
      */
-    PelletState getState(final String peId,
-                                         final String key);
+    PelletState getState(final String peId, final String key);
 
     /**
      * Checkpoint state and return the serialized delta to send to the backup
      * nodes.
-     * @param neighborFlakeId the flake id to which the checkpoint is to be backed up.
+     * @param neighborFlakeId the flake id to which the checkpoint is to be
+     *                        backed up.
      * @return serialized delta to send to the backup nodes.
      */
-    byte[] getIncrementalStateCheckpoint(String neighborFlakeId);
+    byte[] getIncrementalStateCheckpoint(final String neighborFlakeId);
 
     /**
      * Used to backup the states received from the neighbor flakes.
@@ -88,7 +86,7 @@ public interface StateManager {
      * @return the backedup state assocuated with the given fid
      */
     Map<String, PelletStateDelta> copyBackupToPrimary(
-            final String neighborFid, List<String> keys);
+            final String neighborFid, final List<String> keys);
 
 
     /**
@@ -103,6 +101,6 @@ public interface StateManager {
      * the number of such neighbors depend on the "replication" factor.
      * Typically 1.
      */
-    Map<String, List<String>> repartitionState(String selfFid,
-            List<String> neighborFids);
+    Map<String, List<String>> repartitionState(final String selfFid,
+                                               final List<String> neighborFids);
 }

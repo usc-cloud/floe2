@@ -126,7 +126,7 @@ public class PelletExecutor extends Thread {
     private URLClassLoader loader;
 
     /**
-     * Pellet context
+     * Pellet context.
      */
     private final PelletContext pelletContext;
 
@@ -433,7 +433,8 @@ public class PelletExecutor extends Thread {
     /**
      * processes the system signal for the pellet.
      * @param signal system signal.
-     * @param dataReceiver
+     * @param dataReceiver data receiver socket to connect to in order to
+     *                     receive data.
      */
     private void processSystemSignal(final SystemSignal signal,
                                      final ZMQ.Socket dataReceiver) {

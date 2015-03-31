@@ -47,12 +47,12 @@ public class ReducerStateManager implements StateManager {
 
 
     /**
-     * Initialize the state manager
+     * Initialize the state manager.
      *
      * @param args string encoded list of arguments.
      */
     @Override
-    public void init(String args) {
+    public final void init(final String args) {
         keyFieldName = args;
         pelletStateMap = new ConcurrentHashMap<>();
     }
@@ -70,7 +70,7 @@ public class ReducerStateManager implements StateManager {
      * combination.
      */
     @Override
-    public PelletState getState(String peId, Tuple tuple) {
+    public final PelletState getState(final String peId, final Tuple tuple) {
         if (tuple == null) {
             return null;
         }
@@ -88,14 +88,14 @@ public class ReducerStateManager implements StateManager {
      * MESSAGE KEY.
      *
      * @param peId Pellet's instance id.
-     * @param keyValue  The value associated with the corresponding field name (this
-     *             is used during recovery since we do not have access to the
-     *             entire tuple, but just the key).
+     * @param keyValue  The value associated with the corresponding field name
+     *                  (this is used during recovery since we do not have
+     *                  access to the entire tuple, but just the key).
      * @return pellet state corresponding to the given peId and key value
      * combination.
      */
     @Override
-    public PelletState getState(final String peId,
+    public final PelletState getState(final String peId,
                                 final String keyValue) {
         synchronized (pelletStateMap) {
             if (!pelletStateMap.containsKey(keyValue)) {
@@ -111,7 +111,8 @@ public class ReducerStateManager implements StateManager {
      * Checkpoint state and return the serialized delta to send to the backup
      * nodes.
      *
-     * @param neighborFlakeId the flake id to which the checkpoint is to be backed up.
+     * @param neighborFlakeId the flake id to which the checkpoint is to be
+     *                        backed up.
      * @return serialized delta to send to the backup nodes.
      */
     @Override
@@ -154,8 +155,8 @@ public class ReducerStateManager implements StateManager {
     /**
      * Used to backup the states received from the neighbor flakes.
      *
-     * @param nfid           flake id of the neighbor from which the state update is
-     *                       received.
+     * @param nfid           flake id of the neighbor from which the state
+     *                       update is received.
      * @param checkpointdata the checkpoint data received from the
      */
     @Override
@@ -168,7 +169,8 @@ public class ReducerStateManager implements StateManager {
      * Retrieve the state backed up for the given neighbor flake id.
      *
      * @param neighborFid neighbor's flake id.
-     * @param keys        List of keys to be moved from the backup to the primary.
+     * @param keys        List of keys to be moved from the backup to the
+     *                    primary.
      * @return the backedup state assocuated with the given fid
      */
     @Override

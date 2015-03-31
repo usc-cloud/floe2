@@ -36,19 +36,19 @@ public class PelletConfiguration implements Serializable {
     private String stateParams;
 
     /**
-     * State manager Class
+     * State manager Class.
      */
     private String stateManagerClass;
 
     /**
-     * Default constructor. (sets the state type to localonly)
+     * Default constructor. (sets the state type to localonly).
      */
     public PelletConfiguration() {
         this.stateType = StateType.LocalOnly;
     }
 
     /**
-     * @return State type configured for the pellet
+     * @return State type configured for the pellet.
      */
     public final StateType getStateType() {
         return stateType;
@@ -56,12 +56,14 @@ public class PelletConfiguration implements Serializable {
 
     /**
      * Sets the state type for the pellet.
-     * @param type state type enum
+     * @param type state type enum.
+     * @param stParams string encoded parameters to be passed to the state
+     *                    manager's init function.
      */
     public final void setStateType(final StateType type,
-                                   final String stateParams) {
+                                   final String stParams) {
         this.stateType = type;
-        this.stateParams = stateParams;
+        this.stateParams = stParams;
         switch (stateType) {
             case LocalOnly:
                 this.stateManagerClass
@@ -77,22 +79,31 @@ public class PelletConfiguration implements Serializable {
         }
     }
 
+    /**
+     * Sets the custom state manager for the pellet.
+     * @param stManagerClass fully qualified name for the manager class
+     * @param stParams string encoded parameters to be passed to the state
+     *                    manager's init function.
+     */
     public final void setCustomStateType(
-            final String stateManagerClass,
-            final String stateParams) {
+            final String stManagerClass,
+            final String stParams) {
         this.stateType = StateType.Custom;
-        this.stateManagerClass = stateManagerClass;
-        this.stateParams = stateParams;
+        this.stateManagerClass = stManagerClass;
+        this.stateParams = stParams;
     }
 
     /**
      * @return additional state parameters.
      */
-    public String getStateParams() {
+    public final String getStateParams() {
         return stateParams;
     }
 
-    public String getStateManagerClass() {
+    /**
+     * @return the state manager class associated with the pellet.
+     */
+    public final String getStateManagerClass() {
         return stateManagerClass;
     }
 }
