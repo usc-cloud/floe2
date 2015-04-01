@@ -124,7 +124,7 @@ public class PelletConfiguration implements Serializable {
      * @return returns true is this is a source pellet. The source pellet
      * must configure itself as such.
      */
-    public boolean isSourcePellet() {
+    public final boolean isSourcePellet() {
         return sourcePellet;
     }
 }

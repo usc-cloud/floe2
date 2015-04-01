@@ -86,7 +86,7 @@ public class WordMultiStreamPellet extends StatelessPellet {
      *                      particular pellet instance.
      */
     @Override
-    public void onStart(final AppContext appContext,
+    public final void onStart(final AppContext appContext,
                       final PelletContext pelletContext) {
 
     }
@@ -97,7 +97,7 @@ public class WordMultiStreamPellet extends StatelessPellet {
      * @param conf pellet configuration.
      */
     @Override
-    protected void configureStateLessPellet(PelletConfiguration conf) {
+    protected void configureStateLessPellet(final PelletConfiguration conf) {
 
     }
 

@@ -85,7 +85,8 @@ public class WordPellet extends StatelessPellet {
      * @param conf pellet configuration.
      */
     @Override
-    protected void configureStateLessPellet(PelletConfiguration conf) {
+    protected final void configureStateLessPellet(
+            final PelletConfiguration conf) {
         conf.markAsSourcePellet();
     }
 

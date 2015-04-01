@@ -5,7 +5,6 @@ import edu.usc.pgroup.floe.client.AppSubmitter;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.examples.pellets.PrintIteratorPellet;
-import edu.usc.pgroup.floe.examples.pellets.PrintPellet;
 import edu.usc.pgroup.floe.examples.pellets.WordPellet;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.Utils;

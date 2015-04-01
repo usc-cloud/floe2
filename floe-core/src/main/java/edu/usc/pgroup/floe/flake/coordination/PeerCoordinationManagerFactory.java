@@ -18,7 +18,6 @@ package edu.usc.pgroup.floe.flake.coordination;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
-import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

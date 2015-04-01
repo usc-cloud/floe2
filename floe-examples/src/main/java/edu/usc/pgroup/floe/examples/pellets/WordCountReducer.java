@@ -17,7 +17,6 @@
 package edu.usc.pgroup.floe.examples.pellets;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
@@ -78,7 +77,7 @@ public class WordCountReducer extends Pellet {
      *                      particular pellet instance.
      */
     @Override
-    public void onStart(final AppContext appContext,
+    public final void onStart(final AppContext appContext,
                       final PelletContext pelletContext) {
         MetricRegistry metricRegistry = pelletContext.getMetricRegistry();
         counter = metricRegistry.counter(MetricRegistry.name(

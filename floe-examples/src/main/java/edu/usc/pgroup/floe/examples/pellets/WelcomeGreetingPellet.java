@@ -67,7 +67,7 @@ public class WelcomeGreetingPellet
      * @param conf pellet configuration.
      */
     @Override
-    protected void configureStateLessPellet(PelletConfiguration conf) {
+    protected void configureStateLessPellet(final PelletConfiguration conf) {
 
     }
 

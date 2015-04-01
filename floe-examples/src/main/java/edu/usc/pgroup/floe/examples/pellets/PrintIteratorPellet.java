@@ -8,7 +8,6 @@ import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.StateType;
 import edu.usc.pgroup.floe.app.pellets.TupleItertaor;
-import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +75,8 @@ public class PrintIteratorPellet extends IteratorPellet {
      * The execute method which is called for each tuple.
      *
      * @param tupleItertaor input tuple received from the preceding pellet.
-     * @param emitter       An output emitter which may be used by the user to emmit
+     * @param emitter       An output emitter which may be used by the user
+     *                      to emmit
      *                      results.
      * @param stateManager  state associated manager associated with the pellet.
      *                      It is the executor's responsiblity to get the state
@@ -85,7 +85,7 @@ public class PrintIteratorPellet extends IteratorPellet {
     public final void execute(final TupleItertaor tupleItertaor,
                         final Emitter emitter,
                         final StateManager stateManager) {
-        while(true) {
+        while (true) {
             Tuple tuple = tupleItertaor.next();
             //PelletState state = stateManager.getState(peid, tuple);
             //use state as required.

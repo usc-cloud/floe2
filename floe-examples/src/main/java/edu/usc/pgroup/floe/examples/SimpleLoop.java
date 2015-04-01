@@ -77,12 +77,14 @@ public final class SimpleLoop {
         }
 
         /**
-         * Should use the conf object to configure different pellet configuration.
+         * Should use the conf object to configure different pellet
+         * configuration.
          *
          * @param conf pellet configuration.
          */
         @Override
-        protected void configureStateLessPellet(PelletConfiguration conf) {
+        protected void configureStateLessPellet(
+                final PelletConfiguration conf) {
 
         }
 

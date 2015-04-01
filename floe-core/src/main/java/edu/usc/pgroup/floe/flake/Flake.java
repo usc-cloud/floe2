@@ -21,7 +21,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.ganglia.GangliaReporter;
 import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
-import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationComponent;
 import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationManagerFactory;
