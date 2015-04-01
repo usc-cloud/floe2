@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -59,19 +61,31 @@ public final class MessageDispersionStrategyFactory {
                 final String flakeId,
                 final TChannel channel) throws ClassNotFoundException {
 
-        MessageDispersionStrategy strategy = null;
+        String pluginJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
 
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
+        }
+
+        if (loader == null) {
+            loader = ClassLoader.getSystemClassLoader();
+        }
+
+        MessageDispersionStrategy strategy = null;
         try {
             strategy = (MessageDispersionStrategy) Utils.
-                    getConstructor(channel.get_dispersionClass(),
+            getConstructor(channel.get_dispersionClass(), loader,
                     String.class, String.class, String.class)
-                            .newInstance(appName, destPelletName, flakeId);
+            .newInstance(appName, destPelletName, flakeId);
         } catch (InstantiationException e) {
-            LOGGER.error("Cannot create dispersion strategy: {}", e);
+            e.printStackTrace();
         } catch (IllegalAccessException e) {
-            LOGGER.error("Cannot create dispersion strategy: {}", e);
+            e.printStackTrace();
         } catch (InvocationTargetException e) {
-            LOGGER.error("Cannot create dispersion strategy: {}", e);
+            e.printStackTrace();
         }
 
 //        switch (channel.get_channelType()) {
@@ -87,6 +101,7 @@ public final class MessageDispersionStrategyFactory {
 //                throw new ClassNotFoundException(channel.toString());
 //        }
         if (strategy != null) {
+
             strategy.initialize(channel.get_channelArgs());
         }
         return strategy;
@@ -160,8 +175,17 @@ public final class MessageDispersionStrategyFactory {
 
         FlakeLocalDispersionStrategy strategy = null;
 
+        String pluginJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
+
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
+        }
+
         strategy = (FlakeLocalDispersionStrategy) Utils.instantiateObject(
-                channel.get_localDispersionClass());
+                channel.get_localDispersionClass(), loader);
 
         if (strategy != null) {
             strategy.initialize(channel.get_channelArgs());

@@ -242,6 +242,11 @@ public final class ConfigProperties {
             + ".messaging.dispersion.rr.local";
 
     /**
+     * Jar containing various custom floe plugins.
+     */
+    public static final String FLOE_PLUGIN_JAR = "floe.flake.plugins.jar";
+
+    /**
      * Hiding the default constructor.
      */
     private ConfigProperties() {
