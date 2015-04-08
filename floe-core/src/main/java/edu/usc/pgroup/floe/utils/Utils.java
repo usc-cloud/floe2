@@ -434,7 +434,7 @@ public final class Utils {
             URL jarLoc = new URL(
                     "file://" + relativeJarLoc.getAbsolutePath());
 
-            LOGGER.info("Loading jar: {} into class loader.", jarLoc);
+            LOGGER.error("Loading jar: {} into class loader.", jarLoc);
             loader = URLClassLoader.newInstance(
                     new URL[]{jarLoc},
                     parent

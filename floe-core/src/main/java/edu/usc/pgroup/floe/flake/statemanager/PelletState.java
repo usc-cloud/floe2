@@ -80,7 +80,7 @@ public class PelletState {
      * @param customSubId A custom identifier that can be used to further
      *                 identify this state's owner. (e.g. the reducer key)
      */
-    PelletState(//final String peInstanceId,
+    public PelletState(//final String peInstanceId,
                 final String customSubId) {
         this.pelletState = new HashMap<>();
         //this.peId = peInstanceId;
