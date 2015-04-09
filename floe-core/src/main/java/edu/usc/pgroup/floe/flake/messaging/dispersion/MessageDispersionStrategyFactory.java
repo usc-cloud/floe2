@@ -68,9 +68,13 @@ public final class MessageDispersionStrategyFactory {
         if (pluginJar != null && !pluginJar.isEmpty()) {
             loader = Utils.getClassLoader(pluginJar,
                     ClassLoader.getSystemClassLoader());
+            LOGGER.error("*****************DISPERSION LOADED**************");
+           ;
         }
 
         if (loader == null) {
+
+            LOGGER.error("*****************DISPERSION NULL**************");
             loader = ClassLoader.getSystemClassLoader();
         }
 
