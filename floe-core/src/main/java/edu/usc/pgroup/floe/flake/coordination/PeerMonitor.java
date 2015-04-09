@@ -7,6 +7,7 @@ import edu.usc.pgroup.floe.flake.FlakesTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -40,6 +41,10 @@ public class PeerMonitor extends FlakesTracker {
      */
     private SortedMap<Integer, FlakeToken> neighborsToBackupFor;
 
+    /**
+     * List of neighbors on which this Flake should backup it's data.
+     */
+    private SortedMap<Integer, FlakeToken> myBackupNeighbors;
 
     /**
      * fid to token map.
@@ -47,9 +52,14 @@ public class PeerMonitor extends FlakesTracker {
     private Map<String, Integer> fidToTokenMap;
 
     /**
-     * List of neighbors for which this peer will backup state and messages.
+     * All flakes in reverse order of token.
      */
-    private SortedMap<Integer, FlakeToken> allFlakes;
+    private SortedMap<Integer, FlakeToken> allFlakesReverse;
+
+    /**
+     * All flakes in forward order of token.
+     */
+    private SortedMap<Integer, FlakeToken> allFlakesForward;
 
 
     /**
@@ -57,6 +67,11 @@ public class PeerMonitor extends FlakesTracker {
      */
     private static final Logger LOGGER =
             LoggerFactory.getLogger(ReducerPeerCoordinationComponent.class);
+
+    /**
+     * List of peer update listeners.
+     */
+    private List<PeerUpdateListener> peerUpdateListeners;
 
     /**
      * Constructor.
@@ -71,11 +86,24 @@ public class PeerMonitor extends FlakesTracker {
         replicationLevel = FloeConfig.getConfig().getInt(
                 ConfigProperties.FLAKE_TOLERANCE_LEVEL);
         neighborsToBackupFor = new TreeMap<>(Collections.reverseOrder());
-        allFlakes = new TreeMap<>(Collections.reverseOrder());
+        myBackupNeighbors = new TreeMap<>(Collections.reverseOrder());
+        allFlakesReverse = new TreeMap<>(Collections.reverseOrder());
+        allFlakesForward = new TreeMap<>();
         fidToTokenMap = new HashMap<>();
         this.flakeId = myFlakeId;
         this.myToken = null;
+        peerUpdateListeners = new ArrayList<>();
         start();
+    }
+
+    /**
+     * Adds a peer update listener.
+     * @param listener peer update listener instance.
+     */
+    public final void addPeerUpdateListener(final PeerUpdateListener listener) {
+        synchronized (peerUpdateListeners) {
+            peerUpdateListeners.add(listener);
+        }
     }
 
     /**
@@ -87,15 +115,15 @@ public class PeerMonitor extends FlakesTracker {
     @Override
     protected final void initialFlakeList(final List<FlakeToken> flakes) {
         for (FlakeToken flake: flakes) {
-            if (!allFlakes.containsKey(flake.getToken())) {
-                allFlakes.put(flake.getToken(), flake);
-                fidToTokenMap.put(flake.getFlakeID(), flake.getToken());
-                if (flakeId.equalsIgnoreCase(flake.getFlakeID())) {
-                    this.myToken = flake.getToken();
-                }
+            allFlakesForward.put(flake.getToken(), flake);
+            allFlakesReverse.put(flake.getToken(), flake);
+
+            fidToTokenMap.put(flake.getFlakeID(), flake.getToken());
+            if (flakeId.equalsIgnoreCase(flake.getFlakeID())) {
+                this.myToken = flake.getToken();
             }
         }
-        updateNeighboursToSubscribeForMessages();
+        updateNeighbors();
     }
 
     /**
@@ -106,15 +134,19 @@ public class PeerMonitor extends FlakesTracker {
      */
     @Override
     protected final void flakeAdded(final FlakeToken flake) {
-        allFlakes.put(flake.getToken(), flake);
+        allFlakesForward.put(flake.getToken(), flake);
+        allFlakesReverse.put(flake.getToken(), flake);
+
         LOGGER.error(flake.getFlakeID());
         LOGGER.error("{}", flake.getToken());
         LOGGER.error("{}", fidToTokenMap.size());
+
         fidToTokenMap.put(flake.getFlakeID(), flake.getToken());
+
         if (flakeId.equalsIgnoreCase(flake.getFlakeID())) {
             this.myToken = flake.getToken();
         }
-        updateNeighboursToSubscribeForMessages();
+        updateNeighbors();
     }
 
     /**
@@ -125,13 +157,16 @@ public class PeerMonitor extends FlakesTracker {
      */
     @Override
     protected final void flakeRemoved(final FlakeToken flake) {
-        if (allFlakes.containsKey(flake.getToken())) {
-            allFlakes.remove(flake.getToken());
+        if (allFlakesForward.containsKey(flake.getToken())) {
+            allFlakesForward.remove(flake.getToken());
+        }
+        if (allFlakesForward.containsKey(flake.getToken())) {
+            allFlakesForward.remove(flake.getToken());
         }
         if (fidToTokenMap.containsKey(flake.getFlakeID())) {
             fidToTokenMap.remove(flake.getFlakeID());
         }
-        updateNeighboursToSubscribeForMessages();
+        updateNeighbors();
     }
 
     /**
@@ -151,32 +186,47 @@ public class PeerMonitor extends FlakesTracker {
 
         if (prevToken != null
                 && prevToken != flake.getToken()
-                && allFlakes.containsKey(prevToken)) {
-            allFlakes.remove(prevToken);
+                && allFlakesReverse.containsKey(prevToken)) {
+            allFlakesReverse.remove(prevToken);
         }
 
-        allFlakes.put(flake.getToken(), flake);
+        if (prevToken != null
+                && prevToken != flake.getToken()
+                && allFlakesForward.containsKey(prevToken)) {
+            allFlakesForward.remove(prevToken);
+        }
+
+        allFlakesForward.put(flake.getToken(), flake);
+        allFlakesReverse.put(flake.getToken(), flake);
+
         fidToTokenMap.put(flake.getFlakeID(), flake.getToken());
 
         if (flakeId.equalsIgnoreCase(flake.getFlakeID())) {
             this.myToken = flake.getToken();
         }
 
-        updateNeighboursToSubscribeForMessages();
+        updateNeighbors();
     }
 
+    /**
+     * Update both neighbors to backup for and neighbors to backup on.
+     */
+    private synchronized void updateNeighbors() {
+        updateNeighboursToSubscribeForMessages();
+        updateNeighboursToBackupOn();
+    }
 
     /**
      * Finds k neighbor flakes in counter clockwise direction.
      * the map from token to fid of the current neighbors to subscribe for
      * TODOX: THIS HAS PERF. ISSUES CAN BE IMPROVED.
      */
-    private void
+    private synchronized void
             updateNeighboursToSubscribeForMessages() {
 
         if (myToken == null) { return; } //not all info. is available yet.
 
-        SortedMap<Integer, FlakeToken> tail = allFlakes.tailMap(myToken);
+        SortedMap<Integer, FlakeToken> tail = allFlakesReverse.tailMap(myToken);
         Iterator<Integer> iterator = tail.keySet().iterator();
         iterator.next(); //ignore the self's token.
 
@@ -189,16 +239,16 @@ public class PeerMonitor extends FlakesTracker {
         int i = 0;
         for (; i < replicationLevel && iterator.hasNext(); i++) {
             Integer neighborToken = iterator.next();
-            FlakeToken nfk = allFlakes.get(neighborToken);
+            FlakeToken nfk = allFlakesReverse.get(neighborToken);
             if (!nfk.getFlakeID().equalsIgnoreCase(flakeId)) {
                 result.put(neighborToken, nfk);
             }
         }
 
-        Iterator<Integer> headIterator = allFlakes.keySet().iterator();
+        Iterator<Integer> headIterator = allFlakesReverse.keySet().iterator();
         for (; i < replicationLevel && headIterator.hasNext(); i++) {
             Integer neighborToken = headIterator.next();
-            FlakeToken nfk = allFlakes.get(neighborToken);
+            FlakeToken nfk = allFlakesReverse.get(neighborToken);
             if (!nfk.getFlakeID().equalsIgnoreCase(flakeId)) {
                 result.put(neighborToken, nfk);
             }
@@ -206,10 +256,124 @@ public class PeerMonitor extends FlakesTracker {
 
         LOGGER.info("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,
                 result);
+
+
+        SortedMap<Integer, FlakeToken> added
+                = getNewlyAddedFlakes(result, neighborsToBackupFor);
+        SortedMap<Integer, FlakeToken> removed
+                = getRemovedFlakes(result, neighborsToBackupFor);
+
+        if (peerUpdateListeners != null) {
+            for (PeerUpdateListener listener: peerUpdateListeners) {
+                listener.peerListUpdated(added, removed);
+            }
+        }
+
         synchronized (neighborsToBackupFor) {
             neighborsToBackupFor.clear();
             neighborsToBackupFor.putAll(result);
         }
+    }
+
+    /**
+     * Finds k neighbor flakes in counter clockwise direction.
+     * the map from token to fid of the current neighbors to subscribe for
+     * TODOX: THIS HAS PERF. ISSUES CAN BE IMPROVED.
+     */
+    private synchronized void
+            updateNeighboursToBackupOn() {
+
+        if (myToken == null) { return; } //not all info. is available yet.
+
+        SortedMap<Integer, FlakeToken> tail = allFlakesForward.tailMap(myToken);
+        Iterator<Integer> iterator = tail.keySet().iterator();
+        iterator.next(); //ignore the self's token.
+
+        /**
+         * List of neighbors for which this peer will backup state and messages.
+         */
+        SortedMap<Integer, FlakeToken> result = new TreeMap<>();
+
+        int i = 0;
+        for (; i < replicationLevel && iterator.hasNext(); i++) {
+            Integer neighborToken = iterator.next();
+            FlakeToken nfk = allFlakesForward.get(neighborToken);
+            if (!nfk.getFlakeID().equalsIgnoreCase(flakeId)) {
+                result.put(neighborToken, nfk);
+            }
+        }
+
+        Iterator<Integer> headIterator = allFlakesForward.keySet().iterator();
+        for (; i < replicationLevel && headIterator.hasNext(); i++) {
+            Integer neighborToken = headIterator.next();
+            FlakeToken nfk = allFlakesForward.get(neighborToken);
+            if (!nfk.getFlakeID().equalsIgnoreCase(flakeId)) {
+                result.put(neighborToken, nfk);
+            }
+        }
+
+        LOGGER.info("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,
+                result);
+
+
+        SortedMap<Integer, FlakeToken> added
+                = getNewlyAddedFlakes(result, myBackupNeighbors);
+        SortedMap<Integer, FlakeToken> removed
+                = getRemovedFlakes(result, myBackupNeighbors);
+
+        if (peerUpdateListeners != null) {
+            for (PeerUpdateListener listener: peerUpdateListeners) {
+                listener.peerListUpdated(added, removed);
+            }
+        }
+
+        synchronized (myBackupNeighbors) {
+            myBackupNeighbors.clear();
+            myBackupNeighbors.putAll(result);
+        }
+    }
+
+    /**
+     * Gets the newly added neighbors.
+     * @param currentNeighbors current neighbors obtained from ZK.
+     * @param oldNeighbors old neighbors.
+     * @return the newly added neighbors.
+     */
+    private SortedMap<Integer, FlakeToken> getNewlyAddedFlakes(
+            final SortedMap<Integer, FlakeToken> currentNeighbors,
+            final SortedMap<Integer, FlakeToken> oldNeighbors) {
+        SortedMap<Integer, FlakeToken> added = new TreeMap<>();
+
+        for (Map.Entry<Integer, FlakeToken> current
+                : currentNeighbors.entrySet()) {
+            if (oldNeighbors.containsKey(current.getKey())) {
+                continue;
+            }
+            added.put(current.getKey(), current.getValue());
+        }
+        return added;
+    }
+
+
+    /**
+     * Gets the removed neighbors.
+     * @param currentNeighbors current neighbors obtained from ZK.
+     * @param oldNeighbors old neighbors.
+     * @return the removed neighbors.
+     */
+    private SortedMap<Integer, FlakeToken> getRemovedFlakes(
+            final SortedMap<Integer, FlakeToken> currentNeighbors,
+            final SortedMap<Integer, FlakeToken> oldNeighbors) {
+        SortedMap<Integer, FlakeToken> removed = new TreeMap<>();
+
+        for (Map.Entry<Integer, FlakeToken> old
+                : oldNeighbors.entrySet()) {
+            if (currentNeighbors.containsKey(old.getKey())) {
+                continue;
+            }
+            removed.put(old.getKey(), old.getValue());
+        }
+        return removed;
     }
 
     /**
@@ -224,5 +388,12 @@ public class PeerMonitor extends FlakesTracker {
      */
     public final Map<String, Integer> getFidToTokenMap() {
         return fidToTokenMap;
+    }
+
+    /**
+     * @return the list of neighbors to backup on.
+     */
+    public final SortedMap<Integer, FlakeToken> getNeighborsToBackupOn() {
+        return myBackupNeighbors;
     }
 }

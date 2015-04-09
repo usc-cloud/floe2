@@ -30,6 +30,8 @@ import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerFactory;
+import edu.usc.pgroup.floe.flake.statemanager
+        .checkpoint.StateCheckpointComponent;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
@@ -141,6 +143,11 @@ public class Flake {
     private StateManager stateManager;
 
     /**
+     * The periodic state checkpointing component.
+     */
+    private StateCheckpointComponent stateCheckpointComponent;
+
+    /**
      * The user pellet object including all alternates.
      */
     private TPellet tPellet;
@@ -188,7 +195,7 @@ public class Flake {
     /**
      * Peer Monitor (temporary).
      */
-    private PeerMonitor monitor;
+    private PeerMonitor peerMonitor;
 
 
     /**
@@ -344,6 +351,15 @@ public class Flake {
                 flakeId, "HEAET-BEAT", sharedContext);
         flakeHeartbeatComponent.startAndWait();
 
+        peerMonitor = new PeerMonitor(appName, pelletId, flakeId);
+
+        stateCheckpointComponent = new StateCheckpointComponent(
+                metricRegistry, flakeId, "FLAKE-CHECKPOINTER",
+                sharedContext, stateManager,
+                flakeInstance.getStateCheckpointingPort(), peerMonitor
+        );
+        stateCheckpointComponent.startAndWait();
+
         LOGGER.info("Flake started. Starting control channel.");
         startControlChannel();
 
@@ -403,7 +419,8 @@ public class Flake {
 
         stateManager = StateManagerFactory.getStateManager(pellet);
 
-        monitor = new PeerMonitor(appName, pelletId, flakeId);
+
+
         //Start the state manager.
         /*LOGGER.info("Starting state manager.");
         stateManager = StateManagerFactory.getStateManager(metricRegistry,

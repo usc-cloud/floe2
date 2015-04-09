@@ -304,14 +304,14 @@ public class ReducerPeerCoordinationComponent
 
         LOGGER.info("Current neighbors:{}.", currentNeighbors);
 
-        SortedMap<Integer, String> newFlakes
-                = getNewlyAddedFlakes(currentNeighbors,
+        /*SortedMap<Integer, String> newFlakes
+        //        = getNewlyAddedFlakes(currentNeighbors,
                 neighborsToBackupMsgsFor);
 
         LOGGER.info("Newly added neighbors:{}.", newFlakes);
 
-        SortedMap<Integer, String> removedFlakes
-                = getRemovedFlakes(currentNeighbors,
+        //SortedMap<Integer, String> removedFlakes
+        //        = getRemovedFlakes(currentNeighbors,
                 neighborsToBackupMsgsFor);
 
         LOGGER.info("Removed neighbors:{}.", removedFlakes);
@@ -324,7 +324,7 @@ public class ReducerPeerCoordinationComponent
         }
 
         updateStateSubscriptions(stateSoc,
-                newFlakes, removedFlakes);
+                newFlakes, removedFlakes);*/
 
 
         List<String> neighbors = new ArrayList<String>(
@@ -341,49 +341,6 @@ public class ReducerPeerCoordinationComponent
         msgReceivercontrolForwardSocket.recv();
 
         LOGGER.error("UPDATING STATE SUBSCRIPTIONS DONE.");
-    }
-
-    /**
-     * Gets the newly added neighbors.
-     * @param currentNeighbors current neighbors obtained from ZK.
-     * @param oldNeighbors old neighbors.
-     * @return the newly added neighbors.
-     */
-    private SortedMap<Integer, String> getNewlyAddedFlakes(
-            final SortedMap<Integer, String> currentNeighbors,
-            final SortedMap<Integer, String> oldNeighbors) {
-        SortedMap<Integer, String> added = new TreeMap<>();
-
-        for (Map.Entry<Integer, String> current
-                : currentNeighbors.entrySet()) {
-            if (oldNeighbors.containsKey(current.getKey())) {
-                continue;
-            }
-            added.put(current.getKey(), current.getValue());
-        }
-        return added;
-    }
-
-
-    /**
-     * Gets the removed neighbors.
-     * @param currentNeighbors current neighbors obtained from ZK.
-     * @param oldNeighbors old neighbors.
-     * @return the removed neighbors.
-     */
-    private SortedMap<Integer, String> getRemovedFlakes(
-            final SortedMap<Integer, String> currentNeighbors,
-            final SortedMap<Integer, String> oldNeighbors) {
-        SortedMap<Integer, String> removed = new TreeMap<>();
-
-        for (Map.Entry<Integer, String> old
-                : oldNeighbors.entrySet()) {
-            if (currentNeighbors.containsKey(old.getKey())) {
-                continue;
-            }
-            removed.put(old.getKey(), old.getValue());
-        }
-        return removed;
     }
 
     /**

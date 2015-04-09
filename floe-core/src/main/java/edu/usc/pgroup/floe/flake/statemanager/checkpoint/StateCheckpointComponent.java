@@ -25,8 +25,11 @@ import com.codahale.metrics.Snapshot;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
+import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.PelletExecutor;
 import edu.usc.pgroup.floe.flake.QueueLenMonitor;
+import edu.usc.pgroup.floe.flake.coordination.PeerMonitor;
+import edu.usc.pgroup.floe.flake.coordination.PeerUpdateListener;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -34,12 +37,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.nio.charset.Charset;
+import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author kumbhare
  */
-public class StateCheckpointComponent extends FlakeComponent {
+public class StateCheckpointComponent extends FlakeComponent
+        implements PeerUpdateListener {
 
     /**
      * the global logger instance.
@@ -58,6 +65,16 @@ public class StateCheckpointComponent extends FlakeComponent {
     private final StateManager stateManager;
 
     /**
+     * Peer monitor.
+     */
+    private final PeerMonitor peerMonitor;
+
+    /**
+     * State socket listener.
+     */
+    private ZMQ.Socket stateSocReceiver;
+
+    /**
      * Port to bind the socket to send periodic state checkpoints.
      */
     private int port;
@@ -70,19 +87,23 @@ public class StateCheckpointComponent extends FlakeComponent {
      * @param ctx           Shared zmq context.
      * @param stateMgr State manager component.
      * @param stateChkptPort port to use for connections to checkpoint state.
+     * @param monitor peer monitor.
      */
     public StateCheckpointComponent(final MetricRegistry metricRegistry,
                                     final String flakeId,
                                     final String componentName,
                                     final ZMQ.Context ctx,
                                     final StateManager stateMgr,
-                                    final int stateChkptPort) {
+                                    final int stateChkptPort,
+                                    final PeerMonitor monitor) {
         super(metricRegistry, flakeId, componentName, ctx);
         this.stateManager = stateMgr;
         this.port = stateChkptPort;
         this.checkpointPeriod = FloeConfig.getConfig().getInt(ConfigProperties
                 .FLAKE_STATE_CHECKPOINT_PERIOD) * Utils.Constants.MILLI;
-
+        this.stateSocReceiver = getContext().socket(ZMQ.PULL);
+        this.peerMonitor = monitor;
+        this.peerMonitor.addPeerUpdateListener(this);
     }
 
     /**
@@ -95,22 +116,22 @@ public class StateCheckpointComponent extends FlakeComponent {
     @Override
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
-        notifyStarted(true);
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(1);
         pollerItems.register(terminateSignalReceiver, ZMQ.Poller.POLLIN);
+        pollerItems.register(stateSocReceiver, ZMQ.Poller.POLLIN);
 
         /**
          * ZMQ socket connection publish the state to the backups.
          */
-        ZMQ.Socket stateSoc = getContext().socket(ZMQ.PUSH);
+        ZMQ.Socket stateSocSender = getContext().socket(ZMQ.PUSH);
         String ssConnetStr = Utils.Constants.FLAKE_STATE_PUB_SOCK + port;
         LOGGER.info("binding STATE CHECKPOINTER to socket at: {}", ssConnetStr);
 
         TimeUnit durationUnit = TimeUnit.MILLISECONDS;
         double durationFactor = 1.0 / durationUnit.toNanos(1);
 
-        stateSoc.bind(ssConnetStr);
+        stateSocSender.bind(ssConnetStr);
         /*Meter qhist
                 = getMetricRegistry().meter(
                 MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"));*/
@@ -147,6 +168,9 @@ public class StateCheckpointComponent extends FlakeComponent {
 
         final int qLenThreshold = 10;
 
+        notifyStarted(true);
+
+
         while (!done && !Thread.currentThread().isInterrupted()) {
 
             int polled = pollerItems.poll(checkpointPeriod);
@@ -155,48 +179,82 @@ public class StateCheckpointComponent extends FlakeComponent {
                 LOGGER.warn("Terminating state checkpointing");
                 terminateSignalReceiver.recv();
                 done = true;
-            }
+            } else if (pollerItems.pollin(1)) {
+                String nfid = stateSocReceiver.recvStr(
+                                                Charset.defaultCharset());
+                String last = stateSocReceiver.recvStr(
+                                                Charset.defaultCharset());
+                String lb = stateSocReceiver.recvStr(
+                                                Charset.defaultCharset());
 
-            Snapshot snp = qhist.getSnapshot();
-            //snp.dump(System.out);
-            LOGGER.info("fid:{}; q 95->{}; 75->{}; 99->{}; msgs procd: {}",
-                    getFid(),
-                    snp.get95thPercentile(), //* durationFactor,
-                    snp.get75thPercentile(), //* durationFactor,
-                    snp.get99thPercentile(), //* durationFactor,
-                    msgProcessedMeter.getOneMinuteRate());
+                Boolean scalingDown = Boolean.parseBoolean(last);
+                Boolean loadbalanceReq = Boolean.parseBoolean(lb);
 
-            //double last1min = qhist.;
+                LOGGER.info("State delta received from:{}", nfid);
+                byte[] serializedState = stateSocReceiver.recv();
+
+                stateManager.storeNeighborCheckpointToBackup(nfid,
+                        serializedState);
+
+                /*if (scalingDown) {
+                    LOGGER.info("Scaling down NEIGHBOR flake: {}", nfid);
+                    initiateScaleDownAndTakeOver(nfid, false);
+                } else if (loadbalanceReq) {
+                    LOGGER.error("LB request received from:{}.", nfid);
+                    initiateScaleDownAndTakeOver(nfid, true);
+                }
+
+                nowRecovering = false;*/
+            } else {
+
+                Snapshot snp = qhist.getSnapshot();
+                //snp.dump(System.out);
+                LOGGER.info("fid:{}; q 95->{}; 75->{}; 99->{}; msgs procd: {}",
+                        getFid(),
+                        snp.get95thPercentile(), //* durationFactor,
+                        snp.get75thPercentile(), //* durationFactor,
+                        snp.get99thPercentile(), //* durationFactor,
+                        msgProcessedMeter.getOneMinuteRate());
+
+                //double last1min = qhist.;
             /*LOGGER.error("fid:{}; q 1min->{}; msgs procd: {}",
                     getFid(),
                     last1min,
                     msgProcessedMeter.getOneMinuteRate());*/
 
-            Boolean reqLB = false;
-            //double a80 = (snp.get95thPercentile() * durationFactor +
-                    //snp.get75thPercentile() * durationFactor) / 2.0;
-            double a80 = snp.get95thPercentile();
+                Boolean reqLB = false;
+                //double a80 = (snp.get95thPercentile() * durationFactor +
+                //snp.get75thPercentile() * durationFactor) / 2.0;
+                double a80 = snp.get95thPercentile();
 
-            if (stableenough(starttime)) {
+            /*if (stableenough(starttime)) {
                 if (a80 > qLenThreshold) {
                     LOGGER.error("Initiating loadbalancing.");
                     reqLB = true;
                 }
                 starttime = System.currentTimeMillis();
+            }*/
+
+                LOGGER.info("Checkpointing State");
+                //send incremental checkpoint to the neighbor.
+                synchronized (this) {
+                    for (FlakeToken neighbor
+                            : peerMonitor.getNeighborsToBackupOn().values()) {
+                        byte[] chkpointdata
+                                = stateManager.getIncrementalStateCheckpoint(
+                                neighbor.getFlakeID());
+                        stateSocSender.sendMore(getFid());
+                        stateSocSender.sendMore(done.toString());
+                        stateSocSender.sendMore(reqLB.toString());
+                        stateSocSender.send(chkpointdata, 0);
+                    }
+                }
+
+
             }
-
-            LOGGER.info("Checkpointing State");
-            byte[] chkpointdata = stateManager.getIncrementalStateCheckpoint(
-                    null
-            );
-
-            stateSoc.sendMore(getFid());
-            stateSoc.sendMore(done.toString());
-            stateSoc.sendMore(reqLB.toString());
-            stateSoc.send(chkpointdata, 0);
         }
 
-        stateSoc.close();
+        stateSocSender.close();
         monitor.interrupt();
         notifyStopped(true);
     }
@@ -214,5 +272,70 @@ public class StateCheckpointComponent extends FlakeComponent {
             return true;
         }
         return false;
+    }
+
+    /**
+     * The function is called whenever a peer is added or removed for this
+     * flake.
+     *
+     * @param newPeers     list of newly added peers.
+     * @param removedPeers list of removed peers.
+     */
+    @Override
+    public final void peerListUpdated(
+            final SortedMap<Integer, FlakeToken> newPeers,
+            final SortedMap<Integer, FlakeToken> removedPeers) {
+        updateStateSubscriptions(newPeers, removedPeers);
+    }
+
+
+    /**
+     * Update state subscriptions.
+     * @param neighborsToAdd newNeighbors to subscribe and connect to.
+     * @param neighborsToRemove old neighbors to remove from the subscription.
+     */
+    private void updateStateSubscriptions(
+            final SortedMap<Integer, FlakeToken> neighborsToAdd,
+            final SortedMap<Integer, FlakeToken> neighborsToRemove) {
+        /**
+         * ZMQ socket connection publish the state to the backups.
+         */
+        if (neighborsToAdd != null) {
+            for (Map.Entry<Integer, FlakeToken> finfo
+                    : neighborsToAdd.entrySet()) {
+
+                String ssConnetStr
+                        = Utils.Constants.FLAKE_STATE_SUB_SOCK_PREFIX
+                        + finfo.getValue().getIpOrHost() + ":"
+                        + finfo.getValue().getStateCheckptPort();
+
+                //stateSocReceiver.subscribe(finfo.getValue().getBytes());
+
+
+                //LOGGER.error("{} SUBING FOR {}", getFid(), finfo.getValue());
+                LOGGER.info("connecting STATE CHECKPOINTER "
+                        + "to listen for state updates: {}", ssConnetStr);
+
+                stateSocReceiver.connect(ssConnetStr);
+            }
+        }
+
+        if (neighborsToRemove != null) {
+            for (Map.Entry<Integer, FlakeToken> finfo
+                    : neighborsToRemove.entrySet()) {
+
+                String ssConnetStr
+                        = Utils.Constants.FLAKE_STATE_SUB_SOCK_PREFIX
+                        + finfo.getValue().getIpOrHost() + ":"
+                        + finfo.getValue().getStateCheckptPort();
+
+                //stateSocReceiver.unsubscribe(finfo.getValue().getBytes());
+
+                LOGGER.info("DISCONNECTING STATE CHECKPOINTER "
+                        + "to listen for state updates: {}", ssConnetStr);
+
+                stateSocReceiver.disconnect(ssConnetStr);
+            }
+        }
     }
 }
