@@ -21,7 +21,6 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
-import com.codahale.metrics.Snapshot;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
@@ -75,6 +74,11 @@ public class StateCheckpointComponent extends FlakeComponent
     private ZMQ.Socket stateSocReceiver;
 
     /**
+     *
+     */
+    private static final String CHKPT_CTRL_BIND_STR = "ipc://chkpt-ctrl-";
+
+    /**
      * Port to bind the socket to send periodic state checkpoints.
      */
     private int port;
@@ -118,8 +122,13 @@ public class StateCheckpointComponent extends FlakeComponent
             final ZMQ.Socket terminateSignalReceiver) {
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(1);
+
+        ZMQ.Socket stateSocControl = getContext().socket(ZMQ.REP);
+        stateSocControl.bind(CHKPT_CTRL_BIND_STR + getFid());
+
         pollerItems.register(terminateSignalReceiver, ZMQ.Poller.POLLIN);
         pollerItems.register(stateSocReceiver, ZMQ.Poller.POLLIN);
+        pollerItems.register(stateSocControl, ZMQ.Poller.POLLIN);
 
         /**
          * ZMQ socket connection publish the state to the backups.
@@ -180,22 +189,8 @@ public class StateCheckpointComponent extends FlakeComponent
                 terminateSignalReceiver.recv();
                 done = true;
             } else if (pollerItems.pollin(1)) {
-                String nfid = stateSocReceiver.recvStr(
-                                                Charset.defaultCharset());
-                String last = stateSocReceiver.recvStr(
-                                                Charset.defaultCharset());
-                String lb = stateSocReceiver.recvStr(
-                                                Charset.defaultCharset());
 
-                Boolean scalingDown = Boolean.parseBoolean(last);
-                Boolean loadbalanceReq = Boolean.parseBoolean(lb);
-
-                LOGGER.error("State delta received from:{}", nfid);
-                byte[] serializedState = stateSocReceiver.recv();
-
-                stateManager.storeNeighborCheckpointToBackup(nfid,
-                        serializedState);
-
+                receiveCheckpoint(stateSocReceiver);
                 /*if (scalingDown) {
                     LOGGER.info("Scaling down NEIGHBOR flake: {}", nfid);
                     initiateScaleDownAndTakeOver(nfid, false);
@@ -205,63 +200,67 @@ public class StateCheckpointComponent extends FlakeComponent
                 }
 
                 nowRecovering = false;*/
-            } else {
-
-                Snapshot snp = qhist.getSnapshot();
-                //snp.dump(System.out);
-                LOGGER.info("fid:{}; q 95->{}; 75->{}; 99->{}; msgs procd: {}",
-                        getFid(),
-                        snp.get95thPercentile(), //* durationFactor,
-                        snp.get75thPercentile(), //* durationFactor,
-                        snp.get99thPercentile(), //* durationFactor,
-                        msgProcessedMeter.getOneMinuteRate());
-
-                //double last1min = qhist.;
-            /*LOGGER.error("fid:{}; q 1min->{}; msgs procd: {}",
-                    getFid(),
-                    last1min,
-                    msgProcessedMeter.getOneMinuteRate());*/
-
-                Boolean reqLB = false;
-                //double a80 = (snp.get95thPercentile() * durationFactor +
-                //snp.get75thPercentile() * durationFactor) / 2.0;
-                double a80 = snp.get95thPercentile();
-
-            /*if (stableenough(starttime)) {
-                if (a80 > qLenThreshold) {
-                    LOGGER.error("Initiating loadbalancing.");
-                    reqLB = true;
-                }
-                starttime = System.currentTimeMillis();
-            }*/
-
-                LOGGER.error("Checkpointing State");
-                //send incremental checkpoint to the neighbor.
-                if (stateManager != null) {
-                    synchronized (this) {
-                        for (FlakeToken neighbor
-                                : peerMonitor.
-                                getNeighborsToBackupOn().values()) {
-                            LOGGER.info("STATE MANAGER:{}", stateManager);
-                            byte[] chkpointdata
-                                    = stateManager
-                                    .getIncrementalStateCheckpoint(neighbor
-                                            .getFlakeID());
-                            stateSocSender.sendMore(getFid());
-                            stateSocSender.sendMore(done.toString());
-                            stateSocSender.sendMore(reqLB.toString());
-                            stateSocSender.send(chkpointdata, 0);
-                        }
-                    }
-                }
-
-
+            } else if (pollerItems.pollin(2)) {
+            //explict checkpoint request received.
+                stateSocControl.recv();
+                checkpoint(stateSocSender);
+                stateSocControl.send("done");
+            } else { //checkpoint timeout.
+                checkpoint(stateSocSender);
             }
         }
 
         stateSocSender.close();
         monitor.interrupt();
         notifyStopped(true);
+    }
+
+
+    /**
+     * Checkpoint the flake state and sends it over the sender socket.
+     * @param stateSocReciever state reciever socket.
+     */
+    private void receiveCheckpoint(final ZMQ.Socket stateSocReciever) {
+        String nfid = stateSocReceiver.recvStr(
+                Charset.defaultCharset());
+        String last = stateSocReceiver.recvStr(
+                Charset.defaultCharset());
+        String lb = stateSocReceiver.recvStr(
+                Charset.defaultCharset());
+
+        Boolean scalingDown = Boolean.parseBoolean(last);
+        Boolean loadbalanceReq = Boolean.parseBoolean(lb);
+
+        //LOGGER.error("State delta received from:{}", nfid);
+        byte[] serializedState = stateSocReceiver.recv();
+
+        stateManager.storeNeighborCheckpointToBackup(nfid,
+                serializedState);
+    }
+
+
+    /**
+     * Checkpoint the flake state and sends it over the sender socket.
+     * @param stateSocSender state sender socket.
+     */
+    private void checkpoint(final ZMQ.Socket stateSocSender) {
+        //LOGGER.error("Checkpointing State");
+        //send incremental checkpoint to the neighbor.
+        if (stateManager != null) {
+            synchronized (this) {
+                for (FlakeToken neighbor
+                        : peerMonitor.
+                        getNeighborsToBackupOn().values()) {
+                    LOGGER.info("STATE MANAGER:{}", stateManager);
+                    byte[] chkpointdata
+                            = stateManager
+                            .getIncrementalStateCheckpoint(neighbor
+                                    .getFlakeID());
+                    stateSocSender.sendMore(getFid());
+                    stateSocSender.send(chkpointdata, 0);
+                }
+            }
+        }
     }
 
     /**
