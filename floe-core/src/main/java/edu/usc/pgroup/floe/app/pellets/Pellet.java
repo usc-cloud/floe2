@@ -68,7 +68,7 @@ public abstract class Pellet extends IteratorPellet {
         }
         PelletState state = null;
         if (stateMgr != null) {
-            stateMgr.getState(tupleItertaor.getPeId(), t);
+            state = stateMgr.getState(tupleItertaor.getPeId(), t);
         }
         execute(t, emitter, state);
     }

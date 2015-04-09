@@ -66,7 +66,7 @@ public class PeerMonitor extends FlakesTracker {
      * Logger.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(ReducerPeerCoordinationComponent.class);
+            LoggerFactory.getLogger(PeerMonitor.class);
 
     /**
      * List of peer update listeners.
@@ -93,7 +93,6 @@ public class PeerMonitor extends FlakesTracker {
         this.flakeId = myFlakeId;
         this.myToken = null;
         peerUpdateListeners = new ArrayList<>();
-        start();
     }
 
     /**
@@ -102,6 +101,7 @@ public class PeerMonitor extends FlakesTracker {
      */
     public final void addPeerUpdateListener(final PeerUpdateListener listener) {
         synchronized (peerUpdateListeners) {
+            LOGGER.error("ADDING LISTERNER:{}", listener);
             peerUpdateListeners.add(listener);
         }
     }
@@ -137,9 +137,9 @@ public class PeerMonitor extends FlakesTracker {
         allFlakesForward.put(flake.getToken(), flake);
         allFlakesReverse.put(flake.getToken(), flake);
 
-        LOGGER.error(flake.getFlakeID());
-        LOGGER.error("{}", flake.getToken());
-        LOGGER.error("{}", fidToTokenMap.size());
+        LOGGER.info(flake.getFlakeID());
+        LOGGER.info("{}", flake.getToken());
+        LOGGER.info("{}", fidToTokenMap.size());
 
         fidToTokenMap.put(flake.getFlakeID(), flake.getToken());
 
@@ -263,13 +263,20 @@ public class PeerMonitor extends FlakesTracker {
         SortedMap<Integer, FlakeToken> removed
                 = getRemovedFlakes(result, neighborsToBackupFor);
 
+        LOGGER.error("ME:{}, I WILL BACKUP MSGS FOR: A:{} R:{} NEW:{}, old:{},"
+                        + "listeners:{}", myToken, added, removed, result,
+                                    neighborsToBackupFor, peerUpdateListeners);
+
+        synchronized (neighborsToBackupFor) {
         if (peerUpdateListeners != null) {
             for (PeerUpdateListener listener: peerUpdateListeners) {
+                LOGGER.error("CALLING LISTENERS",
+                        myToken, added, removed, result, neighborsToBackupFor);
                 listener.peerListUpdated(added, removed);
             }
         }
 
-        synchronized (neighborsToBackupFor) {
+
             neighborsToBackupFor.clear();
             neighborsToBackupFor.putAll(result);
         }
@@ -314,18 +321,6 @@ public class PeerMonitor extends FlakesTracker {
 
         LOGGER.info("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,
                 result);
-
-
-        SortedMap<Integer, FlakeToken> added
-                = getNewlyAddedFlakes(result, myBackupNeighbors);
-        SortedMap<Integer, FlakeToken> removed
-                = getRemovedFlakes(result, myBackupNeighbors);
-
-        if (peerUpdateListeners != null) {
-            for (PeerUpdateListener listener: peerUpdateListeners) {
-                listener.peerListUpdated(added, removed);
-            }
-        }
 
         synchronized (myBackupNeighbors) {
             myBackupNeighbors.clear();

@@ -83,7 +83,7 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
     public final void childAdded(final ChildData addedChild) {
 
         String destFid = ZKPaths.getNodeFromPath(addedChild.getPath());
-        LOGGER.error("Adding Peer FID: {}", destFid);
+        LOGGER.info("Adding Peer FID: {}", destFid);
 
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 addedChild.getData());
@@ -101,7 +101,7 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
     @Override
     public final void childRemoved(final ChildData removedChild) {
         String destFid = ZKPaths.getNodeFromPath(removedChild.getPath());
-        LOGGER.error("Removing Peer FID: {}", destFid);
+        LOGGER.info("Removing Peer FID: {}", destFid);
 
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 removedChild.getData());
@@ -120,7 +120,7 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
     @Override
     public final void childUpdated(final ChildData updatedChild) {
         String destFid = ZKPaths.getNodeFromPath(updatedChild.getPath());
-        LOGGER.error("Updating Peer FID: {}", destFid);
+        LOGGER.info("Updating Peer FID: {}", destFid);
 
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 updatedChild.getData());

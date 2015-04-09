@@ -351,15 +351,6 @@ public class Flake {
                 flakeId, "HEAET-BEAT", sharedContext);
         flakeHeartbeatComponent.startAndWait();
 
-        peerMonitor = new PeerMonitor(appName, pelletId, flakeId);
-
-        stateCheckpointComponent = new StateCheckpointComponent(
-                metricRegistry, flakeId, "FLAKE-CHECKPOINTER",
-                sharedContext, stateManager,
-                flakeInstance.getStateCheckpointingPort(), peerMonitor
-        );
-        stateCheckpointComponent.startAndWait();
-
         LOGGER.info("Flake started. Starting control channel.");
         startControlChannel();
 
@@ -419,6 +410,7 @@ public class Flake {
 
         stateManager = StateManagerFactory.getStateManager(pellet);
 
+        peerMonitor = new PeerMonitor(appName, pelletId, flakeId);
 
 
         //Start the state manager.
@@ -482,7 +474,15 @@ public class Flake {
                     Utils.serialize(newCommand), 0);
             msgReceivercontrolForwardSocket.recv();
         }
+
+        stateCheckpointComponent = new StateCheckpointComponent(
+                metricRegistry, flakeId, "FLAKE-CHECKPOINTER",
+                sharedContext, stateManager,
+                flakeInstance.getStateCheckpointingPort(), peerMonitor
+        );
+        stateCheckpointComponent.startAndWait();
         LOGGER.info("Finished flake initialization. {}", flakeId);
+        peerMonitor.start();
     }
 
     /**

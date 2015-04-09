@@ -99,7 +99,7 @@ public class ReducerStateManager implements StateManager {
                                 final String keyValue) {
         synchronized (pelletStateMap) {
             if (!pelletStateMap.containsKey(keyValue)) {
-                LOGGER.info("Creating new state for key: {}", keyValue);
+                LOGGER.error("Creating new state for key: {}", keyValue);
                 pelletStateMap.put(keyValue, new PelletState(keyValue));
             }
         }

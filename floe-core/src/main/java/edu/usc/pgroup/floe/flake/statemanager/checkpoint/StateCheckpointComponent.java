@@ -190,7 +190,7 @@ public class StateCheckpointComponent extends FlakeComponent
                 Boolean scalingDown = Boolean.parseBoolean(last);
                 Boolean loadbalanceReq = Boolean.parseBoolean(lb);
 
-                LOGGER.info("State delta received from:{}", nfid);
+                LOGGER.error("State delta received from:{}", nfid);
                 byte[] serializedState = stateSocReceiver.recv();
 
                 stateManager.storeNeighborCheckpointToBackup(nfid,
@@ -235,18 +235,23 @@ public class StateCheckpointComponent extends FlakeComponent
                 starttime = System.currentTimeMillis();
             }*/
 
-                LOGGER.info("Checkpointing State");
+                LOGGER.error("Checkpointing State");
                 //send incremental checkpoint to the neighbor.
-                synchronized (this) {
-                    for (FlakeToken neighbor
-                            : peerMonitor.getNeighborsToBackupOn().values()) {
-                        byte[] chkpointdata
-                                = stateManager.getIncrementalStateCheckpoint(
-                                neighbor.getFlakeID());
-                        stateSocSender.sendMore(getFid());
-                        stateSocSender.sendMore(done.toString());
-                        stateSocSender.sendMore(reqLB.toString());
-                        stateSocSender.send(chkpointdata, 0);
+                if (stateManager != null) {
+                    synchronized (this) {
+                        for (FlakeToken neighbor
+                                : peerMonitor.
+                                getNeighborsToBackupOn().values()) {
+                            LOGGER.info("STATE MANAGER:{}", stateManager);
+                            byte[] chkpointdata
+                                    = stateManager
+                                    .getIncrementalStateCheckpoint(neighbor
+                                            .getFlakeID());
+                            stateSocSender.sendMore(getFid());
+                            stateSocSender.sendMore(done.toString());
+                            stateSocSender.sendMore(reqLB.toString());
+                            stateSocSender.send(chkpointdata, 0);
+                        }
                     }
                 }
 
@@ -313,7 +318,7 @@ public class StateCheckpointComponent extends FlakeComponent
 
 
                 //LOGGER.error("{} SUBING FOR {}", getFid(), finfo.getValue());
-                LOGGER.info("connecting STATE CHECKPOINTER "
+                LOGGER.error("connecting STATE CHECKPOINTER "
                         + "to listen for state updates: {}", ssConnetStr);
 
                 stateSocReceiver.connect(ssConnetStr);
@@ -331,7 +336,7 @@ public class StateCheckpointComponent extends FlakeComponent
 
                 //stateSocReceiver.unsubscribe(finfo.getValue().getBytes());
 
-                LOGGER.info("DISCONNECTING STATE CHECKPOINTER "
+                LOGGER.error("DISCONNECTING STATE CHECKPOINTER "
                         + "to listen for state updates: {}", ssConnetStr);
 
                 stateSocReceiver.disconnect(ssConnetStr);

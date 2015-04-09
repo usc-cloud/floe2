@@ -613,7 +613,7 @@ public class ReducerPeerCoordinationComponent
             // chance to the immediate neighbor first.
             int neighborToken = isImmediateNextNeighbor(neighborFid);
             if (neighborToken == -1) {
-                LOGGER.error("NOT A NEIGHBOR SO NO LB");
+                LOGGER.info("NOT A NEIGHBOR SO NO LB");
                 return;
             }
 
