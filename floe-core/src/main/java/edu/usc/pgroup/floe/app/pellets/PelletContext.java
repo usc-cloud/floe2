@@ -29,6 +29,12 @@ public class PelletContext {
     private final String pelletInstanceId;
 
     /**
+     * pellet's name (as specified during application building).
+     */
+    private final String pelletName;
+
+
+    /**
      * The global metric registry that can be used by the pellet to track
      * application level metrics.
      */
@@ -37,12 +43,14 @@ public class PelletContext {
     /**
      * Constructor.
      * @param peInstanceId Pellet's instance id.
+     * @param peName pellet's name (as specified during application building)
      * @param registry The global metric registry that can be used by the
-     *                 pellet to track application level metrics.
+     *                 pellet.
      */
     public PelletContext(final String peInstanceId,
-                         final MetricRegistry registry) {
+                         final String peName, final MetricRegistry registry) {
         this.pelletInstanceId = peInstanceId;
+        this.pelletName = peName;
         this.metricRegistry = registry;
     }
 
@@ -58,4 +66,9 @@ public class PelletContext {
      * track application level metrics.
      */
     public final MetricRegistry getMetricRegistry() { return metricRegistry; }
+
+    /**
+     * @return pellet's name (as specified during application building)
+     */
+    public final String getPelletName() { return pelletName; }
 }

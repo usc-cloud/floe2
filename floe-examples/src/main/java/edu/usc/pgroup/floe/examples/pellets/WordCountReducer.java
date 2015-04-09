@@ -136,6 +136,6 @@ public class WordCountReducer extends Pellet {
 
         state.setValue("count", count);
         LOGGER.info("Count for {}: {}", word, count);
-        LOGGER.error("Counter Metric:{}",  counter.getCount());
+        LOGGER.info("Counter Metric:{}",  counter.getCount());
     }
 }

@@ -503,7 +503,8 @@ public class Flake {
         IteratorPellet pellet = deserializePellet(p);
 
         PelletExecutor pe = new PelletExecutor(metricRegistry, nextPEIdx,
-                pellet, flakeId, pelletId, sharedContext, stateManager);
+                pellet, flakeId, pelletId, appName, sharedContext,
+                stateManager);
 
         /*PelletExecutor pe = new PelletExecutor(nextPEIdx, p, appName, appJar,
                 flakeId,

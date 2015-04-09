@@ -129,6 +129,8 @@
               files="MsgReceiverComponent.java"/>
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
               files="ReducerPeerCoordinationComponent.java"/>
+    <suppress checks="com.puppycrawl.tools.checkstyle.checks.sizes.ParameterNumberCheck"
+              files="PelletExecutor.java"/>
     <suppress checks="com.puppycrawl.tools.checkstyle.checks.coding.AvoidInlineConditionalsCheck"
               files="FlakeMessageReceiver.java"/>
 

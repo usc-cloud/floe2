@@ -20,4 +20,22 @@ package edu.usc.pgroup.floe.app;
  * @author kumbhare
  */
 public class AppContext {
+    /**
+     * App name (as specified during application building).
+     */
+    private final String appName;
+
+    /**
+     * @param name App name as submitted by the user.
+     */
+    public AppContext(final String name) {
+        this.appName = name;
+    }
+
+    /**
+     * @return App name (as specified during application deployment).
+     */
+    public final String getAppName() {
+        return appName;
+    }
 }
