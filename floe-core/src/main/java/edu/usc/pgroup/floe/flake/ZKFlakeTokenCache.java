@@ -33,6 +33,20 @@ public class ZKFlakeTokenCache extends ZKChildrenCache {
      */
     public ZKFlakeTokenCache(final String path,
                              final PathChildrenUpdateListener listener) {
-        super(path, listener);
+        this(path, listener, true);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param path     the ZK path to cache and listen for changes.
+     * @param listener the update listener callback.
+     * @param cacheData flag indicating if the cache should contain data or
+     *                  just the list.
+     */
+    public ZKFlakeTokenCache(final String path,
+                             final PathChildrenUpdateListener listener,
+                             final boolean cacheData) {
+        super(path, listener, cacheData);
     }
 }

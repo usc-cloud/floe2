@@ -54,6 +54,11 @@ public class WordCountReducer extends Pellet {
     private Counter counter;
 
     /**
+     * Pellet context.
+     */
+    private PelletContext pelletCtx;
+
+    /**
      * Constructor.
      *
      * @param keyName name of the field from the input tuple to be
@@ -82,6 +87,7 @@ public class WordCountReducer extends Pellet {
         MetricRegistry metricRegistry = pelletContext.getMetricRegistry();
         counter = metricRegistry.counter(MetricRegistry.name(
                 WordCountReducer.class, "counter"));
+        this.pelletCtx = pelletContext;
         //use pelletContext.getPelletInstanceId() + "counter" if you need
         // pellet instance specific metric. Or just use "counter" if you want
         // flake level metrics.
@@ -136,6 +142,8 @@ public class WordCountReducer extends Pellet {
 
         state.setValue("count", count);
         LOGGER.info("Count for {}: {}", word, count);
-        LOGGER.info("Counter Metric:{}",  counter.getCount());
+        LOGGER.info("Myfid: {}. Other Flakes: {}", pelletCtx.getFlakeId(),
+                pelletCtx.getCurrentFlakeList());
+        LOGGER.info("Counter Metric:{}", counter.getCount());
     }
 }

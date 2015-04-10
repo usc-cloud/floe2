@@ -41,6 +41,8 @@ public final class SimpleLinear {
      * @param args commandline args.
      */
     public static void main(final String[] args) {
+
+
         System.out.println("Hello World!");
         ApplicationBuilder builder = new ApplicationBuilder();
 

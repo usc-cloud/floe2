@@ -177,8 +177,9 @@ public class PelletExecutor extends Thread {
         this.pelletStateManager = stateManager;
         this.metricRegistry = registry;
         this.pelletName = pid;
-        this.pelletContext = new PelletContext(pelletInstanceId,
-                pelletName, metricRegistry);
+        this.pelletContext = new PelletContext(
+                appName, pelletInstanceId,
+                pelletName, flakeId, metricRegistry);
         this.appContext = new AppContext(appName);
         this.dataReceiver = context.socket(ZMQ.SUB);
         this.dataReceiver.subscribe(pelletInstanceId.getBytes());

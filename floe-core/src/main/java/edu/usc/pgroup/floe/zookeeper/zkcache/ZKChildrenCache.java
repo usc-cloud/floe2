@@ -47,6 +47,11 @@ public class ZKChildrenCache {
     private final PathChildrenUpdateListener cacheListener;
 
     /**
+     * Flag indicating if the cache should include data.
+     */
+    private final boolean cacheData;
+
+    /**
      * Container cache.        //Add custom hooks?
      * Note: This is currently not used since we do all operation on events.
      */
@@ -59,9 +64,22 @@ public class ZKChildrenCache {
      */
     public ZKChildrenCache(final String path,
                            final PathChildrenUpdateListener listener) {
+        this(path, listener, true);
+    }
+
+    /**
+     * Default constructor.
+     * @param path the ZK path to cache and listen for changes.
+     * @param listener the update listener callback.
+     * @param data flag indicating if the cache should contain data (or
+     *                  just a list)
+     */
+    public ZKChildrenCache(final String path,
+                           final PathChildrenUpdateListener listener,
+                           final boolean data) {
         this.cachedPath = path;
         this.cacheListener = listener;
-
+        this.cacheData = data;
         initializeContainerMonitor();
     }
 
@@ -75,7 +93,8 @@ public class ZKChildrenCache {
         pathCache = ZKClient.getInstance().cacheAndSubscribeChildren(
                 cachedPath,
                 cacheListener,
-                true //TODO: For perf. reasons We should not caching container
+                cacheData
+                //TODO: For perf. reasons We should not caching container
                 // data. That will be received on demand. We just want to cache
                 // container list.
         );

@@ -17,6 +17,13 @@
 package edu.usc.pgroup.floe.app.pellets;
 
 import com.codahale.metrics.MetricRegistry;
+import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
+import edu.usc.pgroup.floe.zookeeper.ZKUtils;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.utils.ZKPaths;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author kumbhare
@@ -33,6 +40,16 @@ public class PelletContext {
      */
     private final String pelletName;
 
+    /**
+     * flake id to which this pellet belongs.
+     */
+    private final String flakeId;
+
+
+    /**
+     * Path cache to monitor the tokens.
+     */
+    private ZKFlakeTokenCache flakeCache;
 
     /**
      * The global metric registry that can be used by the pellet to track
@@ -42,16 +59,26 @@ public class PelletContext {
 
     /**
      * Constructor.
+     * @param appName application's name.
      * @param peInstanceId Pellet's instance id.
      * @param peName pellet's name (as specified during application building)
+     * @param fid flake id to which this pellet belongs.
      * @param registry The global metric registry that can be used by the
-     *                 pellet.
      */
-    public PelletContext(final String peInstanceId,
-                         final String peName, final MetricRegistry registry) {
+    public PelletContext(final String appName,
+                         final String peInstanceId,
+                         final String peName,
+                         final String fid,
+                         final MetricRegistry registry) {
         this.pelletInstanceId = peInstanceId;
         this.pelletName = peName;
+        this.flakeId = fid;
         this.metricRegistry = registry;
+
+        String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
+                appName, pelletName);
+        this.flakeCache = new ZKFlakeTokenCache(pelletTokenPath, null, false);
+        this.flakeCache.rebuild();
     }
 
     /**
@@ -71,4 +98,22 @@ public class PelletContext {
      * @return pellet's name (as specified during application building)
      */
     public final String getPelletName() { return pelletName; }
+
+    /**
+     * @return flake id to which this pellet belongs.
+     */
+    public final String getFlakeId() { return flakeId; }
+
+    /**
+     * @return a list of flakes running across the cluster corresponding to
+     * this pellet type.
+     */
+    public final List<String> getCurrentFlakeList() {
+        List<ChildData> cachedData = flakeCache.getCurrentCachedData();
+        List<String> flakes = new ArrayList<>();
+        for (ChildData child: cachedData) {
+            flakes.add(ZKPaths.getNodeFromPath(child.getPath()));
+        }
+        return flakes;
+    }
 }
