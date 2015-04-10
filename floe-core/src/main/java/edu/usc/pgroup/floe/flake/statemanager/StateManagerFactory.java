@@ -52,6 +52,10 @@ public final class StateManagerFactory {
         StateManager manager = null;
         String stateManagerClass = pellet.getConf().getStateManagerClass();
 
+        if (stateManagerClass == null) {
+            return null;
+        }
+
         String pluginJar = FloeConfig.getConfig().getString(
                 ConfigProperties.FLOE_PLUGIN_JAR);
 
@@ -67,6 +71,7 @@ public final class StateManagerFactory {
             LOGGER.error("*****************STATE MANAGER NULL**************");
             loader = ClassLoader.getSystemClassLoader();
         }
+
 
         manager = (StateManager) Utils.instantiateObject(
                 stateManagerClass,
