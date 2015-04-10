@@ -76,7 +76,7 @@ public class StateCheckpointComponent extends FlakeComponent
     /**
      *
      */
-    private static final String CHKPT_CTRL_BIND_STR = "ipc://chkpt-ctrl-";
+    private static final String CHKPT_CTRL_BIND_STR = "inproc://chkpt-ctrl-";
 
     /**
      * Port to bind the socket to send periodic state checkpoints.
