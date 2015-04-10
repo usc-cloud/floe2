@@ -17,6 +17,8 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +51,29 @@ public final class StateManagerFactory {
 
         StateManager manager = null;
         String stateManagerClass = pellet.getConf().getStateManagerClass();
-        if (stateManagerClass != null) {
-            LOGGER.error("State manager: " + stateManagerClass);
-            manager = (StateManager) Utils.instantiateObject(stateManagerClass);
+
+        String pluginJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
+
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
+            LOGGER.error("*****************STATE MANAGER LOADED**************");
         }
+
+        if (loader == null) {
+
+            LOGGER.error("*****************STATE MANAGER NULL**************");
+            loader = ClassLoader.getSystemClassLoader();
+        }
+
+        manager = (StateManager) Utils.instantiateObject(
+                stateManagerClass,
+                loader
+        );
+
+
 
         if (manager != null) {
             manager.init(pellet.getConf().getStateParams());
