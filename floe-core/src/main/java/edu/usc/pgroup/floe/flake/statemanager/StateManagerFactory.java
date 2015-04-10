@@ -63,12 +63,12 @@ public final class StateManagerFactory {
         if (pluginJar != null && !pluginJar.isEmpty()) {
             loader = Utils.getClassLoader(pluginJar,
                     ClassLoader.getSystemClassLoader());
-            LOGGER.error("*****************STATE MANAGER LOADED**************");
+            LOGGER.error("**********STATE MANAGER LOADER LOADED***********");
         }
 
         if (loader == null) {
 
-            LOGGER.error("*****************STATE MANAGER NULL**************");
+            LOGGER.error("**********STATE MANAGER LOADER NULL************");
             loader = ClassLoader.getSystemClassLoader();
         }
 

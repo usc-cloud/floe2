@@ -223,15 +223,15 @@ public class StateCheckpointComponent extends FlakeComponent
     private void receiveCheckpoint(final ZMQ.Socket stateSocReciever) {
         String nfid = stateSocReceiver.recvStr(
                 Charset.defaultCharset());
-        String last = stateSocReceiver.recvStr(
-                Charset.defaultCharset());
-        String lb = stateSocReceiver.recvStr(
-                Charset.defaultCharset());
+        //String last = stateSocReceiver.recvStr(
+        //        Charset.defaultCharset());
+        //String lb = stateSocReceiver.recvStr(
+        //        Charset.defaultCharset());
 
-        Boolean scalingDown = Boolean.parseBoolean(last);
-        Boolean loadbalanceReq = Boolean.parseBoolean(lb);
+        //Boolean scalingDown = Boolean.parseBoolean(last);
+        //Boolean loadbalanceReq = Boolean.parseBoolean(lb);
 
-        //LOGGER.error("State delta received from:{}", nfid);
+        LOGGER.error("State delta received from:{}", nfid);
         byte[] serializedState = stateSocReceiver.recv();
 
         stateManager.storeNeighborCheckpointToBackup(nfid,
@@ -244,14 +244,14 @@ public class StateCheckpointComponent extends FlakeComponent
      * @param stateSocSender state sender socket.
      */
     private void checkpoint(final ZMQ.Socket stateSocSender) {
-        //LOGGER.error("Checkpointing State");
+        LOGGER.error("Checkpointing State");
         //send incremental checkpoint to the neighbor.
         if (stateManager != null) {
-            synchronized (this) {
+            //synchronized (this) {
                 for (FlakeToken neighbor
                         : peerMonitor.
                         getNeighborsToBackupOn().values()) {
-                    LOGGER.info("STATE MANAGER:{}", stateManager);
+                    //LOGGER.info("STATE MANAGER:{}", stateManager);
                     byte[] chkpointdata
                             = stateManager
                             .getIncrementalStateCheckpoint(neighbor
@@ -259,7 +259,7 @@ public class StateCheckpointComponent extends FlakeComponent
                     stateSocSender.sendMore(getFid());
                     stateSocSender.send(chkpointdata, 0);
                 }
-            }
+            //}
         }
     }
 
