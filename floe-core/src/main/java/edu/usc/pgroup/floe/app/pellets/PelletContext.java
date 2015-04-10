@@ -73,7 +73,6 @@ public class PelletContext {
         this.flakeId = fid;
         this.metricRegistry = registry;
         this.flakesTracker = new FlakesTracker(appName, peName);
-        this.flakesTracker.start();
     }
 
     /**
@@ -114,5 +113,13 @@ public class PelletContext {
     public final void addFlakeUpdateListener(
             final FlakeUpdateListener listener) {
         flakesTracker.addFlakeUpdateListener(listener);
+    }
+
+    /**
+     * Starts the flake tracker. If we start this before adding an update
+     * listener, we might miss some updates.
+     */
+    public final void startFlakeTracker() {
+        flakesTracker.start();
     }
 }

@@ -43,6 +43,7 @@ public abstract class MessageDispersionStrategy extends FlakesTracker
                                      final String myFlakeId) {
         super(appName, pelletName);
         this.flakeId = myFlakeId;
+        addFlakeUpdateListener(this);
         start();
     }
 

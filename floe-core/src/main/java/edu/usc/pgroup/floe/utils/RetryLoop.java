@@ -64,8 +64,7 @@ public final class RetryLoop {
                 break;
             } catch (Exception e) {
                 LOGGER.warn("Exception occurred while trying, "
-                        + "checking exception to see if we need to retry: "
-                        + "{}", e);
+                        + "checking exception to see if we need to retry");
                 //if retry attempts failed. Throw the generated exception.
                 //NOTE: This will throw the last generated exception,
                 // which might be different from the previous ones

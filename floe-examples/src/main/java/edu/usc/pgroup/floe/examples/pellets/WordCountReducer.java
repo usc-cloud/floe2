@@ -25,6 +25,8 @@ import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.StateType;
+import edu.usc.pgroup.floe.flake.FlakeToken;
+import edu.usc.pgroup.floe.flake.FlakeUpdateListener;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class WordCountReducer extends Pellet {
+public class WordCountReducer extends Pellet implements FlakeUpdateListener {
 
     /**
      * Key to be used to extract word from tuple.
@@ -88,6 +90,8 @@ public class WordCountReducer extends Pellet {
         counter = metricRegistry.counter(MetricRegistry.name(
                 WordCountReducer.class, "counter"));
         this.pelletCtx = pelletContext;
+        this.pelletCtx.addFlakeUpdateListener(this);
+        this.pelletCtx.startFlakeTracker();
         //use pelletContext.getPelletInstanceId() + "counter" if you need
         // pellet instance specific metric. Or just use "counter" if you want
         // flake level metrics.
@@ -145,5 +149,49 @@ public class WordCountReducer extends Pellet {
         LOGGER.info("Myfid: {}. Other Flakes: {}", pelletCtx.getFlakeId(),
                 pelletCtx.getCurrentFlakeList());
         LOGGER.info("Counter Metric:{}", counter.getCount());
+    }
+
+    /**
+     * This function is called exactly once when the initial flake list is
+     * fetched.
+     *
+     * @param flakes list of currently initialized flakes.
+     */
+    @Override
+    public final void initialFlakeList(final List<FlakeToken> flakes) {
+        LOGGER.error("IN REDUER: {}", flakes);
+    }
+
+    /**
+     * This function is called whenever a new flake is created for the
+     * correspondong pellet.
+     *
+     * @param token flake token corresponding to the added flake.
+     */
+    @Override
+    public final void flakeAdded(final FlakeToken token) {
+        LOGGER.error("IN REDUER FL ADDED: {}", token);
+    }
+
+    /**
+     * This function is called whenever a flake is removed for the
+     * correspondong pellet.
+     *
+     * @param token flake token corresponding to the added flake.
+     */
+    @Override
+    public final void flakeRemoved(final FlakeToken token) {
+
+    }
+
+    /**
+     * This function is called whenever a data associated with a flake
+     * corresponding to the given pellet is updated.
+     *
+     * @param token updated flake token.
+     */
+    @Override
+    public final void flakeDataUpdated(final FlakeToken token) {
+
     }
 }
