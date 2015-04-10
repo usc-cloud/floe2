@@ -98,6 +98,15 @@ public class ZKChildrenCache {
                 // data. That will be received on demand. We just want to cache
                 // container list.
         );
+
+    }
+
+    /**
+     * @param listener the update listener callback.
+     */
+    public final void addUpdateListener(
+            final PathChildrenUpdateListener listener) {
+        ZKClient.getInstance().addPathCacheListener(pathCache, listener);
     }
 
     /**

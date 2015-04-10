@@ -146,7 +146,7 @@ public class RRDispersionStrategy extends MessageDispersionStrategy {
      * @param flakes list of currently initialized flakes.
      */
     @Override
-    protected final void initialFlakeList(final List<FlakeToken> flakes) {
+    public final void initialFlakeList(final List<FlakeToken> flakes) {
         for (FlakeToken flake: flakes) {
             allTargetFlakes.add(flake.getFlakeID());
         }
@@ -159,7 +159,7 @@ public class RRDispersionStrategy extends MessageDispersionStrategy {
      * @param token flake token corresponding to the added flake.
      */
     @Override
-    protected final void flakeAdded(final FlakeToken token) {
+    public final void flakeAdded(final FlakeToken token) {
         if (!allTargetFlakes.contains(token.getFlakeID())) {
             allTargetFlakes.add(token.getFlakeID());
         }
@@ -172,7 +172,7 @@ public class RRDispersionStrategy extends MessageDispersionStrategy {
      * @param token flake token corresponding to the added flake.
      */
     @Override
-    protected final void flakeRemoved(final FlakeToken token) {
+    public final void flakeRemoved(final FlakeToken token) {
         allTargetFlakes.remove(token.getFlakeID());
     }
 
@@ -183,7 +183,7 @@ public class RRDispersionStrategy extends MessageDispersionStrategy {
      * @param token updated flake token.
      */
     @Override
-    protected final void flakeDataUpdated(final FlakeToken token) {
+    public final void flakeDataUpdated(final FlakeToken token) {
 
     }
 }

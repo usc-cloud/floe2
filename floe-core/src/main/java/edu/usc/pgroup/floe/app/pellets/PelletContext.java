@@ -17,12 +17,10 @@
 package edu.usc.pgroup.floe.app.pellets;
 
 import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
-import edu.usc.pgroup.floe.zookeeper.ZKUtils;
-import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.utils.ZKPaths;
+import edu.usc.pgroup.floe.flake.FlakeToken;
+import edu.usc.pgroup.floe.flake.FlakeUpdateListener;
+import edu.usc.pgroup.floe.flake.FlakesTracker;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,7 +47,7 @@ public class PelletContext {
     /**
      * Path cache to monitor the tokens.
      */
-    private ZKFlakeTokenCache flakeCache;
+    private FlakesTracker flakesTracker;
 
     /**
      * The global metric registry that can be used by the pellet to track
@@ -74,11 +72,8 @@ public class PelletContext {
         this.pelletName = peName;
         this.flakeId = fid;
         this.metricRegistry = registry;
-
-        String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
-                appName, pelletName);
-        this.flakeCache = new ZKFlakeTokenCache(pelletTokenPath, null, false);
-        this.flakeCache.rebuild();
+        this.flakesTracker = new FlakesTracker(appName, peName);
+        this.flakesTracker.start();
     }
 
     /**
@@ -108,12 +103,16 @@ public class PelletContext {
      * @return a list of flakes running across the cluster corresponding to
      * this pellet type.
      */
-    public final List<String> getCurrentFlakeList() {
-        List<ChildData> cachedData = flakeCache.getCurrentCachedData();
-        List<String> flakes = new ArrayList<>();
-        for (ChildData child: cachedData) {
-            flakes.add(ZKPaths.getNodeFromPath(child.getPath()));
-        }
-        return flakes;
+    public final List<FlakeToken> getCurrentFlakeList() {
+        return flakesTracker.getCurrentFlakes();
+    }
+
+    /**
+     * Adds the flake update listener to the flake tracker.
+     * @param listener FlakeUpdateListener instance.
+     */
+    public final void addFlakeUpdateListener(
+            final FlakeUpdateListener listener) {
+        flakesTracker.addFlakeUpdateListener(listener);
     }
 }

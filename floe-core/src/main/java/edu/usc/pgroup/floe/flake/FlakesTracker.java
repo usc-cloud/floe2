@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public abstract class FlakesTracker implements PathChildrenUpdateListener {
+public class FlakesTracker implements PathChildrenUpdateListener {
     /**
      * Logger.
      */
@@ -34,6 +34,11 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
     private ZKFlakeTokenCache flakeCache;
 
     /**
+     * Flake update listener.
+     */
+    private List<FlakeUpdateListener> flakeUpdateListener;
+
+    /**
      * Constructor.
      * @param appName name of the application.
      * @param pelletName name of the pellet whose flakes has to be tracked.
@@ -43,12 +48,25 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
                 appName, pelletName);
         LOGGER.debug("Listening for flake tokens for dest pellet: {} at {}",
                 pelletName, pelletTokenPath);
+        flakeUpdateListener = new ArrayList<>();
     }
+
+    /**
+     * add a listener for the flake updates.
+     * @param listener flake update listener.
+     */
+    public final void addFlakeUpdateListener(
+            final FlakeUpdateListener listener) {
+        synchronized (this) {
+            flakeUpdateListener.add(listener);
+        }
+    }
+
 
     /**
      * Start the tracker.
      */
-    protected final void start() {
+    public final void start() {
         this.flakeCache = new ZKFlakeTokenCache(pelletTokenPath, this);
     }
 
@@ -69,7 +87,9 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
             flakes.add(token);
         }
         synchronized (this) {
-            initialFlakeList(flakes);
+            for (FlakeUpdateListener listener: flakeUpdateListener) {
+                listener.initialFlakeList(flakes);
+            }
         }
     }
 
@@ -88,7 +108,9 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 addedChild.getData());
         synchronized (this) {
-            flakeAdded(token);
+            for (FlakeUpdateListener listener: flakeUpdateListener) {
+                listener.flakeAdded(token);
+            }
         }
     }
 
@@ -106,7 +128,9 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 removedChild.getData());
         synchronized (this) {
-            flakeRemoved(token);
+            for (FlakeUpdateListener listener: flakeUpdateListener) {
+                listener.flakeRemoved(token);
+            }
         }
     }
 
@@ -125,7 +149,9 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 updatedChild.getData());
         synchronized (this) {
-            flakeDataUpdated(token);
+            for (FlakeUpdateListener listener: flakeUpdateListener) {
+                listener.flakeDataUpdated(token);
+            }
         }
     }
 
@@ -145,36 +171,5 @@ public abstract class FlakesTracker implements PathChildrenUpdateListener {
         }
         return flakes;
     }
-
-    /**
-     * This function is called exactly once when the initial flake list is
-     * fetched.
-     * @param flakes list of currently initialized flakes.
-     */
-    protected abstract void initialFlakeList(List<FlakeToken> flakes);
-
-    /**
-     * This function is called whenever a new flake is created for the
-     * correspondong pellet.
-     * @param token flake token corresponding to the added flake.
-     */
-    protected abstract void flakeAdded(FlakeToken token);
-
-    /**
-     * This function is called whenever a flake is removed for the
-     * correspondong pellet.
-     * @param token flake token corresponding to the added flake.
-     */
-    protected abstract void flakeRemoved(FlakeToken token);
-
-    /**
-     * This function is called whenever a data associated with a flake
-     * corresponding to the given pellet is updated.
-     * @param token updated flake token.
-     */
-    protected abstract void flakeDataUpdated(FlakeToken token);
-
-
-
 
 }

@@ -3,6 +3,7 @@ package edu.usc.pgroup.floe.flake.coordination;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeToken;
+import edu.usc.pgroup.floe.flake.FlakeUpdateListener;
 import edu.usc.pgroup.floe.flake.FlakesTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ import java.util.TreeMap;
 /**
  * @author kumbhare
  */
-public class PeerMonitor extends FlakesTracker {
+public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
 
     /**
      * This flake's id.
@@ -83,6 +84,7 @@ public class PeerMonitor extends FlakesTracker {
     public PeerMonitor(final String appName, final String pelletName,
                        final String myFlakeId) {
         super(appName, pelletName);
+        addFlakeUpdateListener(this);
         replicationLevel = FloeConfig.getConfig().getInt(
                 ConfigProperties.FLAKE_TOLERANCE_LEVEL);
         neighborsToBackupFor = new TreeMap<>(Collections.reverseOrder());
@@ -113,7 +115,7 @@ public class PeerMonitor extends FlakesTracker {
      * @param flakes list of currently initialized flakes.
      */
     @Override
-    protected final void initialFlakeList(final List<FlakeToken> flakes) {
+    public final void initialFlakeList(final List<FlakeToken> flakes) {
         for (FlakeToken flake: flakes) {
             allFlakesForward.put(flake.getToken(), flake);
             allFlakesReverse.put(flake.getToken(), flake);
@@ -133,7 +135,7 @@ public class PeerMonitor extends FlakesTracker {
      * @param flake flake token corresponding to the added flake.
      */
     @Override
-    protected final void flakeAdded(final FlakeToken flake) {
+    public  final void flakeAdded(final FlakeToken flake) {
         allFlakesForward.put(flake.getToken(), flake);
         allFlakesReverse.put(flake.getToken(), flake);
 
@@ -156,7 +158,7 @@ public class PeerMonitor extends FlakesTracker {
      * @param flake flake token corresponding to the added flake.
      */
     @Override
-    protected final void flakeRemoved(final FlakeToken flake) {
+    public  final void flakeRemoved(final FlakeToken flake) {
         if (allFlakesForward.containsKey(flake.getToken())) {
             allFlakesForward.remove(flake.getToken());
         }
@@ -176,7 +178,7 @@ public class PeerMonitor extends FlakesTracker {
      * @param flake updated flake token.
      */
     @Override
-    protected final void flakeDataUpdated(final FlakeToken flake) {
+    public  final void flakeDataUpdated(final FlakeToken flake) {
 
         Integer prevToken = null;
         if (fidToTokenMap.containsKey(flake.getFlakeID())) {

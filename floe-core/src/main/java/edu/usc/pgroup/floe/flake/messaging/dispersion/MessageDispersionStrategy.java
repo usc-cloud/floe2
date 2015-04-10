@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.FlakeUpdateListener;
 import edu.usc.pgroup.floe.flake.FlakesTracker;
 
 import java.util.List;
@@ -24,7 +25,8 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public abstract class MessageDispersionStrategy extends FlakesTracker {
+public abstract class MessageDispersionStrategy extends FlakesTracker
+        implements FlakeUpdateListener {
 
     /**
      *  Current flake's id.

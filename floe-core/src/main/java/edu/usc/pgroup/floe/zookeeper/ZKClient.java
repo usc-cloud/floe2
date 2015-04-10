@@ -236,6 +236,59 @@ public final class ZKClient {
         }
     }
 
+    /**
+     * subscribes for any updates for the listener.
+     * (add, update, delete).
+     *
+     * @param pathChildrenCache cache object to add the listener to.
+     * @param pathUpdateListener Floe's Path update listener.
+     */
+    public void addPathCacheListener(
+            final PathChildrenCache pathChildrenCache,
+            final PathChildrenUpdateListener pathUpdateListener) {
+
+        if (pathUpdateListener != null) {
+            PathChildrenCacheListener cacheListener =
+                new PathChildrenCacheListener() {
+                    @Override
+                    public void childEvent(
+                            final CuratorFramework curatorFramework,
+                            final PathChildrenCacheEvent
+                                    pathChildrenCacheEvent)
+                            throws Exception {
+                        switch (pathChildrenCacheEvent.getType()) {
+                            case CHILD_ADDED:
+                                pathUpdateListener.childAdded(
+                                        pathChildrenCacheEvent.getData()
+                                );
+                                break;
+                            case CHILD_UPDATED:
+                                pathUpdateListener.childUpdated(
+                                        pathChildrenCacheEvent.getData()
+                                );
+                                break;
+                            case CHILD_REMOVED:
+                                pathUpdateListener.childRemoved(
+                                        pathChildrenCacheEvent.getData()
+                                );
+                                break;
+                            case INITIALIZED:
+                                pathUpdateListener.childrenListInitialized(
+                                        pathChildrenCacheEvent
+                                                .getInitialData()
+                                );
+                                break;
+                            default:
+                        /*
+                        Ignore other pathChildrenEvents. These are handled
+                        internally by the curator's zkcache framework.
+                         */
+                        }
+                    }
+                };
+            pathChildrenCache.getListenable().addListener(cacheListener);
+        }
+    }
 
     /**
      * Creates a cache for the child nodes, and subscribes for any updates.

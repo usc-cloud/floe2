@@ -285,7 +285,7 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
      * @param flakes list of currently initialized flakes.
      */
     @Override
-    protected final void initialFlakeList(final List<FlakeToken> flakes) {
+    public final void initialFlakeList(final List<FlakeToken> flakes) {
         for (FlakeToken flake: flakes) {
             updateCircle(flake.getFlakeID(), flake.getToken(), true);
         }
@@ -298,7 +298,7 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
      * @param token flake token corresponding to the added flake.
      */
     @Override
-    protected final void flakeAdded(final FlakeToken token) {
+    public final void flakeAdded(final FlakeToken token) {
         updateCircle(token.getFlakeID(), token.getToken(), true);
     }
 
@@ -309,7 +309,7 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
      * @param token flake token corresponding to the added flake.
      */
     @Override
-    protected final void flakeRemoved(final FlakeToken token) {
+    public final void flakeRemoved(final FlakeToken token) {
         updateCircle(token.getFlakeID(), token.getToken(), false);
     }
 
@@ -320,7 +320,7 @@ public class ElasticReducerDispersion extends MessageDispersionStrategy {
      * @param token updated flake token.
      */
     @Override
-    protected final void flakeDataUpdated(final FlakeToken token) {
+    public final void flakeDataUpdated(final FlakeToken token) {
         updateCircle(token.getFlakeID(), token.getToken(), true);
     }
 }
