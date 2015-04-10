@@ -115,6 +115,9 @@ public abstract class BaseAppTransition extends ClusterTransition {
         terminateFlakes(updatedMapping, barrier);
         LOGGER.info("All required flakes terminated.");
 
+        final int sleepTime = 2000;
+        Thread.sleep(sleepTime);
+
         //Step 6. Send signal Start pellets.
         startPellets(updatedMapping, barrier);
         LOGGER.info("All pellets Started. The application is now "

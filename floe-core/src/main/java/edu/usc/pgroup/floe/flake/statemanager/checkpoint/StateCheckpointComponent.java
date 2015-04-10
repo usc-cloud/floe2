@@ -183,14 +183,15 @@ public class StateCheckpointComponent extends FlakeComponent
         while (!done && !Thread.currentThread().isInterrupted()) {
 
             int polled = pollerItems.poll(checkpointPeriod);
-            if (pollerItems.pollin(0)) {
-                //terminate.
-                LOGGER.warn("Terminating state checkpointing");
-                terminateSignalReceiver.recv();
-                done = true;
-            } else if (pollerItems.pollin(1)) {
+            try {
+                if (pollerItems.pollin(0)) {
+                    //terminate.
+                    LOGGER.warn("Terminating state checkpointing");
+                    terminateSignalReceiver.recv();
+                    done = true;
+                } else if (pollerItems.pollin(1)) {
 
-                receiveCheckpoint(stateSocReceiver);
+                    receiveCheckpoint(stateSocReceiver);
                 /*if (scalingDown) {
                     LOGGER.info("Scaling down NEIGHBOR flake: {}", nfid);
                     initiateScaleDownAndTakeOver(nfid, false);
@@ -200,13 +201,16 @@ public class StateCheckpointComponent extends FlakeComponent
                 }
 
                 nowRecovering = false;*/
-            } else if (pollerItems.pollin(2)) {
-            //explict checkpoint request received.
-                stateSocControl.recv();
-                checkpoint(stateSocSender);
-                stateSocControl.send("done");
-            } else { //checkpoint timeout.
-                checkpoint(stateSocSender);
+                } else if (pollerItems.pollin(2)) {
+                    //explict checkpoint request received.
+                    stateSocControl.recv();
+                    checkpoint(stateSocSender);
+                    stateSocControl.send("done");
+                } else { //checkpoint timeout.
+                    checkpoint(stateSocSender);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Exception at state checkpointer:{}", e);
             }
         }
 
@@ -244,14 +248,15 @@ public class StateCheckpointComponent extends FlakeComponent
      * @param stateSocSender state sender socket.
      */
     private void checkpoint(final ZMQ.Socket stateSocSender) {
-        LOGGER.error("Checkpointing State");
+
         //send incremental checkpoint to the neighbor.
         if (stateManager != null) {
             //synchronized (this) {
                 for (FlakeToken neighbor
                         : peerMonitor.
                         getNeighborsToBackupOn().values()) {
-                    //LOGGER.info("STATE MANAGER:{}", stateManager);
+                    LOGGER.error("Checkpointing State to: {}",
+                            neighbor.getFlakeID());
                     byte[] chkpointdata
                             = stateManager
                             .getIncrementalStateCheckpoint(neighbor
