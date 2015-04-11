@@ -181,27 +181,29 @@ public class SenderBEComponent extends FlakeComponent {
                         + port);
 
         LOGGER.info("Open back channel on: {}", backChannelPort);
-        final ZMQ.Socket backendBackChannel = getContext().socket(ZMQ.SUB);
+        final ZMQ.Socket backendBackChannel = getContext().socket(ZMQ.REP);
         backendBackChannel.bind(
                 Utils.Constants.FLAKE_SENDER_BACKEND_SOCK_PREFIX
                         + backChannelPort);
-        backendBackChannel.subscribe(myPelletName.getBytes());
+        //backendBackChannel.subscribe(myPelletName.getBytes());
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(2 + 1);
         pollerItems.register(middleendreceiver, ZMQ.Poller.POLLIN);
         pollerItems.register(terminateSignalReceiver, ZMQ.Poller.POLLIN);
-        pollerItems.register(backendBackChannel, ZMQ.Poller.POLLIN);
+        //pollerItems.register(backendBackChannel, ZMQ.Poller.POLLIN);
 
         Meter msgSendMeter =  getMetricRegistry().meter(
-                MetricRegistry.name(SenderBEComponent.class, "sent")
-        );
+                MetricRegistry.name(SenderBEComponent.class, "sent"));
 
         notifyStarted(true);
         int i = 0;
         byte[] message;
         String streamName;
-        while (!Thread.currentThread().isInterrupted()) {
 
+        backendBackChannel.recv();
+        backendBackChannel.send("dne");
+
+        while (!Thread.currentThread().isInterrupted()) {
             pollerItems.poll();
             if (pollerItems.pollin(0)) { //data messages
                 streamName = middleendreceiver
@@ -246,16 +248,15 @@ public class SenderBEComponent extends FlakeComponent {
                         backend.send(message, 0);
                     }
                 } else { //should queue up messages.
-                    LOGGER.warn("Message dropped because no connection "
-                            + "received");
-                    //TODO: FIX THIS..
+                    LOGGER.error("Message dropped because no connection "
+                            + "received");    //TODO: FIX THIS..
                 }
                 msgSendMeter.mark();
             } else if (pollerItems.pollin(1)) { //kill signal
                 LOGGER.warn("Terminating flake sender ME: {}", getFid());
                 terminateSignalReceiver.recv();
                 break;
-            } else if (pollerItems.pollin(2)) { //backChannel from successor
+            } /*else if (pollerItems.pollin(2)) { //backChannel from successor
                 String mypid = backendBackChannel.recvStr(
                         Charset.defaultCharset());
                 String flakeId = backendBackChannel.recvStr(
@@ -273,7 +274,6 @@ public class SenderBEComponent extends FlakeComponent {
                     LOGGER.debug("MSG ON BACKCHANNEL: {},{}",
                             "NNOOOOO DATA", toContinue);
                 }
-
                 Boolean btoContinue = true;
                 if ("0".equalsIgnoreCase(toContinue)) {
                     btoContinue = false;
@@ -283,8 +283,8 @@ public class SenderBEComponent extends FlakeComponent {
                 //NOTE: WE ARE NOT USING BACKCHANNEL ANY MORE!!! CLEANUP REST
                 // OF THE CODE AS WELL.
                 /*dispersionStrategy.backChannelMessageReceived(
-                        flakeId, data, btoContinue);*/
-            }
+                        flakeId, data, btoContinue);*
+            }*/
         }
 
         LOGGER.warn("Closing flake backend sockets");

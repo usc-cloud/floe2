@@ -103,7 +103,7 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
      */
     public final void addPeerUpdateListener(final PeerUpdateListener listener) {
         synchronized (peerUpdateListeners) {
-            LOGGER.error("ADDING LISTERNER:{}", listener);
+            LOGGER.info("ADDING LISTERNER:{}", listener);
             peerUpdateListeners.add(listener);
         }
     }
@@ -256,23 +256,19 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
             }
         }
 
-        LOGGER.info("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,
-                result);
-
-
         SortedMap<Integer, FlakeToken> added
                 = getNewlyAddedFlakes(result, neighborsToBackupFor);
         SortedMap<Integer, FlakeToken> removed
                 = getRemovedFlakes(result, neighborsToBackupFor);
 
-        LOGGER.error("ME:{}, I WILL BACKUP MSGS FOR: A:{} R:{} NEW:{}, old:{},"
+        LOGGER.debug("ME:{}, I WILL BACKUP MSGS FOR: A:{} R:{} NEW:{}, old:{},"
                         + "listeners:{}", myToken, added, removed, result,
                                     neighborsToBackupFor, peerUpdateListeners);
 
         synchronized (neighborsToBackupFor) {
         if (peerUpdateListeners != null) {
             for (PeerUpdateListener listener: peerUpdateListeners) {
-                LOGGER.error("CALLING LISTENERS",
+                LOGGER.debug("CALLING LISTENERS",
                         myToken, added, removed, result, neighborsToBackupFor);
                 listener.peerListUpdated(added, removed);
             }
@@ -321,7 +317,7 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
             }
         }
 
-        LOGGER.info("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,
+        LOGGER.debug("ME:{}, I WILL BACKUP MSGS FOR: {}", myToken,
                 result);
 
         synchronized (myBackupNeighbors) {

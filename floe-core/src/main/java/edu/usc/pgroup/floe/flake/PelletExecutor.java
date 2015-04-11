@@ -145,6 +145,11 @@ public class PelletExecutor extends Thread {
      */
     private final PelletContext pelletContext;
 
+    /**
+     * Flag indicating if the pellet has been started.
+     */
+    private Boolean started;
+
 
     /**
      * hiding default constructor.
@@ -182,8 +187,14 @@ public class PelletExecutor extends Thread {
                 pelletName, flakeId, metricRegistry);
         this.appContext = new AppContext(appName);
         this.dataReceiver = context.socket(ZMQ.SUB);
+        //CONNECT HERE.. :) but wait for Start command before reading data..
+        //Let it be buffered till then.
+        this.dataReceiver.connect(
+                Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
+                        + flakeId);
         this.dataReceiver.subscribe(pelletInstanceId.getBytes());
-        //DO NOT CONNECT HERE.. INSTEAD CONNECT ON START..
+
+        this.started = false;
         this.tupleIterator = new TupleItertaor(pelletInstanceId,
                 pelletStateManager, tupleSerializer, dataReceiver);
     }
@@ -308,10 +319,10 @@ public class PelletExecutor extends Thread {
         signalReceiver.subscribe(pelletInstanceId.getBytes());
 
         LOGGER.info("Open back channel from pellet");
-        final ZMQ.Socket backendBackChannel = context.socket(ZMQ.PUB);
-        backendBackChannel.connect(
-                Utils.Constants.FLAKE_BACKCHANNEL_SENDER_PREFIX
-                        + flakeId);
+//        final ZMQ.Socket backendBackChannel = context.socket(ZMQ.PUB);
+//        backendBackChannel.connect(
+//                Utils.Constants.FLAKE_BACKCHANNEL_SENDER_PREFIX
+//                        + flakeId);
 
         //Create the emitter.
         if (pellet instanceof EmitterEnvelopeHook) {
@@ -327,7 +338,7 @@ public class PelletExecutor extends Thread {
         //pellet.execute(null, emitter);
 
         ZMQ.Poller pollerItems = new ZMQ.Poller(2);
-        pollerItems.register(dataReceiver, ZMQ.Poller.POLLIN);
+        //pollerItems.register(dataReceiver, ZMQ.Poller.POLLIN);
         pollerItems.register(signalReceiver, ZMQ.Poller.POLLIN);
 
         Meter msgDequeuedMeter =  metricRegistry.meter(
@@ -352,11 +363,17 @@ public class PelletExecutor extends Thread {
             //try {
                 pollerItems.poll();
 
-                if (pollerItems.pollin(0)) {
+                if (pollerItems.pollin(1)) {
+                    /*synchronized (started) {
+                        if (!started) {
+                            LOGGER.error("{}",pelletName);
+                            continue;
+                        }
+                    }*/
                     this.pellet.execute(tupleIterator,
                             emitter,
                             pelletStateManager);
-                } else if (pollerItems.pollin(1)) {
+                } else if (pollerItems.pollin(0)) {
                     String envelope = signalReceiver
                             .recvStr(Charset.defaultCharset());
                     byte[] serializedSignal = signalReceiver.recv();
@@ -364,7 +381,7 @@ public class PelletExecutor extends Thread {
                             serializedSignal);
 
                     if (signal instanceof SystemSignal) {
-                        processSystemSignal((SystemSignal) signal,
+                        processSystemSignal((SystemSignal) signal, pollerItems,
                                 dataReceiver);
                     } else {
                         if (pellet instanceof Signallable) {
@@ -403,17 +420,18 @@ public class PelletExecutor extends Thread {
         LOGGER.warn("Pellet executor stopped.");
         dataReceiver.close();
         signalReceiver.close();
-        backendBackChannel.close();
+        //backendBackChannel.close();
         //Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
 
     /**
      * processes the system signal for the pellet.
      * @param signal system signal.
+     * @param pollerItems poller items to added to on start.
      * @param receiver data receiver socket to connect to in order to
-     *                     receive data.
      */
     private void processSystemSignal(final SystemSignal signal,
+                                     final ZMQ.Poller pollerItems,
                                      final ZMQ.Socket receiver) {
         LOGGER.warn("System signal received: ");
         switch (signal.getSystemSignalType()) {
@@ -428,13 +446,19 @@ public class PelletExecutor extends Thread {
                 LOGGER.info("Starting pellets.");
 
                 this.pellet.onStart(appContext, pelletContext);
-                receiver.connect(
-                        Utils.Constants.FLAKE_RECEIVER_BACKEND_SOCK_PREFIX
-                                + flakeId);
-                //FIXME..
+
+                //FIXME.. THIS SHOULD NOT BE REQUIRED.
                 //PelletState state = getPelletState(null);
                 //this.pellet.execute(null, emitter, state);
-                this.pellet.execute(tupleIterator, emitter, pelletStateManager);
+                pollerItems.register(receiver);
+                if (pellet.getConf().isSourcePellet()) {
+                    this.pellet.execute(tupleIterator, emitter,
+                                                pelletStateManager);
+                }
+                synchronized (started) {
+                    started = true;
+                }
+                LOGGER.error("Started:{}", pelletName);
                 break;
             case KillInstance:
                 LOGGER.warn("Kill Instance signal received. Terminating "

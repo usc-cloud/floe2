@@ -280,11 +280,12 @@ public class ReceiverME extends FlakeComponent {
                 strategy.getTargetPelletInstance(t, args);
 
         if (pelletInstanceId != null) {
+            LOGGER.debug("Trying to send to:{}", pelletInstanceId);
                 to.sendMore(pelletInstanceId);
                 //to.sendMore(currentNano.toString());
                 to.send(message, 0);
         } else { //should queue up messages.
-            LOGGER.warn("Message dropped because no pellet active.");
+            LOGGER.error("Message dropped because no pellet active.");
             //FIXME: FIX THIS..
         }
 

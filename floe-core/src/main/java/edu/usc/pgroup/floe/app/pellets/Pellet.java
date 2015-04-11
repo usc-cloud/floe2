@@ -33,7 +33,7 @@ public abstract class Pellet extends IteratorPellet {
      * the global logger instance.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(TupleItertaor.class);
+            LoggerFactory.getLogger(Pellet.class);
 
     /**
      * The execute method which is called for each tuple.
@@ -64,7 +64,9 @@ public abstract class Pellet extends IteratorPellet {
                         final StateManager stateMgr) {
         Tuple t = null;
         if (tupleItertaor != null && !getConf().isSourcePellet()) {
+            LOGGER.debug("Trying to read");
             t = tupleItertaor.next();
+            LOGGER.debug("DATA:{}", t);
         }
         PelletState state = null;
         if (stateMgr != null) {

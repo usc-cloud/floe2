@@ -103,7 +103,7 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         //back channel pinger to initiate out of bound backchannel message
         // when a new pred. flake is created.
-        //final ZMQ.Socket backChannelPingger = getContext().socket(ZMQ.PUB);
+        final ZMQ.Socket backChannelPingger = getContext().socket(ZMQ.REQ);
 
 
 
@@ -175,7 +175,7 @@ public class MsgReceiverComponent extends FlakeComponent {
                 //xsubFromPelletsSock,
                 //xpubToPredSock,
                 msgReceivercontrolForwardSocket,
-                //backChannelPingger,
+                backChannelPingger,
                 terminateSignalReceiver
         );
 
@@ -203,7 +203,7 @@ public class MsgReceiverComponent extends FlakeComponent {
      *                       messages.
      * @param msgReceivercontrolForwardSocket to receive control signals from
      *                                        the flake.
-     * @aram backChannelPingger socket to ping the backchannel whenever a
+     * @param backChannelPingger socket to ping the backchannel whenever a
      *                           new pred. flake is added/removed.
      * @param terminateSignalReceiver terminate signal receiver.
      */
@@ -213,11 +213,10 @@ public class MsgReceiverComponent extends FlakeComponent {
             //final ZMQ.Socket xsubFromPelletsSock,
             //final ZMQ.Socket xpubToPredSock,
             final ZMQ.Socket msgReceivercontrolForwardSocket,
-            //final ZMQ.Socket backChannelPingger,
+            final ZMQ.Socket backChannelPingger,
             final ZMQ.Socket terminateSignalReceiver) {
 
         byte[] message;
-
         //Connect to the message backup socket.
         LOGGER.info("FE connecting for: {}",
                 Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX + getFid());
@@ -235,17 +234,13 @@ public class MsgReceiverComponent extends FlakeComponent {
         boolean done = false;
         boolean terminateSignalled = false;
         final int pollDelay = 500;
-
         Counter queLen = getMetricRegistry().counter(
                 MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
-
         while (!done && !Thread.currentThread().isInterrupted()) {
             pollerItems.poll(pollDelay);
-
             if (pollerItems.pollin(0)) { //frontend
                 //forwardToPellet(msgRecvMeter, frontend, backend,
                 //        msgBackupSender);
-
                 msgRecvMeter.mark();
                 queLen.inc();
                 Utils.forwardCompleteMessage(frontend, recevierME);
@@ -281,6 +276,11 @@ public class MsgReceiverComponent extends FlakeComponent {
                         LOGGER.info("FE connecting for: {}",
                                 dataChannel);
                         frontend.connect(dataChannel);
+
+                        backChannelPingger.connect(backChannel);
+                        backChannelPingger.send("ping");
+                        backChannelPingger.recv();
+
                         //xpubToPredSock.connect(backChannel);
                         result[0] = 1;
                         //backChannelPingger.send(result, 0);

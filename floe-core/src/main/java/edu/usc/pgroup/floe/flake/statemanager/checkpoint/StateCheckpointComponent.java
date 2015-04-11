@@ -145,7 +145,7 @@ public class StateCheckpointComponent extends FlakeComponent
                 = getMetricRegistry().meter(
                 MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"));*/
 
-        LOGGER.error("Hists: {}", getMetricRegistry().getHistograms());
+        LOGGER.debug("Hists: {}", getMetricRegistry().getHistograms());
         /*Histogram qhist = getMetricRegistry()
                 .getHistograms()
                 .get(MetricRegistry.name(
