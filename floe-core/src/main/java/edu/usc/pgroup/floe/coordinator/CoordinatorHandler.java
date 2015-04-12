@@ -466,7 +466,7 @@ public class CoordinatorHandler implements TCoordinator.Iface {
             return status;
         } catch (Exception e) {
             LOGGER.error("Could not retrieve app status.");
-            throw new TException(e);
+            return null;
         }
     }
 

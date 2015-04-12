@@ -218,7 +218,7 @@ public class MsgReceiverComponent extends FlakeComponent {
 
         byte[] message;
         //Connect to the message backup socket.
-        LOGGER.info("FE connecting for: {}",
+        LOGGER.info("FE connecting for msg recovery: {}",
                 Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX + getFid());
         frontend.connect(Utils.Constants.FLAKE_MSG_RECOVERY_PREFIX + getFid());
 
@@ -273,13 +273,16 @@ public class MsgReceiverComponent extends FlakeComponent {
 
                         LOGGER.info("data channel: " + dataChannel);
                         LOGGER.info("back channel: " + backChannel);
-                        LOGGER.info("FE connecting for: {}",
-                                dataChannel);
+                        LOGGER.info("FE connecting for: d: {}, b:{}",
+                                dataChannel, backChannel);
                         frontend.connect(dataChannel);
 
-                        backChannelPingger.connect(backChannel);
+                        /*backChannelPingger.connect(backChannel);
                         backChannelPingger.send("ping");
+                        LOGGER.error("Waiting for ping back {}", backChannel);
                         backChannelPingger.recv();
+                        LOGGER.error("Received ping back from{}",
+                        backChannel);*/
 
                         //xpubToPredSock.connect(backChannel);
                         result[0] = 1;

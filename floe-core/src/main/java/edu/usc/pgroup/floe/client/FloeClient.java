@@ -323,22 +323,29 @@ public class FloeClient extends ThriftClient {
                 LOGGER.warn("Application not found. Yet to be deployed. "
                         + "Trying again.");
                 failedAttempts++;
-                continue;
-            }
-            if (status == AppStatus.RUNNING) {
-                again = false;
-            }
 
-            if (prevStatus == status) {
-                dots += ".";
+            }
+            if (status != null) {
+                LOGGER.warn("Application not found. Yet to be deployed. "
+                        + "Trying again.");
+                failedAttempts++;
+
+                if (status == AppStatus.RUNNING) {
+                    again = false;
+                }
+
+                if (prevStatus == status) {
+                    dots += ".";
+                } else {
+                    dots = ".";
+                }
+
+                LOGGER.info(status.toString() + " " + dots);
+
+                prevStatus = status;
             } else {
-                dots = ".";
+                failedAttempts++;
             }
-
-            LOGGER.info(status.toString() + " " + dots);
-
-            prevStatus = status;
-
             try {
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {

@@ -200,8 +200,11 @@ public class SenderBEComponent extends FlakeComponent {
         byte[] message;
         String streamName;
 
+        /*LOGGER.error("Waiting for backchannel connection at: {} {}",
+                myPelletName, backChannelPort);
         backendBackChannel.recv();
-        backendBackChannel.send("dne");
+        LOGGER.error("Sending ping back:{}", backChannelPort);
+        backendBackChannel.send("dne");*/
 
         while (!Thread.currentThread().isInterrupted()) {
             pollerItems.poll();

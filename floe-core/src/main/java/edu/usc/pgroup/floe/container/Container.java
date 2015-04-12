@@ -434,7 +434,7 @@ public final class Container {
             serializedRM = ZKClient.getInstance().getCuratorClient().getData()
                     .forPath(resourceMappingPath);
         } catch (Exception e) {
-            LOGGER.error("Could not receive resource mapping. Aborting.");
+            LOGGER.error("Could not receive resource mapping to start pellets");
             return;
         }
 

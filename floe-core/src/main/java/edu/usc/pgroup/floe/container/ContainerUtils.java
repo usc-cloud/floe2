@@ -89,7 +89,7 @@ public final class ContainerUtils {
         final String[] argsarr = new String[args.size()];
         args.toArray(argsarr);
 
-        LOGGER.error("args: {}", args);
+        LOGGER.info("args: {}", args);
         //System.exit(1);
 
         Thread t = new Thread(

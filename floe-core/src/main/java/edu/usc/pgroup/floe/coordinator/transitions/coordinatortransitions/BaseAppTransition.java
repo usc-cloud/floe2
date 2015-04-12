@@ -92,10 +92,10 @@ public abstract class BaseAppTransition extends ClusterTransition {
         //Step 2. Send the command to *ALL* containers to check the
         // resource mapping and CREATE the required flakes.
         createFlakes(updatedMapping, barrier);
-        LOGGER.info("All containers finished launching flakes.");
+        LOGGER.error("All containers finished launching flakes.");
 
         initializeFlakes(updatedMapping, barrier);
-        LOGGER.info("All containers finished initializing flakes.");
+        LOGGER.error("All containers finished initializing flakes.");
 
 //        if (1 == 1) {
 //            return;
@@ -104,23 +104,20 @@ public abstract class BaseAppTransition extends ClusterTransition {
         //Step 3. Send connect signals to flakes so that they establish all
         // the appropriate channels.
         connectFlakes(updatedMapping, barrier);
-        LOGGER.info("All containers finished CONNECTING flakes.");
+        LOGGER.error("All containers finished CONNECTING flakes.");
 
         //Step 4. wait for all containers to finish launching or removing
         // pellets.
         increaseOrDecreasePellets(updatedMapping, barrier);
-        LOGGER.info("All pellets successfully created.");
+        LOGGER.error("All pellets successfully created.");
 
         //Step 5. wait for container to terminate flakes, if required.
         terminateFlakes(updatedMapping, barrier);
-        LOGGER.info("All required flakes terminated.");
-
-        final int sleepTime = 2000;
-        Thread.sleep(sleepTime);
+        LOGGER.error("All required flakes terminated.");
 
         //Step 6. Send signal Start pellets.
         startPellets(updatedMapping, barrier);
-        LOGGER.info("All pellets Started. The application is now "
+        LOGGER.error("All pellets Started. The application is now "
                 + "running");
 
         if (!postTransition(currentMapping)) {
@@ -236,7 +233,7 @@ public abstract class BaseAppTransition extends ClusterTransition {
                 AppStatus.UPDATING_PELLETS);
 
         barrier.enter();
-        LOGGER.info("Waiting for containers to launch pellets in the flakes");
+        LOGGER.error("Waiting for containers to launch pellets in the flakes");
         barrier.leave();
         ZKUtils.setAppStatus(appName,
                 AppStatus.UPDATING_PELLETS_COMPLETED);

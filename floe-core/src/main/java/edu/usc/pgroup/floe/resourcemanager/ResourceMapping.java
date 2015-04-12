@@ -126,7 +126,7 @@ public class ResourceMapping implements Serializable {
         FlakeInstance fl = containerInstance.getFlake(pelletId);
         LOGGER.info("FL for pid:{} = {}", pelletId, fl);
         if (fl == null) {
-            LOGGER.error("Creating flake");
+            LOGGER.info("Creating flake");
             fl = containerInstance.createFlake(pelletId, token);
             newFlakeCreated = true;
             if (mappingDelta != null) {

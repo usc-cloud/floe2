@@ -67,9 +67,6 @@ public class QueueLenMonitor extends Thread {
      */
     @Override
     public final void run() {
-
-        System.out.println(metricReg.getHistograms().keySet());
-
         /*Meter qhist
                 = metricReg.meter(MetricRegistry.name(QueueLenMonitor.class,
                 "q.len.histo"));*/

@@ -98,7 +98,7 @@ public class WordMultiStreamPellet extends StatelessPellet {
      */
     @Override
     protected void configureStateLessPellet(final PelletConfiguration conf) {
-
+        conf.markAsSourcePellet();
     }
 
     /**
@@ -119,7 +119,9 @@ public class WordMultiStreamPellet extends StatelessPellet {
                     j = 0;
                 }
                 ot = new Tuple();
-                ot.put("word", firstWords[j++]);
+                String word = firstWords[j++];
+                LOGGER.error("Emmiting: " + word);
+                ot.put("word", word);
                 emitter.emit(stream1, ot);
                 i = 1;
             } else if (i == 1) {
@@ -127,7 +129,9 @@ public class WordMultiStreamPellet extends StatelessPellet {
                     k = 0;
                 }
                 ot = new Tuple();
-                ot.put("word", secondWords[k++]);
+                String word = secondWords[k++];
+                LOGGER.error("Emmiting: " + word);
+                ot.put("word", word);
                 emitter.emit(stream2, ot);
                 i = 0;
             }

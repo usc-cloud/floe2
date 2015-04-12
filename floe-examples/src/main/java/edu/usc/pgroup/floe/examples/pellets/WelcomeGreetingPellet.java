@@ -36,6 +36,10 @@ import java.util.List;
 public class WelcomeGreetingPellet
         extends StatelessPellet implements Signallable {
 
+    /**
+     * cntr.
+     */
+    int i = 0;
 
     /**
      * the global logger instance.
@@ -82,8 +86,13 @@ public class WelcomeGreetingPellet
         if (t == null) {
             LOGGER.info("Dummy execute Welcome.");
         } else {
-            LOGGER.info("Welcome " + t.get("word"));
+            LOGGER.error("Welcome " + t.get("word"));
         }
+        if (i++ == 100) {
+            t.put("word", t.get("word") + ":x");
+            i = 0;
+        }
+        emitter.emit(t);
     }
 
     /**

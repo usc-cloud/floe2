@@ -65,11 +65,14 @@ public final class SimpleMultiOrSplit {
                 new WordMultiStreamPellet("boys", "girls",
                         boys, girls)).setParallelism(1);
 
-        builder.addPellet("hello", new HelloGreetingPellet())
-                .subscribe("names", "boys").setParallelism(1);
+        /*builder.addPellet("hello", new HelloGreetingPellet())
+                .subscribe("names", "boys").setParallelism(1);*/
 
         builder.addPellet("welcome", new WelcomeGreetingPellet())
-                .subscribe("names", "girls", "boys").setParallelism(1);
+                .subscribe("names", "girls", "boys").subscribe("welcome")
+                .setParallelism(1);
+
+
 
         try {
             AppSubmitter.submitApp("helloworld", builder.generateApp());

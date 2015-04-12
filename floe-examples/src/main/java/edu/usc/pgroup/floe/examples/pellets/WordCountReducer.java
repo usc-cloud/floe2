@@ -47,7 +47,7 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
      * Logger.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(PrintPellet.class);
+            LoggerFactory.getLogger(WordCountReducer.class);
 
     /**
      * The global metric registry that can be used by the pellet to track
@@ -92,6 +92,7 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
         this.pelletCtx = pelletContext;
         this.pelletCtx.addFlakeUpdateListener(this);
         this.pelletCtx.startFlakeTracker();
+        this.pelletCtx.getCurrentFlakeList();
         //use pelletContext.getPelletInstanceId() + "counter" if you need
         // pellet instance specific metric. Or just use "counter" if you want
         // flake level metrics.
@@ -145,9 +146,9 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
         count++;
 
         state.setValue("count", count);
-        LOGGER.info("Count for {}: {}", word, count);
-        LOGGER.info("Myfid: {}. Other Flakes: {}", pelletCtx.getFlakeId(),
-                pelletCtx.getCurrentFlakeList());
+        LOGGER.error("Count for {}: {}", word, count);
+        //LOGGER.info("Myfid: {}. Other Flakes: {}", pelletCtx.getFlakeId(),
+        //        pelletCtx.getCurrentFlakeList());
         LOGGER.info("Counter Metric:{}", counter.getCount());
     }
 
@@ -159,7 +160,7 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
      */
     @Override
     public final void initialFlakeList(final List<FlakeToken> flakes) {
-        LOGGER.error("IN REDUER: {}", flakes);
+        LOGGER.info("IN REDUER: {}", flakes);
     }
 
     /**
@@ -170,7 +171,7 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
      */
     @Override
     public final void flakeAdded(final FlakeToken token) {
-        LOGGER.error("IN REDUER FL ADDED: {}", token);
+        LOGGER.info("IN REDUER FL ADDED: {}", token);
     }
 
     /**
