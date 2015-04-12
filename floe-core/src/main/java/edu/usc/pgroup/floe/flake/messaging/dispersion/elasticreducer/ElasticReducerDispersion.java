@@ -280,7 +280,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
 
         }
 
-        LOGGER.error("Circle:{}", circle);
+        //LOGGER.error("Circle:{}", circle);
     }
 
     /**
@@ -305,7 +305,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     public final void childAdded(final ChildData addedChild) {
 
         String destFid = ZKPaths.getNodeFromPath(addedChild.getPath());
-        LOGGER.error("Adding Dest FID: {}", destFid);
+        //LOGGER.error("Adding Dest FID: {}", destFid);
 
         FlakeToken token = (FlakeToken) Utils.deserialize(
                 addedChild.getData());
