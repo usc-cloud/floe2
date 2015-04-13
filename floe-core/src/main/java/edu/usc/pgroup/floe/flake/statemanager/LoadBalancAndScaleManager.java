@@ -1,12 +1,21 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import edu.usc.pgroup.floe.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 /**
  * @author kumbhare
  */
 public class LoadBalancAndScaleManager {
+
+
+    /**
+     * Logger.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(LoadBalancAndScaleManager.class);
 
     /**
      * Shared ZMQ Context.
@@ -38,9 +47,12 @@ public class LoadBalancAndScaleManager {
 
         checkptControl.connect(Utils.Constants.CHKPT_CTRL_BIND_STR + flakeId);
 
+        LOGGER.error("trying to initiate checkpoint");
         checkptControl.send("initiate");
 
         checkptControl.recv(); //wait for request to complete.
+        LOGGER.error("checkpoint sent to neighbor "
+                + "(not necessarily processed by it)");
 
         checkptControl.close();
     }
@@ -53,9 +65,12 @@ public class LoadBalancAndScaleManager {
         loadBalanceControl.connect(
                 Utils.Constants.LDBL_CTRL_BIND_STR + flakeId);
 
+        LOGGER.error("trying to initiate loadbalacing");
         loadBalanceControl.send("initiate");
 
         loadBalanceControl.recv(); //wait for request to complete.
+        LOGGER.error("Relevant keys sent to the neighbor"
+                + "(not necessarily processed by it)");
 
         loadBalanceControl.close();
     }

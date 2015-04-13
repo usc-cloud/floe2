@@ -20,13 +20,13 @@ import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.client.AppSubmitter;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
-import edu.usc.pgroup.floe.examples.pellets.HelloGreetingPellet;
 import edu.usc.pgroup.floe.examples.pellets.WelcomeGreetingPellet;
 import edu.usc.pgroup.floe.examples.pellets.WordMultiStreamPellet;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * @author kumbhare

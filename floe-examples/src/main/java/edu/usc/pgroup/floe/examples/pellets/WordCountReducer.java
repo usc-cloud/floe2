@@ -27,6 +27,7 @@ import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.StateType;
 import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.FlakeUpdateListener;
+import edu.usc.pgroup.floe.flake.statemanager.LoadBalancAndScaleManager;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,21 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
     private PelletContext pelletCtx;
 
     /**
+     * Load balance and scale manager used to initiate these processes.
+     */
+    private LoadBalancAndScaleManager lbsm;
+
+    /**
+     * temp1.
+     */
+    private int temp = 0;
+
+    /**
+     * temp2.
+     */
+    private final int temp2 = 20;
+
+    /**
      * Constructor.
      *
      * @param keyName name of the field from the input tuple to be
@@ -93,6 +109,7 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
         this.pelletCtx.addFlakeUpdateListener(this);
         this.pelletCtx.startFlakeTracker();
         this.pelletCtx.getCurrentFlakeList();
+        this.lbsm = appContext.getLoadBalancAndScaleManager();
         //use pelletContext.getPelletInstanceId() + "counter" if you need
         // pellet instance specific metric. Or just use "counter" if you want
         // flake level metrics.
@@ -149,6 +166,14 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
         LOGGER.error("Count for {}: {}", word, count);
         //LOGGER.info("Myfid: {}. Other Flakes: {}", pelletCtx.getFlakeId(),
         //        pelletCtx.getCurrentFlakeList());
+
+        if (temp2 % temp == 0) {
+            lbsm.checkpointNow();
+            lbsm.initiateLoadBalance();
+            temp = 0;
+        }
+
+
         LOGGER.info("Counter Metric:{}", counter.getCount());
     }
 

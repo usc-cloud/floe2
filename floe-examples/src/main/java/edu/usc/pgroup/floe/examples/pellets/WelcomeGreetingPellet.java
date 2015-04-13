@@ -39,7 +39,7 @@ public class WelcomeGreetingPellet
     /**
      * cntr.
      */
-    int i = 0;
+    private int i = 0;
 
     /**
      * the global logger instance.
@@ -88,7 +88,8 @@ public class WelcomeGreetingPellet
         } else {
             LOGGER.error("Welcome " + t.get("word"));
         }
-        if (i++ == 100) {
+        final int intv = 100;
+        if (i++ == intv) {
             t.put("word", t.get("word") + ":x");
             i = 0;
         }

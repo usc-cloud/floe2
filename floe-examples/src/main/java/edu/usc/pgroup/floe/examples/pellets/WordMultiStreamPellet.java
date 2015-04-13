@@ -97,7 +97,8 @@ public class WordMultiStreamPellet extends StatelessPellet {
      * @param conf pellet configuration.
      */
     @Override
-    protected void configureStateLessPellet(final PelletConfiguration conf) {
+    protected final void configureStateLessPellet(
+            final PelletConfiguration conf) {
         conf.markAsSourcePellet();
     }
 
