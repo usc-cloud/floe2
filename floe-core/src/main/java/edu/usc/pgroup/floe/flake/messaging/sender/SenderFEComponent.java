@@ -133,7 +133,7 @@ public class SenderFEComponent extends FlakeComponent {
 
             SenderBEComponent be
                     = new SenderBEComponent(getMetricRegistry(),
-                    getFid(), "BE-"+pellet, getContext(),
+                    getFid(), "BE-" + pellet, getContext(),
                     port, bpPort, appName, pellet,
                     channel, streams, myPelletName);
 

@@ -665,5 +665,15 @@ public final class Utils {
          * The field name associated with the SRC pellet of the tuple.
          */
         public static final String SYSTEM_SRC_PELLET_NAME = "SYSTEM_SRC_PELLET";
+
+        /**
+         * checkpoint control sock.
+         */
+        public static final String CHKPT_CTRL_BIND_STR = "inproc://chkpt-ctrl-";
+
+        /**
+         * loadbalance control sock.
+         */
+        public static final String LDBL_CTRL_BIND_STR = "inproc://ldbl-ctrl-";
     }
 }

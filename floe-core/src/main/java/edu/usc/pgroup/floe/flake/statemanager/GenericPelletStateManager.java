@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.FlakeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
@@ -141,7 +142,7 @@ public class GenericPelletStateManager implements StateManager {
      * loadbalance, scale in/out etc.
      *
      * @param selfFid      Flake id for the current flake.
-     * @param neighborFids list of neighbor flake ids that hold the backup
+     * @param neighborTokens list of neighbor flake ids that hold the backup
      *                     for the current flake.
      * @return a map for neighbor/self fids to the list of state keys to be
      * transferred to that neighbor.
@@ -152,7 +153,7 @@ public class GenericPelletStateManager implements StateManager {
     @Override
     public final Map<String, List<String>> repartitionState(
             final String selfFid,
-            final List<String> neighborFids) {
+            final List<FlakeToken> neighborTokens) {
         return null;
     }
 

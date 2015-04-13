@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.app;
 
+import edu.usc.pgroup.floe.flake.statemanager.LoadBalancAndScaleManager;
+
 /**
  * @author kumbhare
  */
@@ -26,10 +28,18 @@ public class AppContext {
     private final String appName;
 
     /**
-     * @param name App name as submitted by the user.
+     * Load balance and scaling manager.
      */
-    public AppContext(final String name) {
+    private final LoadBalancAndScaleManager loadBalancAndScaleManager;
+
+    /**
+     * @param name App name as submitted by the user.
+     * @param lbs reference to ladbalance and scale manager.
+     */
+    public AppContext(final String name,
+                      final LoadBalancAndScaleManager lbs) {
         this.appName = name;
+        this.loadBalancAndScaleManager = lbs;
     }
 
     /**
@@ -37,5 +47,12 @@ public class AppContext {
      */
     public final String getAppName() {
         return appName;
+    }
+
+    /**
+     * @return a reference to the load balance and scale manager.
+     */
+    public final LoadBalancAndScaleManager getLoadBalancAndScaleManager() {
+        return loadBalancAndScaleManager;
     }
 }

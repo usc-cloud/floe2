@@ -146,7 +146,6 @@ public class SenderBEComponent extends FlakeComponent {
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
 
-
         this.dispersionStrategy = null;
 
         if (channelType != null && channelType.get_channelType() != null) {
@@ -162,7 +161,6 @@ public class SenderBEComponent extends FlakeComponent {
                         + "Using default RR", channelType.get_channelType());
             }
         }
-
         final ZMQ.Socket middleendreceiver  = getContext().socket(ZMQ.SUB);
 
         middleendreceiver.connect(
@@ -199,7 +197,6 @@ public class SenderBEComponent extends FlakeComponent {
         int i = 0;
         byte[] message;
         String streamName;
-
         /*LOGGER.error("Waiting for backchannel connection at: {} {}",
                 myPelletName, backChannelPort);
         backendBackChannel.recv();

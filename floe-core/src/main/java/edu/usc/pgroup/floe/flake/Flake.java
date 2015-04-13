@@ -20,6 +20,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.ganglia.GangliaReporter;
+import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationComponent;
@@ -28,6 +29,7 @@ import edu.usc.pgroup.floe.flake.coordination.PeerMonitor;
 import edu.usc.pgroup.floe.flake.coordination.ReducerPeerCoordinationComponent;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.messaging.sender.SenderFEComponent;
+import edu.usc.pgroup.floe.flake.statemanager.LoadBalancAndScaleManager;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerFactory;
 import edu.usc.pgroup.floe.flake.statemanager
@@ -197,6 +199,10 @@ public class Flake {
      */
     private PeerMonitor peerMonitor;
 
+    /**
+     * Application's context.
+     */
+    private AppContext appContext;
 
     /**
      * Constructor.
@@ -227,12 +233,14 @@ public class Flake {
         this.appName = app;
         this.appJar = jar;
 
-
-
         this.sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
 
         this.runningPelletInstances = new ArrayList<>();
 
+        LoadBalancAndScaleManager lbs = new LoadBalancAndScaleManager(
+                flakeId, sharedContext
+        );
+        this.appContext = new AppContext(app, lbs);
 
         this.metricRegistry = new MetricRegistry();
 
@@ -504,7 +512,7 @@ public class Flake {
 
         PelletExecutor pe = new PelletExecutor(metricRegistry, nextPEIdx,
                 pellet, flakeId, pelletId, appName, sharedContext,
-                stateManager);
+                stateManager, appContext);
 
         /*PelletExecutor pe = new PelletExecutor(nextPEIdx, p, appName, appJar,
                 flakeId,

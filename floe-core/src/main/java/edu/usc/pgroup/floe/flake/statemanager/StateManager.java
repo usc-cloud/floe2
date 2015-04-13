@@ -17,6 +17,8 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.FlakeToken;
+
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +31,7 @@ public interface StateManager {
      * Initialize the state manager.
      * @param args string encoded list of arguments.
      */
-    void init(String args);
+    void init(final String args);
 
     /**
      * Returns the object (state) associated with the given local pe instance.
@@ -66,7 +68,8 @@ public interface StateManager {
      *                        backed up.
      * @return serialized delta to send to the backup nodes.
      */
-    byte[] getIncrementalStateCheckpoint(final String neighborFlakeId);
+    byte[] getIncrementalStateCheckpoint(
+                                        final String neighborFlakeId);
 
     /**
      * Used to backup the states received from the neighbor flakes.
@@ -93,7 +96,7 @@ public interface StateManager {
      * Repartitions the state. Is used during state migrations for
      * loadbalance, scale in/out etc.
      * @param selfFid Flake id for the current flake.
-     * @param neighborFids list of neighbor flake ids that hold the backup
+     * @param neighborTokens list of neighbor flake ids that hold the backup
      *                     for the current flake.
      * @return a map for neighbor/self fids to the list of state keys to be
      * transferred to that neighbor.
@@ -101,6 +104,7 @@ public interface StateManager {
      * the number of such neighbors depend on the "replication" factor.
      * Typically 1.
      */
-    Map<String, List<String>> repartitionState(final String selfFid,
-                                               final List<String> neighborFids);
+    Map<String, List<String>> repartitionState(
+            final String selfFid,
+            final List<FlakeToken> neighborTokens);
 }

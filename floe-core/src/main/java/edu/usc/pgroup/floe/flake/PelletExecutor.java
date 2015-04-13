@@ -97,10 +97,9 @@ public class PelletExecutor extends Thread {
     private final ZMQ.Socket dataReceiver;
 
     /**
-     * Application's context.
+     * Shared app context.
      */
     private final AppContext appContext;
-
 
     /**
      * The fully qualified pellet class name.
@@ -163,7 +162,8 @@ public class PelletExecutor extends Thread {
      * @param stateManager The common state manager object. This is one per
 *                     flake and common fro all pellet instances. Should
 *                     be thread safe.
-     * @param appName Application's context.
+     * @param appName Application's name.
+     * @param appCtx application context.
      */
     private PelletExecutor(
             final MetricRegistry registry,
@@ -172,7 +172,8 @@ public class PelletExecutor extends Thread {
             final String fid,
             final String pid,
             final StateManager stateManager,
-            final String appName) {
+            final String appName,
+            final AppContext appCtx) {
         this.context = sharedContext;
         this.tupleSerializer = SerializerFactory.getSerializer();
         this.flakeId = fid;
@@ -185,7 +186,6 @@ public class PelletExecutor extends Thread {
         this.pelletContext = new PelletContext(
                 appName, pelletInstanceId,
                 pelletName, flakeId, metricRegistry);
-        this.appContext = new AppContext(appName);
         this.dataReceiver = context.socket(ZMQ.SUB);
         //CONNECT HERE.. :) but wait for Start command before reading data..
         //Let it be buffered till then.
@@ -197,6 +197,7 @@ public class PelletExecutor extends Thread {
         this.started = false;
         this.tupleIterator = new TupleItertaor(pelletInstanceId,
                 pelletStateManager, tupleSerializer, dataReceiver);
+        this.appContext = appCtx;
     }
 
     /**
@@ -235,14 +236,15 @@ public class PelletExecutor extends Thread {
      * @param pelletIndex flake-unique pellet index (need not be contiguous)
      * flake as the pellet id.
      * @param p pellet instance from the user.
-     * @param sharedContext shared ZMQ context to be used in inproc comm. for
-     *                      receiving message from the flake.
      * @param fid flake's id to which this pellet belongs.
-     * @param stateManager The common state manager object. This is one per
-     *                     flake and common fro all pellet instances. Should
-     *                     be thread safe.
      * @param pid pellet's user defined name.
      * @param appName Application's context.
+     * @param sharedContext shared ZMQ context to be used in inproc comm. for
+*                      receiving message from the flake.
+     * @param stateManager The common state manager object. This is one per
+*                     flake and common fro all pellet instances. Should
+*                     be thread safe.
+     * @param appCtx shared app context among all pellet instances.
      */
     public PelletExecutor(final MetricRegistry registry,
                           final int pelletIndex,
@@ -250,9 +252,10 @@ public class PelletExecutor extends Thread {
                           final String fid, final String pid,
                           final String appName,
                           final ZMQ.Context sharedContext,
-                          final StateManager stateManager) {
+                          final StateManager stateManager,
+                          final AppContext appCtx) {
         this(registry, pelletIndex, sharedContext,
-                fid, pid, stateManager, appName);
+                fid, pid, stateManager, appName, appCtx);
         this.pellet = p;
         //this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
