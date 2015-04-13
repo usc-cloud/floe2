@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -235,5 +236,13 @@ public class PelletState {
      */
     public final String getCustomId() {
         return customId;
+    }
+
+    /**
+     * @return the set of all keys in the "master" state. Note: Keys that are
+     * only in the fragment will not be returned.
+     */
+    public final Set<String> getKeys() {
+        return pelletState.keySet();
     }
 }
