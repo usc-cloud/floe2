@@ -416,7 +416,7 @@ public class Flake {
         IteratorPellet pellet = deserializePellet(activeAlternate);
 
 
-        stateManager = StateManagerFactory.getStateManager(pellet);
+        stateManager = StateManagerFactory.getStateManager(flakeId, pellet);
 
         peerMonitor = new PeerMonitor(appName, pelletId, flakeId);
 

@@ -50,10 +50,11 @@ public class ReducerStateManager implements StateManager {
     /**
      * Initialize the state manager.
      *
+     * @param flakeId flake's id to which this sm belongs
      * @param args string encoded list of arguments.
      */
     @Override
-    public final void init(final String args) {
+    public final void init(final String flakeId, final String args) {
         keyFieldName = args;
         pelletStateMap = new ConcurrentHashMap<>();
     }

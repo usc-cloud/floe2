@@ -43,11 +43,14 @@ public final class StateManagerFactory {
 
     /**
      * Constructs the state manager based on the pellet type.
+     *
+     * @param flakeId flake's id.
      * @param pellet The pellet object, used to figure out type of state
      *               manager to create.
      * @return the instantiated (but not started) state manager object.
      */
-    public static StateManager getStateManager(final IteratorPellet pellet) {
+    public static StateManager getStateManager(
+            final String flakeId, final IteratorPellet pellet) {
 
         StateManager manager = null;
         String stateManagerClass = pellet.getConf().getStateManagerClass();
@@ -81,7 +84,7 @@ public final class StateManagerFactory {
 
 
         if (manager != null) {
-            manager.init(pellet.getConf().getStateParams());
+            manager.init(flakeId, pellet.getConf().getStateParams());
         }
         return manager;
     }
