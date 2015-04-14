@@ -365,16 +365,27 @@ public final class ZKUtils {
      * Note: flake id is globally unique.
      * @param appName the application name.
      * @param pelletName pellet's name to which this flake belongs.
-     * @param flakeId flake id.
      * @param token Flake's token.
-     * @param flakeDataPort flake's port for data checkpointing.
      */
     public static void updateToken(final String appName,
                                    final String pelletName,
-                                   final String flakeId,
-                                   final Integer token,
-                                   final Integer flakeDataPort) {
-        updateToken(appName, pelletName, flakeId, token, flakeDataPort, null);
+                                   final FlakeToken token) {
+        String flakeTokenPath = getApplicationFlakeTokenPath(
+                appName, pelletName, token.getFlakeID());
+
+        try {
+            if (ZKClient.getInstance().getCuratorClient()
+                    .checkExists().forPath(flakeTokenPath) != null) {
+                ZKClient.getInstance().getCuratorClient().setData()
+                        .forPath(flakeTokenPath, Utils.serialize(token));
+            } else {
+                ZKClient.getInstance().getCuratorClient()
+                        .create().creatingParentsIfNeeded()
+                        .forPath(flakeTokenPath, Utils.serialize(token));
+            }
+        } catch (Exception e) {
+            LOGGER.error("Could not update flake's token.");
+        }
     }
 
     /**
@@ -402,9 +413,9 @@ public final class ZKUtils {
 
             FlakeToken flakeToken = (FlakeToken) Utils.deserialize(bfToken);
 
+            flakeToken.setCustomData(cdata);
             updateToken(
-                    appName, pelletName, flakeId, flakeToken.getToken(),
-                    flakeToken.getStateCheckptPort(), flakeToken.getCustomData()
+                    appName, pelletName, flakeToken
             );
 
         } catch (Exception e) {
@@ -412,6 +423,56 @@ public final class ZKUtils {
         }
     }
 
+
+    /**
+     * Returns the flake token associated with the flake.
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @param flakeId flake id.
+     * @return the flake's current token value.
+     */
+    public static FlakeToken getFlakeToken(final String appName,
+                                           final String pelletName,
+                                           final String flakeId) {
+        String flakeTokenPath = getApplicationFlakeTokenPath(
+                appName, pelletName, flakeId);
+
+        try {
+            if (ZKClient.getInstance().getCuratorClient()
+                    .checkExists().forPath(flakeTokenPath) == null) {
+                throw new IllegalArgumentException("Given flakeid not found.");
+            }
+
+            byte[] bfToken = ZKClient.getInstance().getCuratorClient().getData()
+                    .forPath(flakeTokenPath);
+
+            FlakeToken flakeToken = (FlakeToken) Utils.deserialize(bfToken);
+
+            return flakeToken;
+
+        } catch (Exception e) {
+            LOGGER.error("Error occurred: {}", e);
+        }
+        return null;
+    }
+
+    /**
+     * Updates the token associated with the given app and flakeid without
+     * any custom data.
+     * Note: flake id is globally unique.
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @param flakeId flake id.
+     * @param token Flake's token.
+     * @param flakeDataPort flake's port for data checkpointing.
+     */
+    public static void updateToken(final String appName,
+                                   final String pelletName,
+                                   final String flakeId,
+                                   final Integer token,
+                                   final Integer flakeDataPort) {
+        updateToken(appName, pelletName, flakeId, token, flakeDataPort, null);
+    }
 
     /**
      * Updates the token associated with the given app and flakeid.
@@ -429,9 +490,6 @@ public final class ZKUtils {
                                    final Integer token,
                                    final Integer flakeDataPort,
                                    final byte[] cdata) {
-        String flakeTokenPath = getApplicationFlakeTokenPath(
-                appName, pelletName, flakeId);
-
         FlakeToken ftoken = new FlakeToken(
                 flakeId,
                 token,
@@ -440,54 +498,7 @@ public final class ZKUtils {
                 cdata
         );
 
-        try {
-            if (ZKClient.getInstance().getCuratorClient()
-                    .checkExists().forPath(flakeTokenPath) != null) {
-                ZKClient.getInstance().getCuratorClient().setData()
-                    .forPath(flakeTokenPath, Utils.serialize(ftoken));
-            } else {
-                ZKClient.getInstance().getCuratorClient()
-                        .create().creatingParentsIfNeeded()
-                        .forPath(flakeTokenPath, Utils.serialize(ftoken));
-            }
-        } catch (Exception e) {
-            LOGGER.error("Could not update flake's token.");
-        }
-    }
-
-    /**
-     * Updates the token associated with the given app and flakeid.
-     * Note: flake id is globally unique.
-     * @param appName the application name.
-     * @param pelletName pellet's name to which this flake belongs.
-     * @param flakeId flake id.
-     * @return the token associated with the given flake from ZK.
-     */
-    public static Integer getToken(final String appName,
-                                   final String pelletName,
-                                   final String flakeId) {
-        String flakeTokenPath = getApplicationFlakeTokenPath(
-                appName, pelletName, flakeId);
-
-
-
-        try {
-            if (ZKClient.getInstance().getCuratorClient()
-                    .checkExists().forPath(flakeTokenPath) != null) {
-                byte[] data = ZKClient.getInstance()
-                        .getCuratorClient().getData()
-                        .forPath(flakeTokenPath);
-
-                FlakeToken token = (FlakeToken) Utils.deserialize(data);
-                return token.getToken();
-            } else {
-                LOGGER.error("Fatal error. cannot continue.");
-                return null;
-            }
-        } catch (Exception e) {
-            LOGGER.error("Could not get flake's token.");
-        }
-        return null;
+        updateToken(appName, pelletName, ftoken);
     }
 
     /**

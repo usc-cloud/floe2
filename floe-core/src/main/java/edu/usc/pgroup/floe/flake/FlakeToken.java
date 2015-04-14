@@ -116,4 +116,12 @@ public class FlakeToken implements Serializable {
      * @return get the flake id.
      */
     public final String getFlakeID() { return flakeID; }
+
+    /**
+     * Sets the custom data for the flake token.
+     * @param cdata serialized custom data.
+     */
+    public final void setCustomData(final byte[] cdata) {
+        this.customData = cdata;
+    }
 }
