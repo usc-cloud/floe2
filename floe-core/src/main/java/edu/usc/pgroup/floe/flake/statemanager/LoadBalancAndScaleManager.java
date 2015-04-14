@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
+import java.nio.charset.Charset;
+
 /**
  * @author kumbhare
  */
@@ -59,8 +61,10 @@ public class LoadBalancAndScaleManager {
 
     /**
      * Initiates the load balance process.
+     * @return true if the load balance process was initialized, false other
+     * wise. (e.g. if the repartition state returns null).
      */
-    public final void initiateLoadBalance() {
+    public final boolean initiateLoadBalance() {
         ZMQ.Socket loadBalanceControl = context.socket(ZMQ.REQ);
         loadBalanceControl.connect(
                 Utils.Constants.LDBL_CTRL_BIND_STR + flakeId);
@@ -68,10 +72,13 @@ public class LoadBalancAndScaleManager {
         LOGGER.error("trying to initiate loadbalacing");
         loadBalanceControl.send("initiate");
 
-        loadBalanceControl.recv(); //wait for request to complete.
+        //wait for request to complete.
+        String initiated = loadBalanceControl.recvStr(Charset.defaultCharset());
+
         LOGGER.error("Relevant keys sent to the neighbor"
                 + "(not necessarily processed by it)");
 
         loadBalanceControl.close();
+        return Boolean.parseBoolean(initiated);
     }
 }

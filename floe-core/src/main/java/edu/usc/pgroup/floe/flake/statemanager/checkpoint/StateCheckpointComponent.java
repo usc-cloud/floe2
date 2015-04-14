@@ -211,8 +211,8 @@ public class StateCheckpointComponent extends FlakeComponent
                 } else if (pollerItems.pollin(2 + 1)) {
                     //explict load balance request received.
                     loadBalanceControl.recv();
-                    initiateLoadbalance(stateSocSender);
-                    loadBalanceControl.send("done");
+                    Boolean initiated = initiateLoadbalance(stateSocSender);
+                    loadBalanceControl.send(initiated.toString(), 0);
                 } else { //checkpoint timeout.
                     checkpoint(stateSocSender);
                 }
@@ -268,8 +268,10 @@ public class StateCheckpointComponent extends FlakeComponent
     /**
      * @param stateSocSender state socket sender used to send command to the
      *                       neighbor.
+     * @return true if the load balance process was initialized, false other
+     * wise. (e.g. if the repartition state returns null).
      */
-    private void initiateLoadbalance(final ZMQ.Socket stateSocSender) {
+    private boolean initiateLoadbalance(final ZMQ.Socket stateSocSender) {
         //send incremental checkpoint to the neighbor.
         if (stateManager != null) {
             //synchronized (this) {
@@ -280,6 +282,11 @@ public class StateCheckpointComponent extends FlakeComponent
                             new ArrayList<FlakeToken>(
                                 peerMonitor.getNeighborsToBackupOn().values())
             );
+
+            if (flakeTokens == null) {
+                return false; //no load balance initiated since repartition
+                // state returned nulll;
+            }
 
             for (Map.Entry<String, List<String>> fentry
                     : flakeTokens.entrySet()) {
@@ -293,8 +300,9 @@ public class StateCheckpointComponent extends FlakeComponent
                     stateSocSender.send(bkeys, 0);
                 }
             }
-
+            return true; //load balance initiated.
         }
+        return false;
     }
 
 
