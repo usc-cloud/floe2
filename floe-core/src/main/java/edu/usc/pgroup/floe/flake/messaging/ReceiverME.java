@@ -276,8 +276,19 @@ public class ReceiverME extends FlakeComponent {
 
 
         //LOGGER.debug("Forwarding to pellet: {}", t);
-        String pelletInstanceId =
-                strategy.getTargetPelletInstance(t, args);
+
+        String pelletInstanceId = null;
+
+        //hacky way to wait for atleast one pellet to be running.
+        while (pelletInstanceId == null) {
+            pelletInstanceId = strategy.getTargetPelletInstance(t, args);
+            try {
+                Thread.sleep(Utils.Constants.MILLI / 2);
+            } catch (InterruptedException e) {
+                LOGGER.error("Thread interrupted whilel waiting for pellets "
+                        + "to start.");
+            }
+        }
 
         if (pelletInstanceId != null) {
             LOGGER.debug("Trying to send to:{}", pelletInstanceId);

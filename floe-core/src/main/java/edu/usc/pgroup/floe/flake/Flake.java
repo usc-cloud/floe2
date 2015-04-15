@@ -251,11 +251,17 @@ public class Flake {
             initialToken = flakeInstance.getToken();
         }
 
-        ZKUtils.updateToken(appName,
+        //WE SHOULD NOT UPDATE HERE SINCE THE FLAKE IS NOT YET READY TO BE
+        // PUT ON THE RING.
+        //THIS SHOULD IDEALLY BE DONE (ATLEAST) AFTER THE CONNECTIONS ARE MADE.
+        //OR AFTER THE PELLETS ARE STARTED? WHICH WILL GUARANTEE THAT ALL THE
+        // PLUGINS ARE CORRECTLY LOADED..!!
+        /*ZKUtils.updateToken(appName,
                 pelletName,
                 flakeId,
                 initialToken,
-                flakeInstance.getStateCheckpointingPort()); //update on the ZK.
+                flakeInstance.getStateCheckpointingPort()); //update on the
+                ZK.*/
 
         final int reporterPeriod = 1;
 
@@ -495,6 +501,17 @@ public class Flake {
         stateCheckpointComponent.startAndWait();
         LOGGER.info("Finished flake initialization. {}", flakeId);
         peerMonitor.start();
+
+        //WE SHOULD NOT UPDATE HERE SINCE THE FLAKE IS NOT YET READY TO BE
+        // PUT ON THE RING.
+        //THIS SHOULD IDEALLY BE DONE (ATLEAST) AFTER THE CONNECTIONS ARE MADE.
+        //OR AFTER THE PELLETS ARE STARTED? WHICH WILL GUARANTEE THAT ALL THE
+        // PLUGINS ARE CORRECTLY LOADED..!!
+        ZKUtils.updateToken(appName,
+                pelletName,
+                flakeId,
+                initialToken,
+                flakeInstance.getStateCheckpointingPort()); //update on the ZK.
     }
 
     /**

@@ -166,14 +166,6 @@ public class WordCountReducer extends Pellet implements FlakeUpdateListener {
         LOGGER.error("Count for {}: {}", word, count);
         //LOGGER.info("Myfid: {}. Other Flakes: {}", pelletCtx.getFlakeId(),
         //        pelletCtx.getCurrentFlakeList());
-
-        if (temp2 % temp == 0) {
-            lbsm.checkpointNow();
-            lbsm.initiateLoadBalance();
-            temp = 0;
-        }
-
-
         LOGGER.info("Counter Metric:{}", counter.getCount());
     }
 

@@ -213,11 +213,24 @@ public class SenderBEComponent extends FlakeComponent {
                 // backend);
 
                 message = middleendreceiver.recv();
-
                 Tuple tuple = tupleSerializer.deserialize(message);
 
-                List<String> flakeIds = dispersionStrategy
-                        .getTargetFlakeIds(tuple);
+
+                List<String> flakeIds = null;
+
+                //Another hacky way to ensure that atleast one targe flake
+                // has been initialized.
+                while (flakeIds == null || flakeIds.size() == 0 || flakeIds
+                        .get(0) == null) {
+                    flakeIds = dispersionStrategy
+                            .getTargetFlakeIds(tuple);
+                    try {
+                        Thread.sleep(Utils.Constants.MILLI / 2);
+                    } catch (InterruptedException e) {
+                        LOGGER.error("Thread interrupted while waiting for "
+                                + "target flakes to start.");
+                    }
+                }
 
                 //FIXME: CAN IMPROVE PERF. HERE BY NOT DOING MULTIPLE
                 //FIXME: SERIALIZE/DESERIALIZE operations.
@@ -230,6 +243,10 @@ public class SenderBEComponent extends FlakeComponent {
                         && flakeIds.size() > 0) {
                     for (String flakeId : flakeIds) {
                         LOGGER.debug("Sending {} to: {}", tuple, flakeId);
+                        if (flakeId == null) {
+                            LOGGER.error("NULL TARGET FOUND!!");
+                            continue;
+                        }
                         backend.sendMore(flakeId);
                         backend.sendMore(myPelletName);
 
@@ -256,7 +273,22 @@ public class SenderBEComponent extends FlakeComponent {
                 LOGGER.warn("Terminating flake sender ME: {}", getFid());
                 terminateSignalReceiver.recv();
                 break;
-            } /*else if (pollerItems.pollin(2)) { //backChannel from successor
+            }
+        }
+        LOGGER.warn("Closing flake backend sockets");
+
+        middleendreceiver.close();
+        backend.close();
+        backendBackChannel.close();
+        notifyStopped(true);
+    }
+}
+
+/*
+THis is for back channel poller in prev. function in case we want to bring it
+ back.
+else if (pollerItems.pollin(2)) { //backChannel from successor
+
                 String mypid = backendBackChannel.recvStr(
                         Charset.defaultCharset());
                 String flakeId = backendBackChannel.recvStr(
@@ -285,13 +317,3 @@ public class SenderBEComponent extends FlakeComponent {
                 /*dispersionStrategy.backChannelMessageReceived(
                         flakeId, data, btoContinue);*
             }*/
-        }
-
-        LOGGER.warn("Closing flake backend sockets");
-
-        middleendreceiver.close();
-        backend.close();
-        backendBackChannel.close();
-        notifyStopped(true);
-    }
-}
