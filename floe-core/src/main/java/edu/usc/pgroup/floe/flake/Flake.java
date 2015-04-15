@@ -127,7 +127,7 @@ public class Flake {
     /**
      * Pellet id/name.
      */
-    private final String pelletId;
+    private final String pelletName;
 
     /**
      * Shutdown hook to close sockets etc on Cntl-C or unexpected shutdown.
@@ -229,7 +229,7 @@ public class Flake {
 
         this.flakeId = Utils.generateFlakeId(cid, fid);
         this.containerId = cid;
-        this.pelletId = pid;
+        this.pelletName = pid;
         this.appName = app;
         this.appJar = jar;
 
@@ -252,7 +252,7 @@ public class Flake {
         }
 
         ZKUtils.updateToken(appName,
-                pelletId,
+                pelletName,
                 flakeId,
                 initialToken,
                 flakeInstance.getStateCheckpointingPort()); //update on the ZK.
@@ -338,8 +338,8 @@ public class Flake {
     /**
      * @return pellet id (same as name).
      */
-    public final String getPelletId() {
-        return pelletId;
+    public final String getPelletName() {
+        return pelletName;
     }
 
     /**
@@ -349,7 +349,7 @@ public class Flake {
      */
     public final void start() {
         LOGGER.info("starting flake.");
-        flakeInfo = new FlakeInfo(pelletId, flakeId, containerId, appName);
+        flakeInfo = new FlakeInfo(pelletName, flakeId, containerId, appName);
         flakeInfo.setStartTime(new Date().getTime());
 
         //start heartbeat
@@ -402,7 +402,7 @@ public class Flake {
 
         TFloeApp tfloeApp = resourceMapping.getFloeApp();
 
-        tPellet = tfloeApp.get_pellets().get(pelletId);
+        tPellet = tfloeApp.get_pellets().get(pelletName);
 
         //FixeME: Change the way alternates are handled later. For now we
         // just choose the active alternate.
@@ -416,9 +416,12 @@ public class Flake {
         IteratorPellet pellet = deserializePellet(activeAlternate);
 
 
-        stateManager = StateManagerFactory.getStateManager(flakeId, pellet);
+        stateManager = StateManagerFactory.getStateManager(appName,
+                pelletName,
+                flakeId,
+                pellet);
 
-        peerMonitor = new PeerMonitor(appName, pelletId, flakeId);
+        peerMonitor = new PeerMonitor(appName, pelletName, flakeId);
 
 
         //Start the state manager.
@@ -437,7 +440,7 @@ public class Flake {
                 metricRegistry,
                 sharedContext,
                 appName,
-                pelletId,
+                pelletName,
                 flakeId,
                 "FLAKE-SENDER",
                 flakeInstance.getPelletPortMapping(),
@@ -458,7 +461,7 @@ public class Flake {
         LOGGER.info("Starting coordination manager.");
         coordinationManager = PeerCoordinationManagerFactory
                 .getCoordinationManager(metricRegistry, appName,
-                        pelletId,
+                        pelletName,
                         pellet,
                         flakeId,
                         "COORDINATION-MANAGER", stateManager, sharedContext);
@@ -511,7 +514,7 @@ public class Flake {
         IteratorPellet pellet = deserializePellet(p);
 
         PelletExecutor pe = new PelletExecutor(metricRegistry, nextPEIdx,
-                pellet, flakeId, pelletId, appName, sharedContext,
+                pellet, flakeId, pelletName, appName, sharedContext,
                 stateManager, appContext);
 
         /*PelletExecutor pe = new PelletExecutor(nextPEIdx, p, appName, appJar,
@@ -627,7 +630,7 @@ public class Flake {
                             + flakeId);
                     SystemSignal systemSignal = new SystemSignal(
                             getAppName(),
-                            getPelletId(),
+                            getPelletName(),
                             SystemSignal.SystemSignalType.SwitchAlternate,
                             (byte[]) command.getData()
                     );
@@ -711,7 +714,7 @@ public class Flake {
                             = runningPelletInstances.remove(0);
                     signal.sendMore(insToRemove.getPelletInstanceId());
                     SystemSignal systemSignal = new SystemSignal(appName,
-                            pelletId,
+                            pelletName,
                             SystemSignal.SystemSignalType.KillInstance,
                             null);
                     signal.send(Utils.serialize(systemSignal), 0);
@@ -742,7 +745,7 @@ public class Flake {
                             = runningPelletInstances.remove(0);
                     signal.sendMore(insToRemove.getPelletInstanceId());
                     SystemSignal systemSignal = new SystemSignal(appName,
-                            pelletId,
+                            pelletName,
                             SystemSignal.SystemSignalType.KillInstance,
                             null);
                     signal.send(Utils.serialize(systemSignal), 0);
@@ -765,7 +768,7 @@ public class Flake {
                     for (PelletExecutor peInstance: runningPelletInstances) {
                         signal.sendMore(peInstance.getPelletInstanceId());
                         SystemSignal systemSignal = new SystemSignal(appName,
-                                pelletId,
+                                pelletName,
                                 SystemSignal.SystemSignalType.StartInstance,
                                 null);
                         signal.send(Utils.serialize(systemSignal), 0);

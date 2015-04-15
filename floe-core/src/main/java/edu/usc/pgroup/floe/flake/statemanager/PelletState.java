@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -129,6 +130,23 @@ public class PelletState {
         /*if (updateListener != null) {
             updateListener.stateUpdated(peId, customId, key, state);
         }*/
+    }
+
+    /**
+     * Removes the given keys from the master state.
+     * @param keys list of keys to be removed from the master state.
+     */
+    public final void clearValues(final List<String> keys) {
+        mergeLock.lock();
+        try {
+            if (keys != null) {
+                for (String key: keys) {
+                    pelletState.remove(key);
+                }
+            }
+        } finally {
+            mergeLock.unlock();
+        }
     }
 
     /**

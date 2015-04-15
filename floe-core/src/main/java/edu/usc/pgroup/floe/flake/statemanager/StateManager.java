@@ -29,10 +29,14 @@ public interface StateManager {
 
     /**
      * Initialize the state manager.
+     * @param appName flake's id.
+     * @param pelletName flake's id.
      * @param flakeId flake's id.
      * @param args string encoded list of arguments.
      */
-    void init(final String flakeId, final String args);
+    void init(final String appName,
+              final String pelletName,
+              final String flakeId, final String args);
 
     /**
      * Returns the object (state) associated with the given local pe instance.

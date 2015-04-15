@@ -52,11 +52,15 @@ public class GenericPelletStateManager implements StateManager {
     /**
      * Initialize the state manager.
      *
-     * @param flakeId flake's id to which this sm belongs
+     * @param appName flake's id.
+     * @param pelletName flake's id.
+     * @param flakeId flake's id.
      * @param args string encoded list of arguments.
      */
     @Override
-    public final void init(final String flakeId, final String args) {
+    public final void init(final String appName,
+                           final String pelletName,
+                           final String flakeId, final String args) {
 
     }
 
