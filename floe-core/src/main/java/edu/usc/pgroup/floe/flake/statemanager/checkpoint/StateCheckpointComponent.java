@@ -21,6 +21,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
+import edu.usc.pgroup.floe.client.FloeClient;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
@@ -31,13 +32,16 @@ import edu.usc.pgroup.floe.flake.coordination.PeerMonitor;
 import edu.usc.pgroup.floe.flake.coordination.PeerUpdateListener;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
+import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.utils.Utils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -71,6 +75,16 @@ public class StateCheckpointComponent extends FlakeComponent
     private final PeerMonitor peerMonitor;
 
     /**
+     * application name.
+     */
+    private final String appName;
+
+    /**
+     * pellet name.
+     */
+    private final String pelletName;
+
+    /**
      * State socket listener.
      */
     private ZMQ.Socket stateSocReceiver;
@@ -82,6 +96,8 @@ public class StateCheckpointComponent extends FlakeComponent
 
     /**
      * Constructor.
+     * @param app application name.
+     * @param pellet pellet name.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
@@ -90,14 +106,19 @@ public class StateCheckpointComponent extends FlakeComponent
      * @param stateChkptPort port to use for connections to checkpoint state.
      * @param monitor peer monitor.
      */
-    public StateCheckpointComponent(final MetricRegistry metricRegistry,
-                                    final String flakeId,
-                                    final String componentName,
-                                    final ZMQ.Context ctx,
-                                    final StateManager stateMgr,
-                                    final int stateChkptPort,
-                                    final PeerMonitor monitor) {
+    public StateCheckpointComponent(
+            final String app,
+            final String pellet,
+            final MetricRegistry metricRegistry,
+            final String flakeId,
+            final String componentName,
+            final ZMQ.Context ctx,
+            final StateManager stateMgr,
+            final int stateChkptPort,
+            final PeerMonitor monitor) {
         super(metricRegistry, flakeId, componentName, ctx);
+        this.appName = app;
+        this.pelletName = pellet;
         this.stateManager = stateMgr;
         this.port = stateChkptPort;
         this.checkpointPeriod = FloeConfig.getConfig().getInt(ConfigProperties
@@ -210,8 +231,9 @@ public class StateCheckpointComponent extends FlakeComponent
                     stateSocControl.send("done");
                 } else if (pollerItems.pollin(2 + 1)) {
                     //explict load balance request received.
-                    loadBalanceControl.recv();
-                    Boolean initiated = initiateLoadbalance(stateSocSender);
+                    Boolean initiated
+                            = initiateLoadbalanceOrScaleout(
+                            loadBalanceControl, stateSocSender);
                     loadBalanceControl.send(initiated.toString(), 0);
                 } else { //checkpoint timeout.
                     checkpoint(stateSocSender);
@@ -266,21 +288,77 @@ public class StateCheckpointComponent extends FlakeComponent
     }
 
     /**
+     * Initiates load balance or scale out process.
+     *
+     * @param controlReceiver control receiver socket.
      * @param stateSocSender state socket sender used to send command to the
      *                       neighbor.
      * @return true if the load balance process was initialized, false other
      * wise. (e.g. if the repartition state returns null).
      */
-    private boolean initiateLoadbalance(final ZMQ.Socket stateSocSender) {
+    private boolean initiateLoadbalanceOrScaleout(
+            final ZMQ.Socket controlReceiver, final ZMQ.Socket stateSocSender) {
         //send incremental checkpoint to the neighbor.
+
+        String command = controlReceiver.recvStr(Charset.defaultCharset());
+
+        switch (command) {
+            case "loadbalance":
+                return initiateLoadBalance(controlReceiver, stateSocSender);
+            case "scale":
+                return initiateScaleOut(controlReceiver, stateSocSender);
+            default:
+                LOGGER.warn("unknown command");
+        }
+        return false;
+    }
+
+    /**
+     * Sends the initiate scale out command to the commander. NOTE THAT THE
+     * FUNCTION RETURNS AFTER SENDING THE COMMAND. True return value does not
+     * mean the scale out succeeded but just that the command was sent to the
+     * coordinator.
+     * @return true if the command was sent succesfully.
+     * @param controlReceiver control receiver socket.
+     * @param stateSocSender state socket sender used to send command to the
+     *                       neighbor.
+     */
+    private boolean initiateScaleOut(final ZMQ.Socket controlReceiver,
+                                     final ZMQ.Socket stateSocSender) {
+        try {
+
+            Integer newToken = stateManager.getTokenForNewFlake(
+                                    peerMonitor.getNeighborsToBackupOn());
+
+            if (newToken == null) {
+                return false;
+            }
+            FloeClient.getInstance().getClient().scaleWithTokens(
+                    ScaleDirection.up, appName, pelletName, 1,
+                    Collections.singletonList(newToken)
+            );
+            return true;
+        } catch (TException e) {
+            return false;
+        }
+    }
+
+    /**
+     * initiates the load balance process.
+     *
+     * @param controlReceiver control receiver socket.
+     * @param stateSocSender state soc. sender to send the load balance request.
+     * @return true if the load balance process was initialized, false other
+     * wise. (e.g. if the repartition state returns null).
+     */
+    private boolean initiateLoadBalance(final ZMQ.Socket controlReceiver,
+                                        final ZMQ.Socket stateSocSender) {
         if (stateManager != null) {
             //synchronized (this) {
-
-
             Map<String, List<String>> flakeTokens
                     = stateManager.repartitionState(getFid(),
-                            new ArrayList<FlakeToken>(
-                                peerMonitor.getNeighborsToBackupOn().values())
+                    new ArrayList<FlakeToken>(
+                            peerMonitor.getNeighborsToBackupOn().values())
             );
 
             if (flakeTokens == null) {

@@ -70,7 +70,7 @@ public class LoadBalancAndScaleManager {
                 Utils.Constants.LDBL_CTRL_BIND_STR + flakeId);
 
         LOGGER.error("trying to initiate loadbalacing");
-        loadBalanceControl.send("initiate");
+        loadBalanceControl.send("loadbalance");
 
         //wait for request to complete.
         String initiated = loadBalanceControl.recvStr(Charset.defaultCharset());
@@ -81,4 +81,29 @@ public class LoadBalancAndScaleManager {
         loadBalanceControl.close();
         return Boolean.parseBoolean(initiated);
     }
+
+    /**
+     * Initiates the load balance process.
+     * @return true if the load balance process was initialized, false other
+     * wise. (e.g. if the repartition state returns null).
+     */
+    public final boolean initiateScaleOut() {
+        ZMQ.Socket loadBalanceControl = context.socket(ZMQ.REQ);
+        loadBalanceControl.connect(
+                Utils.Constants.LDBL_CTRL_BIND_STR + flakeId);
+
+        LOGGER.error("trying to initiate scale out process.");
+        loadBalanceControl.send("scale");
+
+        //wait for request to complete.
+        String initiated = loadBalanceControl.recvStr(Charset.defaultCharset());
+
+        LOGGER.error("Scale out command has been sent to the coordinator."
+                + "You can you use flake tracker to check if the flake has "
+                + "been deployed.");
+
+        loadBalanceControl.close();
+        return Boolean.parseBoolean(initiated);
+    }
+
 }

@@ -487,6 +487,7 @@ public class Flake {
         }
 
         stateCheckpointComponent = new StateCheckpointComponent(
+                appName, pelletName,
                 metricRegistry, flakeId, "FLAKE-CHECKPOINTER",
                 sharedContext, stateManager,
                 flakeInstance.getStateCheckpointingPort(), peerMonitor
