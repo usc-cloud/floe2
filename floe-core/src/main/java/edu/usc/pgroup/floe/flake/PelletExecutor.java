@@ -360,11 +360,17 @@ public class PelletExecutor extends Thread {
                 MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
 
         boolean disconnected = false;
-
+        final int pollTimeout = 0;
         while (!Thread.currentThread().isInterrupted()) {
             LOGGER.debug("POLLING: ");
             //try {
-                pollerItems.poll();
+
+                if (this.pellet != null
+                        && this.pellet.getConf().isSourcePellet()) {
+                    pollerItems.poll(0);
+                } else {
+                    pollerItems.poll();
+                }
 
                 if (pollerItems.pollin(1)) {
                     /*synchronized (started) {
@@ -392,6 +398,12 @@ public class PelletExecutor extends Thread {
                         } else {
                             LOGGER.warn("Pellet is not signallable.");
                         }
+                    }
+                } else {
+                    if (this.pellet != null
+                            && this.pellet.getConf().isSourcePellet()) {
+                        this.pellet.execute(tupleIterator,
+                                            emitter, pelletStateManager);
                     }
                 }
 
