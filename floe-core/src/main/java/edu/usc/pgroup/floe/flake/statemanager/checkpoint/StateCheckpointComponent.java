@@ -328,6 +328,7 @@ public class StateCheckpointComponent extends FlakeComponent
         try {
 
             Integer newToken = stateManager.getTokenForNewFlake(
+                                    peerMonitor.getMyToken(),
                                     peerMonitor.getNeighborsToBackupOn());
 
             if (newToken == null) {

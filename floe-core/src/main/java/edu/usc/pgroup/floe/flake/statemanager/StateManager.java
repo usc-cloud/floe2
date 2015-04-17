@@ -21,6 +21,7 @@ import edu.usc.pgroup.floe.flake.FlakeToken;
 
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * @author kumbhare
@@ -116,10 +117,11 @@ public interface StateManager {
     /**
      * Return the position (token number) between -INT_MAX to INT_MAX for the
      * new flake while scaling out.
+     * @param myToken own flake's token.
      * @param neighborsToBackupOn list of neighbors that this flake uses to
      *                            backup it's data.
      * @return return the new token value.
      */
-    Integer getTokenForNewFlake(
-            final Map<Integer, FlakeToken> neighborsToBackupOn);
+    Integer getTokenForNewFlake(final FlakeToken myToken,
+            final SortedMap<Integer, FlakeToken> neighborsToBackupOn);
 }

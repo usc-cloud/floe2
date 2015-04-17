@@ -35,7 +35,7 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
     /**
      * This flake's current token.
      */
-    private Integer myToken;
+    private FlakeToken myToken;
 
     /**
      * List of neighbors for which this peer will backup state and messages.
@@ -88,8 +88,9 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
         replicationLevel = FloeConfig.getConfig().getInt(
                 ConfigProperties.FLAKE_TOLERANCE_LEVEL);
         neighborsToBackupFor = new TreeMap<>(Collections.reverseOrder());
-        myBackupNeighbors = new TreeMap<>(Collections.reverseOrder());
         allFlakesReverse = new TreeMap<>(Collections.reverseOrder());
+
+        myBackupNeighbors = new TreeMap<>();
         allFlakesForward = new TreeMap<>();
         fidToTokenMap = new HashMap<>();
         this.flakeId = myFlakeId;
@@ -116,13 +117,13 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
      */
     @Override
     public final void initialFlakeList(final List<FlakeToken> flakes) {
-        for (FlakeToken flake: flakes) {
-            allFlakesForward.put(flake.getToken(), flake);
-            allFlakesReverse.put(flake.getToken(), flake);
+        for (FlakeToken flakeT: flakes) {
+            allFlakesForward.put(flakeT.getToken(), flakeT);
+            allFlakesReverse.put(flakeT.getToken(), flakeT);
 
-            fidToTokenMap.put(flake.getFlakeID(), flake.getToken());
-            if (flakeId.equalsIgnoreCase(flake.getFlakeID())) {
-                this.myToken = flake.getToken();
+            fidToTokenMap.put(flakeT.getFlakeID(), flakeT.getToken());
+            if (flakeId.equalsIgnoreCase(flakeT.getFlakeID())) {
+                this.myToken = flakeT;
             }
         }
         updateNeighbors();
@@ -146,7 +147,7 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
         fidToTokenMap.put(flake.getFlakeID(), flake.getToken());
 
         if (flakeId.equalsIgnoreCase(flake.getFlakeID())) {
-            this.myToken = flake.getToken();
+            this.myToken = flake;
         }
         updateNeighbors();
     }
@@ -204,7 +205,7 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
         fidToTokenMap.put(flake.getFlakeID(), flake.getToken());
 
         if (flakeId.equalsIgnoreCase(flake.getFlakeID())) {
-            this.myToken = flake.getToken();
+            this.myToken = flake;
         }
 
         updateNeighbors();
@@ -228,7 +229,8 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
 
         if (myToken == null) { return; } //not all info. is available yet.
 
-        SortedMap<Integer, FlakeToken> tail = allFlakesReverse.tailMap(myToken);
+        SortedMap<Integer, FlakeToken> tail = allFlakesReverse.tailMap(
+                                                    myToken.getToken());
         Iterator<Integer> iterator = tail.keySet().iterator();
         iterator.next(); //ignore the self's token.
 
@@ -263,7 +265,7 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
 
         LOGGER.debug("ME:{}, I WILL BACKUP MSGS FOR: A:{} R:{} NEW:{}, old:{},"
                         + "listeners:{}", myToken, added, removed, result,
-                                    neighborsToBackupFor, peerUpdateListeners);
+                neighborsToBackupFor, peerUpdateListeners);
 
         synchronized (neighborsToBackupFor) {
         if (peerUpdateListeners != null) {
@@ -290,7 +292,8 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
 
         if (myToken == null) { return; } //not all info. is available yet.
 
-        SortedMap<Integer, FlakeToken> tail = allFlakesForward.tailMap(myToken);
+        SortedMap<Integer, FlakeToken> tail = allFlakesForward.tailMap(
+                                                    myToken.getToken());
         Iterator<Integer> iterator = tail.keySet().iterator();
         iterator.next(); //ignore the self's token.
 
@@ -388,5 +391,12 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
      */
     public final SortedMap<Integer, FlakeToken> getNeighborsToBackupOn() {
         return myBackupNeighbors;
+    }
+
+    /**
+     * @return Returns flake's current token.
+     */
+    public final FlakeToken getMyToken() {
+        return myToken;
     }
 }
