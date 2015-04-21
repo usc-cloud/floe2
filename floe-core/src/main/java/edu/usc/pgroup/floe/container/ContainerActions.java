@@ -111,21 +111,23 @@ public final class ContainerActions {
         String appName = mapping.getAppName();
 
         String applicationJar = mapping.getApplicationJarPath();
+        String containerId = ContainerInfo.getInstance().getContainerId();
 
         if (applicationJar != null) {
             try {
 
                 String downloadLocation
                         = Utils.getContainerJarDownloadPath(appName,
+                                                            containerId,
                                                             applicationJar);
 
                 File f = new File(downloadLocation);
-                if (!f.exists()) {
+                //if (!f.exists()) {
                     LOGGER.info("Downloading: " + applicationJar);
                     FloeClient.getInstance().downloadFileSync(applicationJar,
                             downloadLocation);
                     LOGGER.info("Finished Downloading: " + applicationJar);
-                }
+                //}
             } catch (Exception e) {
                 LOGGER.warn("No application jar specified. It should work"
                               + " still work for inproc testing. Exception: {}",
@@ -133,7 +135,6 @@ public final class ContainerActions {
             }
         }
 
-        String containerId = ContainerInfo.getInstance().getContainerId();
 
         Map<String, ResourceMapping.FlakeInstance> flakes = null;
 

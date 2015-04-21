@@ -166,7 +166,7 @@ public class FloeClient extends ThriftClient {
     public final void downloadFileSync(
             final String fileName, final String outFileName) {
         if (!Utils.checkValidFileName(fileName)) {
-            throw new IllegalArgumentException("Filename is valid. Should not"
+            throw new IllegalArgumentException("Filename is invalid. Should not"
                     + " contain .. and should not be an absolute path.");
         }
 
@@ -179,7 +179,8 @@ public class FloeClient extends ThriftClient {
             if (!parent.exists()) {
                 parent.mkdirs();
             }
-            outChannel = Channels.newChannel(new FileOutputStream(outFileName));
+            outChannel = Channels.newChannel(
+                    new FileOutputStream(outFileName, false));
         } catch (TException e) {
             LOGGER.error(e.getMessage());
             throw new RuntimeException(e);

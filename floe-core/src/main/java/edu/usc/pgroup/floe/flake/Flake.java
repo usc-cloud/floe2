@@ -555,7 +555,8 @@ public class Flake {
         IteratorPellet pellet = null;
         try {
             File relativeJarLoc = new File(
-                    Utils.getContainerJarDownloadPath(appName, appJar));
+                    Utils.getContainerJarDownloadPath(appName,
+                            containerId, appJar));
 
             URL jarLoc = new URL(
                     "file://" + relativeJarLoc.getAbsolutePath());

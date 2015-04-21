@@ -339,16 +339,20 @@ public final class Utils {
     /**
      * returns the pull local path of the application jar.
      * @param appName name of the application.
+     * @param containerId container id (used when multiple containers are run
+     * on the same machine.
      * @param jarName jar name.
      * @return the path to the application jar.
      */
     public static String getContainerJarDownloadPath(final String appName,
+                                                     final String containerId,
                                                      final String jarName) {
         String downloadLocation = FloeConfig.getConfig().getString(
                 ConfigProperties.FLOE_EXEC_SCRATCH_FOLDER)
                 + Utils.Constants.FILE_PATH_SEPARATOR
-                + FloeConfig.getConfig().getString(
-                ConfigProperties.CONTAINER_LOCAL_FOLDER)
+                + FloeConfig.getConfig()
+                        .getString(ConfigProperties.CONTAINER_LOCAL_FOLDER)
+                + "-" + containerId
                 + Utils.Constants.FILE_PATH_SEPARATOR
                 + Utils.Constants.CONTAINER_APP_FOLDER
                 + Utils.Constants.FILE_PATH_SEPARATOR

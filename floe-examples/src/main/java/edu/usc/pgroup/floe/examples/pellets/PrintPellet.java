@@ -20,12 +20,10 @@ import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
-import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.Signallable;
 import edu.usc.pgroup.floe.app.pellets.TupleItertaor;
-import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -146,13 +144,13 @@ public class PrintPellet extends IteratorPellet implements Signallable {
      * The execute method which is called for each tuple.
      *
      * @param tupleItertaor input tuple received from the preceding pellet.
-     * @param emitter       An output emitter which may be used by the user to emmit
-     *                      results.
+     * @param emitter       An output emitter which may be used by the user
+     *                      to emmit results.
      * @param stateManager  state associated manager associated with the pellet.
      *                      It is the executor's responsiblity to get the state
      */
     @Override
-    public void execute(final TupleItertaor tupleItertaor,
+    public final void execute(final TupleItertaor tupleItertaor,
                         final Emitter emitter,
                         final StateManager stateManager) {
         while (true) {

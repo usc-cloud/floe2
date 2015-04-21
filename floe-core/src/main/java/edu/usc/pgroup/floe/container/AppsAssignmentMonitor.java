@@ -107,7 +107,9 @@ public class AppsAssignmentMonitor {
                 try {
 
                     String downloadLocation = Utils.getContainerJarDownloadPath(
-                            resourceMapping.getAppName(), applicationJar);
+                            resourceMapping.getAppName(),
+                            containerId,
+                            applicationJar);
 
                     LOGGER.info("Downloading: " + applicationJar);
                     FloeClient.getInstance().downloadFileSync(applicationJar,
@@ -175,7 +177,9 @@ public class AppsAssignmentMonitor {
                 try {
 
                     String downloadLocation = Utils.getContainerJarDownloadPath(
-                            resourceMapping.getAppName(), applicationJar);
+                            resourceMapping.getAppName(),
+                            containerId,
+                            applicationJar);
 
                     LOGGER.info("Downloading: " + applicationJar);
                     FloeClient.getInstance().downloadFileSync(applicationJar,

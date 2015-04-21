@@ -20,7 +20,6 @@ import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
@@ -70,7 +69,14 @@ public final class SimpleLoop {
      */
     static class SendAndPrint extends StatelessPellet {
 
-        int control = 0;
+        /**
+         * control var.
+         */
+        private int control = 0;
+
+        /**
+         * pellet context.
+         */
         private PelletContext pctx;
 
         /**
@@ -81,7 +87,7 @@ public final class SimpleLoop {
          *                      particular pellet instance.
          */
         @Override
-        public void onStart(final AppContext appContext,
+        public final void onStart(final AppContext appContext,
                           final PelletContext pelletContext) {
             this.pctx = pelletContext;
             pctx.startFlakeTracker();
@@ -107,13 +113,13 @@ public final class SimpleLoop {
          *                which may be used by the user to emmit
          */
         @Override
-        public void execute(final Tuple t, final Emitter emitter) {
+        public final void execute(final Tuple t, final Emitter emitter) {
             Tuple ot = new Tuple();
             if (t != null) {
                 Integer type = (Integer) t.get("type");
                 if (type == 0) {
                     //send control message.
-                    LOGGER.error("Received data",t);
+                    LOGGER.error("Received data", t);
                     ot.put("type", 1);
                     ot.put("from", pctx.getPelletInstanceId());
                     emitter.emit(ot);
@@ -121,9 +127,9 @@ public final class SimpleLoop {
                     control++;
                     LOGGER.error("Received control:{}; cnt:{}, expecting:{}",
                             t, control, pctx.getCurrentFlakeList().size());
-                    if (control==pctx.getCurrentFlakeList().size()) {
+                    if (control == pctx.getCurrentFlakeList().size()) {
                         LOGGER.error("barrier done");
-                        control=0;
+                        control = 0;
                     }
                 } else {
                     LOGGER.error("Received UNKNOWN: {}, {}", t.get("type"),
@@ -146,7 +152,7 @@ public final class SimpleLoop {
          * messages.
          */
         @Override
-        public List<String> getOutputStreamNames() {
+        public final List<String> getOutputStreamNames() {
             return null;
         }
     }
@@ -163,7 +169,8 @@ public final class SimpleLoop {
 
         TChannel channel = new TChannel(TChannelType.CUSTOM,
         "edu.usc.pgroup.floe.flake.messaging.dispersion.BroadCastDispersion",
-        "edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin.RRFlakeLocalDispersionStrategy");
+        "edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin"
+                + ".RRFlakeLocalDispersionStrategy");
 
 
         builder.addPellet("word", new TestSendPellet());
@@ -193,17 +200,23 @@ public final class SimpleLoop {
         }
     }
 
+    /**
+     * Test send pellet.
+     */
     private static class TestSendPellet extends Pellet {
         /**
          * The execute method which is called for each tuple.
          *
          * @param t       input tuple received from the preceding pellet.
-         * @param emitter An output emitter which may be used by the user to emmit
-         *                results.
-         * @param state   state associated with the current execution of the pellet.
+         * @param emitter An output emitter which may be used by the user
+         *                to emmit results.
+         * @param state   state associated with the current execution
+         *                of the pellet.
          */
         @Override
-        public void execute(Tuple t, Emitter emitter, PelletState state) {
+        public final void execute(final Tuple t,
+                            final Emitter emitter,
+                            final PelletState state) {
 
             try {
                 Thread.sleep(Utils.Constants.MILLI * 2 * 2);
@@ -212,7 +225,7 @@ public final class SimpleLoop {
             }
 
             Tuple o = new Tuple();
-            o.put("type",0);
+            o.put("type", 0);
             emitter.emit(o);
             emitter.emit(o);
             emitter.emit(o);
@@ -224,12 +237,12 @@ public final class SimpleLoop {
         }
 
         /**
-         * Use to configure different aspects of the pellet,such as state type etc.
+         * Use to configure different aspects of the pellet,such as state type.
          *
          * @param pconf pellet configurer
          */
         @Override
-        public void configure(PelletConfiguration pconf) {
+        public final void configure(final PelletConfiguration pconf) {
             pconf.markAsSourcePellet();
         }
 
@@ -241,7 +254,8 @@ public final class SimpleLoop {
          * @param pelletContext Pellet instance context. Related to this
          */
         @Override
-        public void onStart(AppContext appContext, PelletContext pelletContext) {
+        public void onStart(final AppContext appContext,
+                            final PelletContext pelletContext) {
 
         }
 
@@ -259,7 +273,7 @@ public final class SimpleLoop {
          * messages.
          */
         @Override
-        public List<String> getOutputStreamNames() {
+        public final List<String> getOutputStreamNames() {
             return null;
         }
     }
