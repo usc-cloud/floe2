@@ -48,7 +48,9 @@ public final class SimpleLinear {
 
         String[] words = {"John", "Jane", "Maverick", "Alok"};
 
-        builder.addPellet("word", new WordPellet(words)).setParallelism(1);
+        final int interval = 10;
+        builder.addPellet("word", new WordPellet(words, interval))
+                .setParallelism(1);
 
         builder.addPellet("print", new PrintPellet())
                 .subscribe("word").setParallelism(2);

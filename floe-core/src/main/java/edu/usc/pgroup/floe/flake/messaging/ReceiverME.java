@@ -279,6 +279,8 @@ public class ReceiverME extends FlakeComponent {
 
         String pelletInstanceId = null;
 
+        pelletInstanceId = strategy.getTargetPelletInstance(t, args);
+
         //hacky way to wait for atleast one pellet to be running.
         while (pelletInstanceId == null) {
             pelletInstanceId = strategy.getTargetPelletInstance(t, args);

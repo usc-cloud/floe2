@@ -19,11 +19,14 @@ package edu.usc.pgroup.floe.examples.pellets;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
 import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
 import edu.usc.pgroup.floe.app.pellets.Signallable;
+import edu.usc.pgroup.floe.app.pellets.TupleItertaor;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
+import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -34,7 +37,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class PrintPellet extends Pellet implements Signallable {
+public class PrintPellet extends IteratorPellet implements Signallable {
 
     /**
      * Pellet's instance id.
@@ -95,7 +98,7 @@ public class PrintPellet extends Pellet implements Signallable {
      * @param t       input tuple received from the preceding pellet.
      * @param emitter An output emitter which may be used by the user to emmit.
      * @param state   State specific to the key value given in the tuple.
-     */
+     *
     @Override
     public final void execute(
             final Tuple t,
@@ -113,13 +116,13 @@ public class PrintPellet extends Pellet implements Signallable {
             LOGGER.info("{} : {} : Received: {}",
                     peInstanceId,
                     count,
-                    t.get("word"));*/
+                    t.get("word"));*
             LOGGER.info("{} : Received: {}",
                     peInstanceId,
                     t.get("word"));
             emitter.emit(t);
         }
-    }
+    }*/
 
     /**
      * The teardown function, called when the topology is killed.
@@ -140,13 +143,33 @@ public class PrintPellet extends Pellet implements Signallable {
     }
 
     /**
+     * The execute method which is called for each tuple.
+     *
+     * @param tupleItertaor input tuple received from the preceding pellet.
+     * @param emitter       An output emitter which may be used by the user to emmit
+     *                      results.
+     * @param stateManager  state associated manager associated with the pellet.
+     *                      It is the executor's responsiblity to get the state
+     */
+    @Override
+    public void execute(final TupleItertaor tupleItertaor,
+                        final Emitter emitter,
+                        final StateManager stateManager) {
+        while (true) {
+            Tuple t = tupleItertaor.next();
+            LOGGER.error("{} : Received: {}",
+                    peInstanceId, t.get("word"));
+        }
+    }
+
+    /**
      * Called when a signal is received for the component.
      *
      * @param signal the signal received for this pellet.
      */
     @Override
     public final void onSignal(final PelletSignal signal) {
-        LOGGER.info("RECEIVED SIGNAL: {}",
+        LOGGER.error("RECEIVED SIGNAL: {}",
                 Utils.deserialize(signal.getSignalData()));
     }
 }

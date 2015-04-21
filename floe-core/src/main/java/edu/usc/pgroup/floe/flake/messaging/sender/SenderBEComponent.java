@@ -224,11 +224,13 @@ public class SenderBEComponent extends FlakeComponent {
                         .get(0) == null) {
                     flakeIds = dispersionStrategy
                             .getTargetFlakeIds(tuple);
-                    try {
-                        Thread.sleep(Utils.Constants.MILLI / 2);
-                    } catch (InterruptedException e) {
-                        LOGGER.error("Thread interrupted while waiting for "
-                                + "target flakes to start.");
+                    if (flakeIds == null) {
+                        try {
+                            Thread.sleep(Utils.Constants.MILLI / 2);
+                        } catch (InterruptedException e) {
+                            LOGGER.error("Thread interrupted while waiting for "
+                                    + "target flakes to start.");
+                        }
                     }
                 }
 
