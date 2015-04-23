@@ -45,6 +45,14 @@ public class PelletState {
      */
     private HashMap<String, Object> pelletState;
 
+
+    /**
+     * Pellet LOCAL ONLY TEMPORARY STATE. NO CHECKPOINTING OR FAULT RECOVERY
+     * IS GUARANTEED FOR SUCH STATE.
+     */
+    private HashMap<String, Object> tempPelletState;
+
+
     /**
      * Atomic reference that points to the currently used delta to update the
      * state.
@@ -85,6 +93,7 @@ public class PelletState {
     public PelletState(//final String peInstanceId,
                 final String customSubId) {
         this.pelletState = new HashMap<>();
+        this.tempPelletState = new HashMap<>();
         //this.peId = peInstanceId;
         this.customId = customSubId;
 
@@ -262,5 +271,26 @@ public class PelletState {
      */
     public final Set<String> getKeys() {
         return pelletState.keySet();
+    }
+
+    /**
+     * Sets the state in the temp state store. No load balance/fault recovery
+     * is guaranteed.
+     * @param key state key
+     * @param value state value.
+     */
+    public final void setTempValue(final String key, final Object value) {
+        this.tempPelletState.put(key, value);
+    }
+
+    /**
+     * Gets the state from the temp state store. No load balance/fault recovery
+     * is guaranteed.
+     * @param key state key
+     * @return returns the value associated with the temp state key. Null if
+     * not found.
+     */
+    public final Object getTempValue(final String key) {
+        return this.tempPelletState.get(key);
     }
 }
