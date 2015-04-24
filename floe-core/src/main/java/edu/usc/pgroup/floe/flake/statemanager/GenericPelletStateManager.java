@@ -101,7 +101,11 @@ public class GenericPelletStateManager implements StateManager {
      */
     @Override
     public final PelletState getState(final String peId, final String key) {
-        return null;
+        if (!pelletStateMap.containsKey(peId)) {
+            LOGGER.info("Creating new state for peid: {}", peId);
+            pelletStateMap.put(peId, new PelletState(peId));
+        }
+        return pelletStateMap.get(peId);
     }
 
     /**
@@ -112,7 +116,7 @@ public class GenericPelletStateManager implements StateManager {
      */
     @Override
     public final byte[] getIncrementalStateCheckpoint(final String neighborId) {
-        return new byte[0];
+        return null;
     }
 
     /**
