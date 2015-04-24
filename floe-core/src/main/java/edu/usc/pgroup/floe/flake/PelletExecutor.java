@@ -366,7 +366,8 @@ public class PelletExecutor extends Thread {
             //try {
 
                 if (this.pellet != null
-                        && this.pellet.getConf().isSourcePellet()) {
+                        && this.pellet.getConf().isSourcePellet()
+                        && this.pellet.hasStarted()) {
                     pollerItems.poll(0);
                 } else {
                     pollerItems.poll();
@@ -461,7 +462,7 @@ public class PelletExecutor extends Thread {
                 LOGGER.info("Starting pellets.");
 
                 this.pellet.onStart(appContext, pelletContext);
-
+                this.pellet.markStarted();
                 //FIXME.. THIS SHOULD NOT BE REQUIRED.
                 //PelletState state = getPelletState(null);
                 //this.pellet.execute(null, emitter, state);

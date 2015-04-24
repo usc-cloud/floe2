@@ -36,10 +36,16 @@ public abstract class IteratorPellet implements Serializable {
     private PelletConfiguration conf;
 
     /**
+     * Indicates whether the pellet has been started.
+     */
+    private boolean started;
+
+    /**
      * Default constructor.
      */
     public IteratorPellet() {
         conf = new PelletConfiguration();
+        started = false;
     }
 
 
@@ -99,4 +105,18 @@ public abstract class IteratorPellet implements Serializable {
     public abstract void execute(final TupleItertaor tupleItertaor,
                                  final Emitter emitter,
                                  final StateManager stateManager);
+
+    /**
+     * @return returns true if the pellet has been started. False otherwise
+     */
+    public final boolean hasStarted() {
+        return started;
+    }
+
+    /**
+     * Marks the pellet as started.
+     */
+    public final void markStarted() {
+        this.started = true;
+    }
 }
