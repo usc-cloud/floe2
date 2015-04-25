@@ -16,11 +16,14 @@
 
 package edu.usc.pgroup.floe.resourcemanager;
 
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.ContainerInfo;
 import edu.usc.pgroup.floe.thriftgen.AlternateNotFoundException;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
+import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,7 +125,7 @@ public class ClusterResourceManager extends ResourceManager {
         List<ContainerInfo> feasible = new ArrayList<>();
         for (ContainerInfo container : containers) {
             //If there are no cores available, move to next container.
-            if (container.getAvailableCores() == 0) {
+            if (container.getAvailableCores() == 0 && FloeConfig.getConfig().getString(ConfigProperties.FLOE_EXEC_MODE).equals(Utils.Constants.DISTRIBUTED)) {
                 LOGGER.info("No availalbe cores: {}",
                         container.getContainerId());
                 continue;
@@ -155,7 +158,7 @@ public class ClusterResourceManager extends ResourceManager {
             //Now check if during the current mapping, all cores have been used.
             //If so, move to the next container.
             int usedCores = mapping.getUsedCores(container.getContainerId());
-            if (usedCores >= container.getNumCores()) {
+            if (usedCores >= container.getNumCores() && FloeConfig.getConfig().getString(ConfigProperties.FLOE_EXEC_MODE).equals(Utils.Constants.DISTRIBUTED) ) {
                 LOGGER.info("Resource full: {}, used:{}, available:{}",
                         container.getContainerId(), usedCores,
                         container.getNumCores());
