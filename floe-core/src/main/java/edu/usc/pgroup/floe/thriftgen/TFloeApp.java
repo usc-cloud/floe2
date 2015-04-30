@@ -38,6 +38,7 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
 
   private static final org.apache.thrift.protocol.TField PELLETS_FIELD_DESC = new org.apache.thrift.protocol.TField("pellets", org.apache.thrift.protocol.TType.MAP, (short)1);
   private static final org.apache.thrift.protocol.TField JAR_PATH_FIELD_DESC = new org.apache.thrift.protocol.TField("jarPath", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField PLUGINS_JAR_PATH_FIELD_DESC = new org.apache.thrift.protocol.TField("pluginsJarPath", org.apache.thrift.protocol.TType.STRING, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -47,11 +48,13 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
 
   private Map<String,TPellet> pellets; // required
   private String jarPath; // optional
+  private String pluginsJarPath; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     PELLETS((short)1, "pellets"),
-    JAR_PATH((short)2, "jarPath");
+    JAR_PATH((short)2, "jarPath"),
+    PLUGINS_JAR_PATH((short)3, "pluginsJarPath");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -70,6 +73,8 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
           return PELLETS;
         case 2: // JAR_PATH
           return JAR_PATH;
+        case 3: // PLUGINS_JAR_PATH
+          return PLUGINS_JAR_PATH;
         default:
           return null;
       }
@@ -110,7 +115,7 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.JAR_PATH};
+  private _Fields optionals[] = {_Fields.JAR_PATH,_Fields.PLUGINS_JAR_PATH};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -119,6 +124,8 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
             new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TPellet.class))));
     tmpMap.put(_Fields.JAR_PATH, new org.apache.thrift.meta_data.FieldMetaData("jarPath", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.PLUGINS_JAR_PATH, new org.apache.thrift.meta_data.FieldMetaData("pluginsJarPath", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TFloeApp.class, metaDataMap);
@@ -156,6 +163,9 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
     if (other.is_set_jarPath()) {
       this.jarPath = other.jarPath;
     }
+    if (other.is_set_pluginsJarPath()) {
+      this.pluginsJarPath = other.pluginsJarPath;
+    }
   }
 
   public TFloeApp deepCopy() {
@@ -166,6 +176,7 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
   public void clear() {
     this.pellets = null;
     this.jarPath = null;
+    this.pluginsJarPath = null;
   }
 
   public int get_pellets_size() {
@@ -225,6 +236,29 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
     }
   }
 
+  public String get_pluginsJarPath() {
+    return this.pluginsJarPath;
+  }
+
+  public void set_pluginsJarPath(String pluginsJarPath) {
+    this.pluginsJarPath = pluginsJarPath;
+  }
+
+  public void unset_pluginsJarPath() {
+    this.pluginsJarPath = null;
+  }
+
+  /** Returns true if field pluginsJarPath is set (has been assigned a value) and false otherwise */
+  public boolean is_set_pluginsJarPath() {
+    return this.pluginsJarPath != null;
+  }
+
+  public void set_pluginsJarPath_isSet(boolean value) {
+    if (!value) {
+      this.pluginsJarPath = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case PELLETS:
@@ -243,6 +277,14 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
       }
       break;
 
+    case PLUGINS_JAR_PATH:
+      if (value == null) {
+        unset_pluginsJarPath();
+      } else {
+        set_pluginsJarPath((String)value);
+      }
+      break;
+
     }
   }
 
@@ -253,6 +295,9 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
 
     case JAR_PATH:
       return get_jarPath();
+
+    case PLUGINS_JAR_PATH:
+      return get_pluginsJarPath();
 
     }
     throw new IllegalStateException();
@@ -269,6 +314,8 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
       return is_set_pellets();
     case JAR_PATH:
       return is_set_jarPath();
+    case PLUGINS_JAR_PATH:
+      return is_set_pluginsJarPath();
     }
     throw new IllegalStateException();
   }
@@ -304,6 +351,15 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
         return false;
     }
 
+    boolean this_present_pluginsJarPath = true && this.is_set_pluginsJarPath();
+    boolean that_present_pluginsJarPath = true && that.is_set_pluginsJarPath();
+    if (this_present_pluginsJarPath || that_present_pluginsJarPath) {
+      if (!(this_present_pluginsJarPath && that_present_pluginsJarPath))
+        return false;
+      if (!this.pluginsJarPath.equals(that.pluginsJarPath))
+        return false;
+    }
+
     return true;
   }
 
@@ -320,6 +376,11 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
     builder.append(present_jarPath);
     if (present_jarPath)
       builder.append(jarPath);
+
+    boolean present_pluginsJarPath = true && (is_set_pluginsJarPath());
+    builder.append(present_pluginsJarPath);
+    if (present_pluginsJarPath)
+      builder.append(pluginsJarPath);
 
     return builder.toHashCode();
   }
@@ -348,6 +409,16 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
     }
     if (is_set_jarPath()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.jarPath, other.jarPath);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(is_set_pluginsJarPath()).compareTo(other.is_set_pluginsJarPath());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (is_set_pluginsJarPath()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.pluginsJarPath, other.pluginsJarPath);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -386,6 +457,16 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
         sb.append("null");
       } else {
         sb.append(this.jarPath);
+      }
+      first = false;
+    }
+    if (is_set_pluginsJarPath()) {
+      if (!first) sb.append(", ");
+      sb.append("pluginsJarPath:");
+      if (this.pluginsJarPath == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.pluginsJarPath);
       }
       first = false;
     }
@@ -465,6 +546,14 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 3: // PLUGINS_JAR_PATH
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.pluginsJarPath = iprot.readString();
+              struct.set_pluginsJarPath_isSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -498,6 +587,13 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
           oprot.writeFieldEnd();
         }
       }
+      if (struct.pluginsJarPath != null) {
+        if (struct.is_set_pluginsJarPath()) {
+          oprot.writeFieldBegin(PLUGINS_JAR_PATH_FIELD_DESC);
+          oprot.writeString(struct.pluginsJarPath);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -527,9 +623,15 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
       if (struct.is_set_jarPath()) {
         optionals.set(0);
       }
-      oprot.writeBitSet(optionals, 1);
+      if (struct.is_set_pluginsJarPath()) {
+        optionals.set(1);
+      }
+      oprot.writeBitSet(optionals, 2);
       if (struct.is_set_jarPath()) {
         oprot.writeString(struct.jarPath);
+      }
+      if (struct.is_set_pluginsJarPath()) {
+        oprot.writeString(struct.pluginsJarPath);
       }
     }
 
@@ -550,10 +652,14 @@ public class TFloeApp implements org.apache.thrift.TBase<TFloeApp, TFloeApp._Fie
         }
       }
       struct.set_pellets_isSet(true);
-      BitSet incoming = iprot.readBitSet(1);
+      BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
         struct.jarPath = iprot.readString();
         struct.set_jarPath_isSet(true);
+      }
+      if (incoming.get(1)) {
+        struct.pluginsJarPath = iprot.readString();
+        struct.set_pluginsJarPath_isSet(true);
       }
     }
   }

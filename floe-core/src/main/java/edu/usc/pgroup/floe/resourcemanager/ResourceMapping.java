@@ -721,6 +721,9 @@ public class ResourceMapping implements Serializable {
             builder.append(",[");
             builder.append(numPelletInstances);
             builder.append("]");
+            builder.append(",[");
+            builder.append(stateChekpointingPort);
+            builder.append("]");
             builder.append("); ");
             return builder.toString();
         }

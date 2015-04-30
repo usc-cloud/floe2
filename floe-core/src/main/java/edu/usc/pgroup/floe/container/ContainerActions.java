@@ -27,7 +27,6 @@ import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +110,7 @@ public final class ContainerActions {
         String appName = mapping.getAppName();
 
         String applicationJar = mapping.getApplicationJarPath();
+        String pluginJar = mapping.getFloeApp().get_pluginsJarPath();
         String containerId = ContainerInfo.getInstance().getContainerId();
 
         if (applicationJar != null) {
@@ -121,13 +121,23 @@ public final class ContainerActions {
                                                             containerId,
                                                             applicationJar);
 
-                File f = new File(downloadLocation);
-                //if (!f.exists()) {
-                    LOGGER.info("Downloading: " + applicationJar);
-                    FloeClient.getInstance().downloadFileSync(applicationJar,
-                            downloadLocation);
-                    LOGGER.info("Finished Downloading: " + applicationJar);
-                //}
+                LOGGER.info("Downloading: " + applicationJar);
+                FloeClient.getInstance().downloadFileSync(applicationJar,
+                        downloadLocation);
+                LOGGER.info("Finished Downloading: " + applicationJar);
+
+
+                if (pluginJar != null) {
+                    String pluginLocation
+                            = Utils.getContainerJarDownloadPath(appName,
+                            containerId,
+                            pluginJar);
+                    LOGGER.info("Downloading plugin: " + pluginJar);
+                    FloeClient.getInstance().downloadFileSync(pluginJar,
+                            pluginLocation);
+                    LOGGER.info("Finished Downloading plugin: " + pluginJar);
+                }
+
             } catch (Exception e) {
                 LOGGER.warn("No application jar specified. It should work"
                               + " still work for inproc testing. Exception: {}",

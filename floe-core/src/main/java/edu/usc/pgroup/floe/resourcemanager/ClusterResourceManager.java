@@ -106,6 +106,7 @@ public class ClusterResourceManager extends ResourceManager {
                 //}
             }
         }
+        LOGGER.info("Resource mapping:{}", mapping);
         return  mapping;
     }
 
@@ -125,7 +126,10 @@ public class ClusterResourceManager extends ResourceManager {
         List<ContainerInfo> feasible = new ArrayList<>();
         for (ContainerInfo container : containers) {
             //If there are no cores available, move to next container.
-            if (container.getAvailableCores() == 0 && FloeConfig.getConfig().getString(ConfigProperties.FLOE_EXEC_MODE).equals(Utils.Constants.DISTRIBUTED)) {
+            if (container.getAvailableCores() == 0
+                    && FloeConfig.getConfig()
+                    .getString(ConfigProperties.FLOE_EXEC_MODE)
+                    .equals(Utils.Constants.DISTRIBUTED)) {
                 LOGGER.info("No availalbe cores: {}",
                         container.getContainerId());
                 continue;
@@ -158,7 +162,10 @@ public class ClusterResourceManager extends ResourceManager {
             //Now check if during the current mapping, all cores have been used.
             //If so, move to the next container.
             int usedCores = mapping.getUsedCores(container.getContainerId());
-            if (usedCores >= container.getNumCores() && FloeConfig.getConfig().getString(ConfigProperties.FLOE_EXEC_MODE).equals(Utils.Constants.DISTRIBUTED) ) {
+            if (usedCores >= container.getNumCores()
+                    && FloeConfig.getConfig()
+                    .getString(ConfigProperties.FLOE_EXEC_MODE)
+                    .equals(Utils.Constants.DISTRIBUTED)) {
                 LOGGER.info("Resource full: {}, used:{}, available:{}",
                         container.getContainerId(), usedCores,
                         container.getNumCores());

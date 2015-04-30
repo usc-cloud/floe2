@@ -22,6 +22,8 @@ import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.ganglia.GangliaReporter;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.pellets.IteratorPellet;
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
 import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationComponent;
 import edu.usc.pgroup.floe.flake.coordination.PeerCoordinationManagerFactory;
@@ -421,6 +423,7 @@ public class Flake {
         // out of it.
         IteratorPellet pellet = deserializePellet(activeAlternate);
 
+        loadPluginJar(tfloeApp);
 
         stateManager = StateManagerFactory.getStateManager(appName,
                 pelletName,
@@ -512,6 +515,23 @@ public class Flake {
                 flakeId,
                 initialToken,
                 flakeInstance.getStateCheckpointingPort()); //update on the ZK.
+    }
+
+    /**
+     * Loads the plugin jar into the namespace.
+     * @param tfloeApp floe app object.
+     */
+    private void loadPluginJar(TFloeApp tfloeApp) {
+        String pluginJar = tfloeApp.get_pluginsJarPath();
+
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
+        }
+
+        FloeConfig.getConfig().addProperty(ConfigProperties.FLOE_PLUGIN_JAR,
+                loader);
     }
 
     /**

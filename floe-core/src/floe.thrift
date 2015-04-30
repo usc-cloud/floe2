@@ -71,6 +71,7 @@ struct TPellet {
 struct TFloeApp {
     1: required map<string, TPellet> pellets;
     2: optional string jarPath;
+    3: optional string pluginsJarPath;
 }
 
 exception InsufficientResourcesException {
@@ -195,7 +196,7 @@ service TCoordinator
     2: AppNotFoundException anfe,
     3: PelletNotFoundException pnfe);
 
-    void scale_with_tokens(1: ScaleDirection direction, 2: string appName,
+    void scaleWithTokens(1: ScaleDirection direction, 2: string appName,
     3: string pelletName, 4: i32 count, 5: list<i32> tokens) throws
     (1: InsufficientResourcesException ire,
     2: AppNotFoundException anfe,

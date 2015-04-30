@@ -13,6 +13,7 @@ import org.apache.thrift.scheme.StandardScheme;
 
 import org.apache.thrift.scheme.TupleScheme;
 import org.apache.thrift.protocol.TTupleProtocol;
+import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.EncodingUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -22,11 +23,13 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.EnumSet;
 import java.util.Collections;
 import java.util.BitSet;
 import java.nio.ByteBuffer;
-
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +83,7 @@ public class TCoordinator {
 
     public void scale(ScaleDirection direction, String appName, String pelletName, int count, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
-    public void scale_with_tokens(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
+    public void scaleWithTokens(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
     public void signal(TSignal signal, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
@@ -309,13 +312,13 @@ public class TCoordinator {
 
     public void scaleWithTokens(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens) throws InsufficientResourcesException, AppNotFoundException, PelletNotFoundException, org.apache.thrift.TException
     {
-      send_scale_with_tokens(direction, appName, pelletName, count, tokens);
-      recv_scale_with_tokens();
+      send_scaleWithTokens(direction, appName, pelletName, count, tokens);
+      recv_scaleWithTokens();
     }
 
-    public void send_scale_with_tokens(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens) throws org.apache.thrift.TException
+    public void send_scaleWithTokens(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens) throws org.apache.thrift.TException
     {
-      scale_with_tokens_args args = new scale_with_tokens_args();
+      scaleWithTokens_args args = new scaleWithTokens_args();
       args.set_direction(direction);
       args.set_appName(appName);
       args.set_pelletName(pelletName);
@@ -324,9 +327,9 @@ public class TCoordinator {
       sendBase("scaleWithTokens", args);
     }
 
-    public void recv_scale_with_tokens() throws InsufficientResourcesException, AppNotFoundException, PelletNotFoundException, org.apache.thrift.TException
+    public void recv_scaleWithTokens() throws InsufficientResourcesException, AppNotFoundException, PelletNotFoundException, org.apache.thrift.TException
     {
-      scale_with_tokens_result result = new scale_with_tokens_result();
+      scaleWithTokens_result result = new scaleWithTokens_result();
       receiveBase(result, "scaleWithTokens");
       if (result.ire != null) {
         throw result.ire;
@@ -732,20 +735,20 @@ public class TCoordinator {
       }
     }
 
-    public void scale_with_tokens(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException {
+    public void scaleWithTokens(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      scale_with_tokens_call method_call = new scale_with_tokens_call(direction, appName, pelletName, count, tokens, resultHandler, this, ___protocolFactory, ___transport);
+      scaleWithTokens_call method_call = new scaleWithTokens_call(direction, appName, pelletName, count, tokens, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class scale_with_tokens_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class scaleWithTokens_call extends org.apache.thrift.async.TAsyncMethodCall {
       private ScaleDirection direction;
       private String appName;
       private String pelletName;
       private int count;
       private List<Integer> tokens;
-      public scale_with_tokens_call(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens, org.apache.thrift.async.AsyncMethodCallback resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public scaleWithTokens_call(ScaleDirection direction, String appName, String pelletName, int count, List<Integer> tokens, org.apache.thrift.async.AsyncMethodCallback resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.direction = direction;
         this.appName = appName;
@@ -756,7 +759,7 @@ public class TCoordinator {
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("scaleWithTokens", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        scale_with_tokens_args args = new scale_with_tokens_args();
+        scaleWithTokens_args args = new scaleWithTokens_args();
         args.set_direction(direction);
         args.set_appName(appName);
         args.set_pelletName(pelletName);
@@ -772,7 +775,7 @@ public class TCoordinator {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_scale_with_tokens();
+        (new Client(prot)).recv_scaleWithTokens();
       }
     }
 
@@ -931,7 +934,7 @@ public class TCoordinator {
       processMap.put("downloadChunk", new downloadChunk());
       processMap.put("submitApp", new submitApp());
       processMap.put("scale", new scale());
-      processMap.put("scaleWithTokens", new scale_with_tokens());
+      processMap.put("scaleWithTokens", new scaleWithTokens());
       processMap.put("signal", new signal());
       processMap.put("switchAlternate", new switchAlternate());
       processMap.put("killApp", new killApp());
@@ -1117,21 +1120,21 @@ public class TCoordinator {
       }
     }
 
-    public static class scale_with_tokens<I extends Iface> extends org.apache.thrift.ProcessFunction<I, scale_with_tokens_args> {
-      public scale_with_tokens() {
+    public static class scaleWithTokens<I extends Iface> extends org.apache.thrift.ProcessFunction<I, scaleWithTokens_args> {
+      public scaleWithTokens() {
         super("scaleWithTokens");
       }
 
-      public scale_with_tokens_args getEmptyArgsInstance() {
-        return new scale_with_tokens_args();
+      public scaleWithTokens_args getEmptyArgsInstance() {
+        return new scaleWithTokens_args();
       }
 
       protected boolean isOneway() {
         return false;
       }
 
-      public scale_with_tokens_result getResult(I iface, scale_with_tokens_args args) throws org.apache.thrift.TException {
-        scale_with_tokens_result result = new scale_with_tokens_result();
+      public scaleWithTokens_result getResult(I iface, scaleWithTokens_args args) throws org.apache.thrift.TException {
+        scaleWithTokens_result result = new scaleWithTokens_result();
         try {
           iface.scaleWithTokens(args.direction, args.appName, args.pelletName, args.count, args.tokens);
         } catch (InsufficientResourcesException ire) {
@@ -1264,7 +1267,7 @@ public class TCoordinator {
       processMap.put("downloadChunk", new downloadChunk());
       processMap.put("submitApp", new submitApp());
       processMap.put("scale", new scale());
-      processMap.put("scaleWithTokens", new scale_with_tokens());
+      processMap.put("scaleWithTokens", new scaleWithTokens());
       processMap.put("signal", new signal());
       processMap.put("switchAlternate", new switchAlternate());
       processMap.put("killApp", new killApp());
@@ -1710,20 +1713,20 @@ public class TCoordinator {
       }
     }
 
-    public static class scale_with_tokens<I extends AsyncIface> extends org.apache.thrift.AsyncProcessFunction<I, scale_with_tokens_args, Void> {
-      public scale_with_tokens() {
+    public static class scaleWithTokens<I extends AsyncIface> extends org.apache.thrift.AsyncProcessFunction<I, scaleWithTokens_args, Void> {
+      public scaleWithTokens() {
         super("scaleWithTokens");
       }
 
-      public scale_with_tokens_args getEmptyArgsInstance() {
-        return new scale_with_tokens_args();
+      public scaleWithTokens_args getEmptyArgsInstance() {
+        return new scaleWithTokens_args();
       }
 
       public AsyncMethodCallback<Void> getResultHandler(final AsyncFrameBuffer fb, final int seqid) {
         final org.apache.thrift.AsyncProcessFunction fcall = this;
         return new AsyncMethodCallback<Void>() { 
           public void onComplete(Void o) {
-            scale_with_tokens_result result = new scale_with_tokens_result();
+            scaleWithTokens_result result = new scaleWithTokens_result();
             try {
               fcall.sendResponse(fb,result, org.apache.thrift.protocol.TMessageType.REPLY,seqid);
               return;
@@ -1735,7 +1738,7 @@ public class TCoordinator {
           public void onError(Exception e) {
             byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;
             org.apache.thrift.TBase msg;
-            scale_with_tokens_result result = new scale_with_tokens_result();
+            scaleWithTokens_result result = new scaleWithTokens_result();
             if (e instanceof InsufficientResourcesException) {
                         result.ire = (InsufficientResourcesException) e;
                         result.set_ire_isSet(true);
@@ -1771,8 +1774,8 @@ public class TCoordinator {
         return false;
       }
 
-      public void start(I iface, scale_with_tokens_args args, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws TException {
-        iface.scale_with_tokens(args.direction, args.appName, args.pelletName, args.count, args.tokens,resultHandler);
+      public void start(I iface, scaleWithTokens_args args, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws TException {
+        iface.scaleWithTokens(args.direction, args.appName, args.pelletName, args.count, args.tokens,resultHandler);
       }
     }
 
@@ -8493,8 +8496,8 @@ public class TCoordinator {
 
   }
 
-  public static class scale_with_tokens_args implements org.apache.thrift.TBase<scale_with_tokens_args, scale_with_tokens_args._Fields>, java.io.Serializable, Cloneable, Comparable<scale_with_tokens_args>   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("scale_with_tokens_args");
+  public static class scaleWithTokens_args implements org.apache.thrift.TBase<scaleWithTokens_args, scaleWithTokens_args._Fields>, java.io.Serializable, Cloneable, Comparable<scaleWithTokens_args>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("scaleWithTokens_args");
 
     private static final org.apache.thrift.protocol.TField DIRECTION_FIELD_DESC = new org.apache.thrift.protocol.TField("direction", org.apache.thrift.protocol.TType.I32, (short)1);
     private static final org.apache.thrift.protocol.TField APP_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("appName", org.apache.thrift.protocol.TType.STRING, (short)2);
@@ -8504,8 +8507,8 @@ public class TCoordinator {
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new scale_with_tokens_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new scale_with_tokens_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new scaleWithTokens_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new scaleWithTokens_argsTupleSchemeFactory());
     }
 
     private ScaleDirection direction; // required
@@ -8606,13 +8609,13 @@ public class TCoordinator {
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
               new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(scale_with_tokens_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(scaleWithTokens_args.class, metaDataMap);
     }
 
-    public scale_with_tokens_args() {
+    public scaleWithTokens_args() {
     }
 
-    public scale_with_tokens_args(
+    public scaleWithTokens_args(
       ScaleDirection direction,
       String appName,
       String pelletName,
@@ -8631,7 +8634,7 @@ public class TCoordinator {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public scale_with_tokens_args(scale_with_tokens_args other) {
+    public scaleWithTokens_args(scaleWithTokens_args other) {
       __isset_bitfield = other.__isset_bitfield;
       if (other.is_set_direction()) {
         this.direction = other.direction;
@@ -8649,8 +8652,8 @@ public class TCoordinator {
       }
     }
 
-    public scale_with_tokens_args deepCopy() {
-      return new scale_with_tokens_args(this);
+    public scaleWithTokens_args deepCopy() {
+      return new scaleWithTokens_args(this);
     }
 
     @Override
@@ -8891,12 +8894,12 @@ public class TCoordinator {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof scale_with_tokens_args)
-        return this.equals((scale_with_tokens_args)that);
+      if (that instanceof scaleWithTokens_args)
+        return this.equals((scaleWithTokens_args)that);
       return false;
     }
 
-    public boolean equals(scale_with_tokens_args that) {
+    public boolean equals(scaleWithTokens_args that) {
       if (that == null)
         return false;
 
@@ -8981,7 +8984,7 @@ public class TCoordinator {
     }
 
     @Override
-    public int compareTo(scale_with_tokens_args other) {
+    public int compareTo(scaleWithTokens_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
@@ -9055,7 +9058,7 @@ public class TCoordinator {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("scale_with_tokens_args(");
+      StringBuilder sb = new StringBuilder("scaleWithTokens_args(");
       boolean first = true;
 
       sb.append("direction:");
@@ -9120,15 +9123,15 @@ public class TCoordinator {
       }
     }
 
-    private static class scale_with_tokens_argsStandardSchemeFactory implements SchemeFactory {
-      public scale_with_tokens_argsStandardScheme getScheme() {
-        return new scale_with_tokens_argsStandardScheme();
+    private static class scaleWithTokens_argsStandardSchemeFactory implements SchemeFactory {
+      public scaleWithTokens_argsStandardScheme getScheme() {
+        return new scaleWithTokens_argsStandardScheme();
       }
     }
 
-    private static class scale_with_tokens_argsStandardScheme extends StandardScheme<scale_with_tokens_args> {
+    private static class scaleWithTokens_argsStandardScheme extends StandardScheme<scaleWithTokens_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, scale_with_tokens_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, scaleWithTokens_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -9197,7 +9200,7 @@ public class TCoordinator {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, scale_with_tokens_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, scaleWithTokens_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -9237,16 +9240,16 @@ public class TCoordinator {
 
     }
 
-    private static class scale_with_tokens_argsTupleSchemeFactory implements SchemeFactory {
-      public scale_with_tokens_argsTupleScheme getScheme() {
-        return new scale_with_tokens_argsTupleScheme();
+    private static class scaleWithTokens_argsTupleSchemeFactory implements SchemeFactory {
+      public scaleWithTokens_argsTupleScheme getScheme() {
+        return new scaleWithTokens_argsTupleScheme();
       }
     }
 
-    private static class scale_with_tokens_argsTupleScheme extends TupleScheme<scale_with_tokens_args> {
+    private static class scaleWithTokens_argsTupleScheme extends TupleScheme<scaleWithTokens_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, scale_with_tokens_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, scaleWithTokens_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.is_set_direction()) {
@@ -9289,7 +9292,7 @@ public class TCoordinator {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, scale_with_tokens_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, scaleWithTokens_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(5);
         if (incoming.get(0)) {
@@ -9326,8 +9329,8 @@ public class TCoordinator {
 
   }
 
-  public static class scale_with_tokens_result implements org.apache.thrift.TBase<scale_with_tokens_result, scale_with_tokens_result._Fields>, java.io.Serializable, Cloneable, Comparable<scale_with_tokens_result>   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("scale_with_tokens_result");
+  public static class scaleWithTokens_result implements org.apache.thrift.TBase<scaleWithTokens_result, scaleWithTokens_result._Fields>, java.io.Serializable, Cloneable, Comparable<scaleWithTokens_result>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("scaleWithTokens_result");
 
     private static final org.apache.thrift.protocol.TField IRE_FIELD_DESC = new org.apache.thrift.protocol.TField("ire", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField ANFE_FIELD_DESC = new org.apache.thrift.protocol.TField("anfe", org.apache.thrift.protocol.TType.STRUCT, (short)2);
@@ -9335,8 +9338,8 @@ public class TCoordinator {
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new scale_with_tokens_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new scale_with_tokens_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new scaleWithTokens_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new scaleWithTokens_resultTupleSchemeFactory());
     }
 
     private InsufficientResourcesException ire; // required
@@ -9418,13 +9421,13 @@ public class TCoordinator {
       tmpMap.put(_Fields.PNFE, new org.apache.thrift.meta_data.FieldMetaData("pnfe", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(scale_with_tokens_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(scaleWithTokens_result.class, metaDataMap);
     }
 
-    public scale_with_tokens_result() {
+    public scaleWithTokens_result() {
     }
 
-    public scale_with_tokens_result(
+    public scaleWithTokens_result(
       InsufficientResourcesException ire,
       AppNotFoundException anfe,
       PelletNotFoundException pnfe)
@@ -9438,7 +9441,7 @@ public class TCoordinator {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public scale_with_tokens_result(scale_with_tokens_result other) {
+    public scaleWithTokens_result(scaleWithTokens_result other) {
       if (other.is_set_ire()) {
         this.ire = new InsufficientResourcesException(other.ire);
       }
@@ -9450,8 +9453,8 @@ public class TCoordinator {
       }
     }
 
-    public scale_with_tokens_result deepCopy() {
-      return new scale_with_tokens_result(this);
+    public scaleWithTokens_result deepCopy() {
+      return new scaleWithTokens_result(this);
     }
 
     @Override
@@ -9595,12 +9598,12 @@ public class TCoordinator {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof scale_with_tokens_result)
-        return this.equals((scale_with_tokens_result)that);
+      if (that instanceof scaleWithTokens_result)
+        return this.equals((scaleWithTokens_result)that);
       return false;
     }
 
-    public boolean equals(scale_with_tokens_result that) {
+    public boolean equals(scaleWithTokens_result that) {
       if (that == null)
         return false;
 
@@ -9657,7 +9660,7 @@ public class TCoordinator {
     }
 
     @Override
-    public int compareTo(scale_with_tokens_result other) {
+    public int compareTo(scaleWithTokens_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
@@ -9711,7 +9714,7 @@ public class TCoordinator {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("scale_with_tokens_result(");
+      StringBuilder sb = new StringBuilder("scaleWithTokens_result(");
       boolean first = true;
 
       sb.append("ire:");
@@ -9762,15 +9765,15 @@ public class TCoordinator {
       }
     }
 
-    private static class scale_with_tokens_resultStandardSchemeFactory implements SchemeFactory {
-      public scale_with_tokens_resultStandardScheme getScheme() {
-        return new scale_with_tokens_resultStandardScheme();
+    private static class scaleWithTokens_resultStandardSchemeFactory implements SchemeFactory {
+      public scaleWithTokens_resultStandardScheme getScheme() {
+        return new scaleWithTokens_resultStandardScheme();
       }
     }
 
-    private static class scale_with_tokens_resultStandardScheme extends StandardScheme<scale_with_tokens_result> {
+    private static class scaleWithTokens_resultStandardScheme extends StandardScheme<scaleWithTokens_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, scale_with_tokens_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, scaleWithTokens_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -9816,7 +9819,7 @@ public class TCoordinator {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, scale_with_tokens_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, scaleWithTokens_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -9841,16 +9844,16 @@ public class TCoordinator {
 
     }
 
-    private static class scale_with_tokens_resultTupleSchemeFactory implements SchemeFactory {
-      public scale_with_tokens_resultTupleScheme getScheme() {
-        return new scale_with_tokens_resultTupleScheme();
+    private static class scaleWithTokens_resultTupleSchemeFactory implements SchemeFactory {
+      public scaleWithTokens_resultTupleScheme getScheme() {
+        return new scaleWithTokens_resultTupleScheme();
       }
     }
 
-    private static class scale_with_tokens_resultTupleScheme extends TupleScheme<scale_with_tokens_result> {
+    private static class scaleWithTokens_resultTupleScheme extends TupleScheme<scaleWithTokens_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, scale_with_tokens_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, scaleWithTokens_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.is_set_ire()) {
@@ -9875,7 +9878,7 @@ public class TCoordinator {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, scale_with_tokens_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, scaleWithTokens_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {

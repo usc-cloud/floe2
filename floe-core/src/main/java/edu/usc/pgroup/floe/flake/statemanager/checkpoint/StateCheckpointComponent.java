@@ -158,7 +158,8 @@ public class StateCheckpointComponent extends FlakeComponent
          */
         ZMQ.Socket stateSocSender = getContext().socket(ZMQ.PUB);
         String ssConnetStr = Utils.Constants.FLAKE_STATE_PUB_SOCK + port;
-        LOGGER.info("binding STATE CHECKPOINTER to socket at: {}", ssConnetStr);
+        LOGGER.error("binding STATE CHECKPOINTER to socket at: {} fid:{}",
+                ssConnetStr, getFid());
 
         TimeUnit durationUnit = TimeUnit.MILLISECONDS;
         double durationFactor = 1.0 / durationUnit.toNanos(1);

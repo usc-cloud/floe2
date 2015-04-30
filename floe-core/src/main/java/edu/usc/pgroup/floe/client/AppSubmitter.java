@@ -64,13 +64,22 @@ public final class AppSubmitter {
 
         FloeClient client = FloeClient.getInstance();
 
-        String jar = FloeConfig.getConfig().getString(ConfigProperties
-                .FLOE_EXE_JAR);
+        String jar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_EXE_JAR);
 
         //submit jar.
         if (jar != null) {
             String baseFile = client.uploadFileSync(jar);
             app.set_jarPath(baseFile);
+        }
+
+
+        String pluginsJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
+
+        if (pluginsJar != null) {
+            String baseFile = client.uploadFileSync(pluginsJar);
+            app.set_pluginsJarPath(baseFile);
         }
 
         //submit app

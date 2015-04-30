@@ -244,7 +244,7 @@ public final class ConfigProperties {
     /**
      * Jar containing various custom floe plugins.
      */
-    public static final String FLOE_PLUGIN_JAR = "floe.flake.plugins.jar";
+    public static final String FLOE_PLUGIN_JAR = "floe.plugins.jar";
 
     /**
      * Hiding the default constructor.

@@ -178,14 +178,8 @@ public final class MessageDispersionStrategyFactory {
 
         FlakeLocalDispersionStrategy strategy = null;
 
-        String pluginJar = FloeConfig.getConfig().getString(
+        ClassLoader loader = (ClassLoader) FloeConfig.getConfig().getProperty(
                 ConfigProperties.FLOE_PLUGIN_JAR);
-
-        ClassLoader loader = null;
-        if (pluginJar != null && !pluginJar.isEmpty()) {
-            loader = Utils.getClassLoader(pluginJar,
-                    ClassLoader.getSystemClassLoader());
-        }
 
         strategy = (FlakeLocalDispersionStrategy) Utils.instantiateObject(
                 channel.get_localDispersionClass(), loader);
