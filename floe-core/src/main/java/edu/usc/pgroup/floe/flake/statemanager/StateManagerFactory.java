@@ -65,15 +65,8 @@ public final class StateManagerFactory {
             return null;
         }
 
-        String pluginJar = FloeConfig.getConfig().getString(
+        ClassLoader loader = (ClassLoader) FloeConfig.getConfig().getProperty(
                 ConfigProperties.FLOE_PLUGIN_JAR);
-
-        ClassLoader loader = null;
-        if (pluginJar != null && !pluginJar.isEmpty()) {
-            loader = Utils.getClassLoader(pluginJar,
-                    ClassLoader.getSystemClassLoader());
-            LOGGER.warn("**********STATE MANAGER LOADER LOADED***********");
-        }
 
         if (loader == null) {
 

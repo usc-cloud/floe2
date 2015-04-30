@@ -521,7 +521,7 @@ public class Flake {
      * Loads the plugin jar into the namespace.
      * @param tfloeApp floe app object.
      */
-    private void loadPluginJar(TFloeApp tfloeApp) {
+    private void loadPluginJar(final TFloeApp tfloeApp) {
         String pluginJar = tfloeApp.get_pluginsJarPath();
 
         ClassLoader loader = null;
