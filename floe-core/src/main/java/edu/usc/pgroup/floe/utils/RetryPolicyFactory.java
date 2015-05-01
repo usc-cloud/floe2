@@ -33,7 +33,7 @@ public final class RetryPolicyFactory {
     /**
      * args for the default policy.
      */
-    private static final String[] DEFAULT_ARGS = {"5", "1000"};
+    private static final String[] DEFAULT_ARGS = {"10", "2000"};
 
     /**
      * @param klass name of the class.
