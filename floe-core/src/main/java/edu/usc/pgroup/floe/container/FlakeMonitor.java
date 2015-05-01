@@ -133,6 +133,14 @@ public final class FlakeMonitor {
     }
 
     /**
+     * Remove the flake from the monitor.
+     * @param pelletId pellet id for the flake to be removed
+     */
+    public void removeFlake(final String pelletId) {
+        flakeMap.remove(pelletId);
+    }
+
+    /**
      * Internal monitor class to listen for heartbeats from flakes.
      */
     private class Monitor extends Thread {

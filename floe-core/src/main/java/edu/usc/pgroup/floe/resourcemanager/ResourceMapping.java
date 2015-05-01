@@ -115,7 +115,8 @@ public class ResourceMapping implements Serializable {
         ContainerInstance containerInstance = null;
         if (!containerMap.containsKey(container.getContainerId())) {
             containerInstance = new ContainerInstance(
-                    container.getContainerId(), container);
+                    container.getContainerId(), container,
+                    container.getHostnameOrIpAddr());
             containerMap.put(container.getContainerId(),
                     containerInstance);
         } else {
@@ -395,6 +396,11 @@ public class ResourceMapping implements Serializable {
         private final ContainerInfo containerInfo;
 
         /**
+         * host name or ipaddr.
+         */
+        private final String host;
+
+        /**
          * the next available port.
          */
         private int nextPort;
@@ -408,12 +414,15 @@ public class ResourceMapping implements Serializable {
          * Constructor.
          * @param cid container's id
          * @param cInfo the containerInfo object received from the heartbeat.
+         * @param hostnameOrIpAddr host or ip addr.
          */
-        public ContainerInstance(final String cid, final ContainerInfo cInfo) {
+        public ContainerInstance(final String cid, final ContainerInfo cInfo,
+                                 final String hostnameOrIpAddr) {
             this.containerId = cid;
             this.containerInfo = cInfo;
             this.nextPort = containerInfo.getPortRangeStart();
             this.flakeMap = new HashMap<>();
+            this.host = hostnameOrIpAddr;
         }
 
         /**
@@ -503,6 +512,20 @@ public class ResourceMapping implements Serializable {
             }
             stringBuilder.append("]" + System.lineSeparator());
             return stringBuilder.toString();
+        }
+
+        /**
+         * @return returns the container id.
+         */
+        public final String getContainerId() {
+            return containerId;
+        }
+
+        /**
+         * @return the host name or ip arrd.
+         */
+        public final String getHostNameorIpAddr() {
+            return host;
         }
     }
 
@@ -795,7 +818,8 @@ public class ResourceMapping implements Serializable {
         }
 
         /**
-         * @return the token as string or "nan" (the user defined token, if any)
+         * @return the token as string or "nan" (the user defined token, if
+         * any).
          */
         public final Integer getToken() {
             return fToken;

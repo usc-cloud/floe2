@@ -375,22 +375,32 @@ public class Flake {
             flakeHeartbeatComponent.stopAndWait();
         }
 
+        LOGGER.info("Stopped heartbeat: " + flakeId);
+
+        //HACK.. THIS SHOULD NOT BE REQUIRED.
+        System.exit(0);
+
         if (flakeReceiverComponent != null) {
             flakeReceiverComponent.stopAndWait();
         }
 
+        LOGGER.info("Stopped reciever: " + flakeId);
         /*if (stateManager != null) {
             stateManager.stopAndWait();
         }*/
 
+        peerMonitor.stop();
+        LOGGER.info("Stopped peerMonitor: " + flakeId);
+
         if (coordinationManager != null) {
             coordinationManager.stopAndWait();
         }
+        LOGGER.info("Stopped coordination: " + flakeId);
 
         if (flakeSenderComponent != null) {
             flakeSenderComponent.stopAndWait();
         }
-
+        LOGGER.info("Stopped render: " + flakeId);
         //initializeFlake();
     }
 
@@ -684,6 +694,10 @@ public class Flake {
                         LOGGER.warn("Flake has running pellets. "
                                 + "Cannot terminate");
                     }
+
+//                    //HACK..ALOK.. TODO FIX THE ACTUAL ISSUE.
+//                    LOGGER.error("Exiting Flake: " + flakeId);
+//                    System.exit(0);
                     break; //?? Do we need anything else? Prob. Not.
                 default:
                     processControlSignal(command,

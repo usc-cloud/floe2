@@ -152,7 +152,7 @@ public class MsgReceiverComponent extends FlakeComponent {
 
             receiverMEComponent = new ReceiverME(getMetricRegistry(),
                     getFid(),
-                    "RECEIVER-NE", getContext(),
+                    "RECEIVER-ME", getContext(),
                     predChannelMap);
 
             receiverMEComponent.startAndWait();

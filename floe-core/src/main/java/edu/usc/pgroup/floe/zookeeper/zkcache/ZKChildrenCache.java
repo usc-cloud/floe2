@@ -23,6 +23,7 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -125,6 +126,17 @@ public class ZKChildrenCache {
         } catch (Exception e) {
             e.printStackTrace();
             LOGGER.warn("Could not retrieve path cache. {}", e);
+        }
+    }
+
+    /**
+     * Stop the cache.
+     */
+    public final void stop() {
+        try {
+            pathCache.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

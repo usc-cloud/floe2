@@ -27,6 +27,7 @@ import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -256,6 +257,48 @@ public final class ZKUtils {
         return false;
     }
 
+
+    /**
+     * @return returns a list of applications (both running and terminated)
+     */
+    public static List<String> getRunningApplications() {
+        List<String> applications = new ArrayList<>();
+        try {
+            List<String> runningApplications = ZKClient.getInstance()
+                    .getCuratorClient().getChildren()
+                    .forPath(ZKUtils.getApplicationRootPath());
+
+            if (runningApplications != null) {
+                applications.addAll(runningApplications);
+            }
+        } catch (Exception e) {
+        LOGGER.error("Exception occurred while getting running "
+                + "applications. {}", e);
+        }
+        return applications;
+    }
+
+
+    /**
+     * @return returns a list of applications (both running and terminated)
+     */
+    public static List<String> getTerminatedApplications() {
+        List<String> applications = new ArrayList<>();
+        try {
+            List<String> terminatedApplications = ZKClient.getInstance()
+                    .getCuratorClient().getChildren()
+                    .forPath(
+                            ZKUtils.getTerminatedApplicationRootPath());
+            if (terminatedApplications != null) {
+                applications.addAll(terminatedApplications);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Exception occurred while getting running "
+                    + "applications. {}", e);
+        }
+
+        return applications;
+    }
     /**
      * Sets the cluster status.
      * @param status the new status to set.

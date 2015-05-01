@@ -155,8 +155,9 @@ public class ReceiverME extends FlakeComponent {
                         : localDispersionStratMap.values()) {
                     strategy.stopAndWait();
                 }*/
-
+                LOGGER.info("GOT TERMINIATE REQ at RECIEVER ME");
                 byte[] intr = terminateSignalReceiver.recv();
+                LOGGER.info("READ IT");
                 break;
             }
         }
@@ -170,6 +171,7 @@ public class ReceiverME extends FlakeComponent {
         backend.close();
         recevierME.close();
         msgBackupSender.close();
+        LOGGER.info("Notifying stopped.");
         notifyStopped(true);
     }
 

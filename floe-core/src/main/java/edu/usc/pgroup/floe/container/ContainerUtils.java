@@ -17,7 +17,6 @@
 package edu.usc.pgroup.floe.container;
 
 import edu.usc.pgroup.floe.flake.FlakeInfo;
-import edu.usc.pgroup.floe.flake.FlakeService;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMappingDelta;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
@@ -27,6 +26,8 @@ import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,13 +87,13 @@ public final class ContainerUtils {
         args.add("-cid");
         args.add(cid);
 
-        final String[] argsarr = new String[args.size()];
+        /*final String[] argsarr = new String[args.size()];
         args.toArray(argsarr);
 
-        LOGGER.info("args: {}", args);
+        LOGGER.info("args: {}", args);*/
         //System.exit(1);
 
-        Thread t = new Thread(
+        /*Thread t = new Thread(
                 new Runnable() {
                     @Override
                     public void run() {
@@ -102,13 +103,36 @@ public final class ContainerUtils {
                     }
                 }
         );
-        t.start();
-        return Utils.generateFlakeId(cid, fid);
+        t.start();*/
+        List<String> command = new ArrayList<>();
+        command.add("java");
+
+        command.add("-cp");
+        command.add(System.getProperty("java.class.path"));
+
+        command.add("edu.usc.pgroup.floe.flake.FlakeService");
+        command.addAll(args);
+        Runtime r = Runtime.getRuntime();
+
+        final String[] cmdarray = new String[command.size()];
+        command.toArray(cmdarray);
+
+        String flakeid = Utils.generateFlakeId(cid, fid);
+        try {
+            Process p = new ProcessBuilder(cmdarray)
+                    .redirectOutput(new File("flake." + flakeid + ".out"))
+                    .redirectError(new File("flake." + flakeid + ".err"))
+                    .start();
+        } catch (IOException e) {
+            LOGGER.error("Could not start process.");
+            return null;
+        }
+        return flakeid;
     }
 
     /**
      * Returns the unique flake id.
-     * @return container-local unique flake id
+     * @return container-local unique flake id.
      */
     public static int getUniqueFlakeId() {
         return flakeId++;
@@ -548,8 +572,12 @@ public final class ContainerUtils {
                     //Send Kill Signal.
                     ContainerUtils.sendKillFlakeCommand(info.getFlakeId());
 
+                    //HACK..ALOK
+                    FlakeMonitor.getInstance().removeFlake(info.getPelletId());
                     //Wait for flake to be killed.
-                    Boolean killed = RetryLoop.callWithRetry(RetryPolicyFactory
+                    /*Boolean killed = RetryLoop.callWithRetry
+                    (RetryPolicyFactory
+
                                     .getDefaultPolicy(),
                             new Callable<Boolean>() {
                                 @Override
@@ -570,7 +598,7 @@ public final class ContainerUtils {
                                     throw new Exception("Flake still alive. "
                                             + "Trying again. ");
                                 }
-                            });
+                            });*/
                     LOGGER.info("Flake terminated (at container):{}", flakeId);
 
                 } catch (Exception e) {

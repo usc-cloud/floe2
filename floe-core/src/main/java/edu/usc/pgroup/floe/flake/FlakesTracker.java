@@ -71,6 +71,13 @@ public class FlakesTracker implements PathChildrenUpdateListener {
     }
 
     /**
+     * Stop the falke monitor.
+     */
+    public final void stop() {
+        this.flakeCache.stop();
+    }
+
+    /**
      * Triggered when initial list of children is cached.
      * This is retrieved synchronously.
      *

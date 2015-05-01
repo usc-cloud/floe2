@@ -295,6 +295,9 @@ public class PeerMonitor extends FlakesTracker implements FlakeUpdateListener {
         SortedMap<Integer, FlakeToken> tail = allFlakesForward.tailMap(
                                                     myToken.getToken());
         Iterator<Integer> iterator = tail.keySet().iterator();
+        if (!iterator.hasNext()) {
+            return;
+        }
         iterator.next(); //ignore the self's token.
 
         /**

@@ -66,6 +66,11 @@ public abstract class FlakeComponent {
     private final MetricRegistry metricRegistry;
 
     /**
+     * Component runner thread.
+     */
+    private Thread componentRunner;
+
+    /**
      * Constructor.
      * @param registry Metrics registry used to log various metrics.
      * @param flakeId Flake's id to which this component belongs.
@@ -95,7 +100,7 @@ public abstract class FlakeComponent {
      * @return true if the component was started successfully, false otherwise
      */
     public final synchronized boolean startAndWait() {
-        Thread componentRunner = new Thread(
+        componentRunner = new Thread(
                 new Runnable() {
                     @Override
                     public void run() {
@@ -129,12 +134,14 @@ public abstract class FlakeComponent {
         killSignalSender.send(new byte[]{1}, 0);
 
         LOGGER.info("Waiting for Stopped notification for {}", name);
+
         byte[] result = notifyListenerSock.recv(); //wait
 
         LOGGER.info("{} Stopped with status {}", name, result);
         if (result[0] == 1) {
             return true;
         }
+
         return false;
     }
 
