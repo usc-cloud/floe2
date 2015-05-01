@@ -61,16 +61,19 @@ public final class FlakeService {
  *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param appName application's name to which this flake belongs.
      * @param jar the application's jar file name.
+     * @param pluginJar plugin jar.
      */
     private FlakeService(final String pid,
                          final String fid,
                          final String cid,
                          final String appName,
-                         final String jar) {
+                         final String jar,
+                         final String pluginJar) {
         flake = new Flake(pid, fid,
                 cid,
                 appName,
-                jar);
+                jar,
+                pluginJar);
     }
 
     /**
@@ -114,11 +117,18 @@ public final class FlakeService {
                 .withDescription("App's jar file name containing the pellets")
                 .create("jar");
 
+        Option pluginjarOption = OptionBuilder.withArgName("file")
+                .hasArg().withType(new String())
+                .withDescription("App's plugin jar")
+                .create("pluginjar");
+
+
         options.addOption(pidOption);
         options.addOption(idOption);
         options.addOption(cidOption);
         options.addOption(appNameOption);
         options.addOption(jarOption);
+        options.addOption(pluginjarOption);
 
         return options;
     }
@@ -153,6 +163,10 @@ public final class FlakeService {
         if (line.hasOption("jar")) {
             jar = line.getOptionValue("jar");
         }
+        String pluginjar = null;
+        if (line.hasOption("pluginjar")) {
+            pluginjar = line.getOptionValue("pluginjar");
+        }
 
         LOGGER.info("pid: {}, id:{}, cid:{}, app:{}, jar:{}",
             pid, id,
@@ -163,7 +177,7 @@ public final class FlakeService {
                     id,
                     cid,
                     appName,
-                    jar).start();
+                    jar, pluginjar).start();
         } catch (Exception e) {
             LOGGER.error("Exception while creating flake: {}", e);
             return;

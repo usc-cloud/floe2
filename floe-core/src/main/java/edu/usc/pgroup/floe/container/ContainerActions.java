@@ -178,6 +178,7 @@ public final class ContainerActions {
             ContainerUtils.createFlakes(
                     mapping.getAppName(),
                     mapping.getApplicationJarPath(),
+                    mapping.getPluginJarPath(),
                     containerId,
                     flakes);
         }

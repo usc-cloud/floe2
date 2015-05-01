@@ -58,6 +58,7 @@ public final class ContainerUtils {
      * @param pid pellet id/name.
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
+     * @param pluginJarPath plugin jar file name.
      * @param cid container's id on which this flake resides.
      * @param flakeInstance flake's instance object with corresponding pros.
      * @return the flake id of the launched flake.
@@ -66,6 +67,7 @@ public final class ContainerUtils {
             final String pid,
             final String appName,
             final String applicationJarPath,
+            final String pluginJarPath,
             final String cid,
             final ResourceMapping.FlakeInstance flakeInstance) {
 
@@ -83,6 +85,10 @@ public final class ContainerUtils {
         if (applicationJarPath != null) {
             args.add("-jar");
             args.add(applicationJarPath);
+        }
+        if (pluginJarPath != null) {
+            args.add("-pluginjar");
+            args.add(pluginJarPath);
         }
         args.add("-cid");
         args.add(cid);
@@ -289,6 +295,7 @@ public final class ContainerUtils {
             Map<String, String> pidToFidMap = createFlakes(
                     resourceMapping.getAppName(),
                     resourceMapping.getApplicationJarPath(),
+                    resourceMapping.getPluginJarPath(),
                     containerId,
                     flakes);
 
@@ -488,12 +495,14 @@ public final class ContainerUtils {
      *
      * @param appName application name.
      * @param applicationJarPath application's jar file name.
+     * @param pluginJarPath plugin jar file name.
      * @param containerId Container id.
      * @param flakeInstances list of flake instances from the resource mapping.
      * @return the pid to fid map.
      */
     public static Map<String, String> createFlakes(
             final String appName, final String applicationJarPath,
+            final String pluginJarPath,
             final String containerId,
             final Map<String, ResourceMapping.FlakeInstance> flakeInstances) {
 
@@ -511,6 +520,7 @@ public final class ContainerUtils {
                     pid,
                     appName,
                     applicationJarPath,
+                    pluginJarPath,
                     containerId,
                     flakeInstance
                     );

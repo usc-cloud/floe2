@@ -381,6 +381,13 @@ public class ResourceMapping implements Serializable {
     }
 
     /**
+     * @return plugin jar path.
+     */
+    public final String getPluginJarPath() {
+        return floeApp.get_pluginsJarPath();
+    }
+
+    /**
      * Internal container instance class.
      */
     public class ContainerInstance implements Serializable {

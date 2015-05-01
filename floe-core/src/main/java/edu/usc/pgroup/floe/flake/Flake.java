@@ -212,16 +212,18 @@ public class Flake {
      * @param fid flake's id. (the container decides a unique id for the
      *                flake)
      * @param cid container's id. This will be appended by fid to get the
- *            actual globally unique flake id. This is to support
- *            psuedo-distributed mode with multiple containers. Bug#1.
+*            actual globally unique flake id. This is to support
+*            psuedo-distributed mode with multiple containers. Bug#1.
      * @param app application's name to which this flake belongs.
      * @param jar the application's jar file name.
+     * @param pluginJar plugin jar.
      */
     public Flake(final String pid,
                  final String fid,
                  final String cid,
                  final String app,
-                 final String jar) {
+                 final String jar,
+                 final String pluginJar) {
 
         ResourceMapping resourceMapping = ZKUtils.getResourceMapping(app);
         ResourceMapping.ContainerInstance container
@@ -234,7 +236,7 @@ public class Flake {
         this.pelletName = pid;
         this.appName = app;
         this.appJar = jar;
-
+        loadPluginJar(pluginJar);
         this.sharedContext = ZMQ.context(Utils.Constants.FLAKE_NUM_IO_THREADS);
 
         this.runningPelletInstances = new ArrayList<>();
@@ -433,8 +435,6 @@ public class Flake {
         // out of it.
         IteratorPellet pellet = deserializePellet(activeAlternate);
 
-        loadPluginJar(tfloeApp);
-
         stateManager = StateManagerFactory.getStateManager(appName,
                 pelletName,
                 flakeId,
@@ -529,14 +529,14 @@ public class Flake {
 
     /**
      * Loads the plugin jar into the namespace.
-     * @param tfloeApp floe app object.
+     * @param pluginJar plugin jar
      */
-    private void loadPluginJar(final TFloeApp tfloeApp) {
-        String pluginJar = tfloeApp.get_pluginsJarPath();
-
+    private void loadPluginJar(final String pluginJar) {
         ClassLoader loader = null;
         if (pluginJar != null && !pluginJar.isEmpty()) {
-            loader = Utils.getClassLoader(pluginJar,
+            loader = Utils.getClassLoader(
+                    Utils.getContainerJarDownloadPath(appName,
+                                                        containerId, appJar),
                     ClassLoader.getSystemClassLoader());
         }
 
@@ -591,7 +591,8 @@ public class Flake {
             URL jarLoc = new URL(
                     "file://" + relativeJarLoc.getAbsolutePath());
 
-            LOGGER.info("Loading jar: {} into class loader.", jarLoc);
+            LOGGER.info("deserialize Pellet: Loading jar: {} into class "
+                    + "loader.", jarLoc);
             loader = URLClassLoader.newInstance(
                     new URL[]{jarLoc},
                     getClass().getClassLoader()
