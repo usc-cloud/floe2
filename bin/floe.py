@@ -92,6 +92,18 @@ def jar(jarfile, klass, *args):
         jvmopts=[' '.join(filter(None, [JAR_JVM_OPTS, "-Dfloe.execution.jar=" +
         jarfile]))])
 
+def nojar(klass, *args):
+    """Syntax: [floe jar topology-jar-path class ...]
+
+    Runs the main method of class with the specified arguments.
+    The floe jars and configs in ~/.floe are put on the classpath.
+    The process is configured so that floeSubmitter
+    will upload the jar at topology-jar-path when the topology is submitted.
+    """
+    exec_floe_class(
+        klass,
+        jvmtype="-client",
+        args=args)
 
 
 
@@ -257,7 +269,9 @@ def unknown_command(*args):
     print "Unknown command: [floe %s]" % ' '.join(sys.argv[1:])
     print_usage()
 
-COMMANDS = {"jar": jar, "kill": kill, "coordinator": coordinator,
+COMMANDS = {"jar": jar,
+            "nojar": nojar,
+            "kill": kill, "coordinator": coordinator,
             "container": container, "classpath": print_classpath,
             "dev-zookeeper": dev_zookeeper,
             "scale": scale,
