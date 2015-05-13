@@ -23,7 +23,9 @@ import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.app.pellets.PelletConfiguration;
 import edu.usc.pgroup.floe.app.pellets.PelletContext;
+import edu.usc.pgroup.floe.app.pellets.Signallable;
 import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
+import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +35,7 @@ import java.util.List;
 /**
  * @author kumbhare
  */
-public class WordPellet extends StatelessPellet {
+public class WordPellet extends StatelessPellet implements Signallable {
     /**
      * the global logger instance.
      */
@@ -53,7 +55,17 @@ public class WordPellet extends StatelessPellet {
     /**
      * Metrics registry.
      */
-    private MetricRegistry metrics;
+    private Meter tweetRateMeter;
+
+    /**
+     * DEFAULT LOOP MAX value.
+     */
+    private static final long DEFAULT_LOOPMAX = (long) Math.pow(10, 10);
+
+    /**
+     * loop max for busy wait.
+     */
+    private long loopMax;
 
     /**
      * Constructor.
@@ -64,6 +76,7 @@ public class WordPellet extends StatelessPellet {
                       final long sleepTime) {
         this.words = w;
         this.interval = sleepTime;
+        this.loopMax = DEFAULT_LOOPMAX;
     }
 
     /**
@@ -84,7 +97,9 @@ public class WordPellet extends StatelessPellet {
     @Override
     public final void onStart(final AppContext appContext,
                       final PelletContext pelletContext) {
-        this.metrics = pelletContext.getMetricRegistry();
+        MetricRegistry metrics = pelletContext.getMetricRegistry();
+        tweetRateMeter = metrics.meter(
+                MetricRegistry.name(WordPellet.class, "MyWordGen"));
     }
 
     /**
@@ -106,28 +121,41 @@ public class WordPellet extends StatelessPellet {
     @Override
     public final void execute(final Tuple t, final Emitter emitter) {
         LOGGER.info("Executing word pellet.");
-        int i = 0;
 
 
-        Meter tweetRateMeter = metrics.meter(MetricRegistry.name("MyWordGen"));
+        int i = (int) (Math.random() * words.length);
 
-        while (true) {
-            if (i == words.length) {
-                i = 0;
-            }
-            Tuple ot = new Tuple();
-            ot.put("word", words[i]);
-            LOGGER.debug("Emmitting: {}", ot);
-            emitter.emit(ot);
-            try {
-                Thread.sleep(interval);
-            } catch (InterruptedException e) {
-                LOGGER.error("Exception: {}", e);
-                break;
-            }
-            i++;
-            tweetRateMeter.mark();
+        Tuple ot = new Tuple();
+        ot.put("word", words[i]);
+        LOGGER.debug("Emmitting: {}", ot);
+        emitter.emit(ot);
+
+        tweetRateMeter.mark();
+
+        //busy wait.
+        long j = 0;
+        while (j < loopMax) {
+            j++;
         }
+//
+//
+//        //Meter tweetRateMeter = metrics.meter(MetricRegistry.name
+//        // ("MyWordGen"));
+//
+//        while (true) {
+//            if (i == words.length) {
+//                i = 0;
+//            }
+//
+//            try {
+//                Thread.sleep(interval);
+//            } catch (InterruptedException e) {
+//                LOGGER.error("Exception: {}", e);
+//                break;
+//            }
+//            i++;
+//            //tweetRateMeter.mark();
+//        }
     }
 
     /**
@@ -146,5 +174,16 @@ public class WordPellet extends StatelessPellet {
     @Override
     public final List<String> getOutputStreamNames() {
         return null;
+    }
+
+    /**
+     * Called when a signal is received for the component.
+     *
+     * @param signal the signal received for this pellet.
+     */
+    @Override
+    public final void onSignal(final PelletSignal signal) {
+        String lmstr = (String) Utils.deserialize(signal.getSignalData());
+        loopMax = Integer.parseInt(lmstr);
     }
 }
