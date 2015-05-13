@@ -16,21 +16,14 @@
 
 package edu.usc.pgroup.floe.flake.statemanager.checkpoint;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SlidingTimeWindowReservoir;
 import edu.usc.pgroup.floe.client.FloeClient;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.FlakeToken;
-import edu.usc.pgroup.floe.flake.PelletExecutor;
-import edu.usc.pgroup.floe.flake.QueueLenMonitor;
 import edu.usc.pgroup.floe.flake.coordination.PeerMonitor;
 import edu.usc.pgroup.floe.flake.coordination.PeerUpdateListener;
-import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.thriftgen.ScaleDirection;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -169,30 +162,30 @@ public class StateCheckpointComponent extends FlakeComponent
                 = getMetricRegistry().meter(
                 MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"));*/
 
-        LOGGER.debug("Hists: {}", getMetricRegistry().getHistograms());
+
         /*Histogram qhist = getMetricRegistry()
                 .getHistograms()
                 .get(MetricRegistry.name(
                         QueueLenMonitor.class, "q.len.histo"));*/
 
-        Counter queLen = getMetricRegistry().counter(
-                MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
+        //Counter queLen = getMetricRegistry().counter(
+                //MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
 
         final int windowlen = 30; //seconds.
-        Histogram qhist
+        /*Histogram qhist
                 = getMetricRegistry() .register(
                 MetricRegistry.name(QueueLenMonitor.class, "q.len.histo"),
                 new Histogram(new SlidingTimeWindowReservoir(windowlen,
-                        TimeUnit.SECONDS)));
+                        TimeUnit.SECONDS)));*/
 
-        QueueLenMonitor monitor = new QueueLenMonitor(getMetricRegistry(),
+        /*QueueLenMonitor monitor = new QueueLenMonitor(getMetricRegistry(),
                 queLen, qhist);
-        monitor.start();
+        monitor.start();*/
 
 
 
-        Meter msgProcessedMeter =  getMetricRegistry().meter(
-                MetricRegistry.name(PelletExecutor.class, "processed"));
+        /*Meter msgProcessedMeter =  getMetricRegistry().meter(
+                MetricRegistry.name(PelletExecutor.class, "processed"));*/
 
         notifyStarted(true);
         Boolean done = false;
@@ -245,7 +238,7 @@ public class StateCheckpointComponent extends FlakeComponent
         }
 
         stateSocSender.close();
-        monitor.interrupt();
+        //monitor.interrupt();
         notifyStopped(true);
     }
 

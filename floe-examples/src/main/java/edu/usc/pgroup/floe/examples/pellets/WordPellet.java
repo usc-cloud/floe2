@@ -16,6 +16,8 @@
 
 package edu.usc.pgroup.floe.examples.pellets;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.Emitter;
 import edu.usc.pgroup.floe.app.Tuple;
@@ -49,6 +51,11 @@ public class WordPellet extends StatelessPellet {
     private final long interval;
 
     /**
+     * Metrics registry.
+     */
+    private MetricRegistry metrics;
+
+    /**
      * Constructor.
      * @param w List of words to emmit in a loop.
      * @param sleepTime sleeptime interval between two words.
@@ -75,9 +82,9 @@ public class WordPellet extends StatelessPellet {
      *                      particular pellet instance.
      */
     @Override
-    public void onStart(final AppContext appContext,
+    public final void onStart(final AppContext appContext,
                       final PelletContext pelletContext) {
-
+        this.metrics = pelletContext.getMetricRegistry();
     }
 
     /**
@@ -100,13 +107,17 @@ public class WordPellet extends StatelessPellet {
     public final void execute(final Tuple t, final Emitter emitter) {
         LOGGER.info("Executing word pellet.");
         int i = 0;
+
+
+        Meter tweetRateMeter = metrics.meter(MetricRegistry.name("MyWordGen"));
+
         while (true) {
             if (i == words.length) {
                 i = 0;
             }
             Tuple ot = new Tuple();
             ot.put("word", words[i]);
-            LOGGER.error("Emmitting: {}", ot);
+            LOGGER.debug("Emmitting: {}", ot);
             emitter.emit(ot);
             try {
                 Thread.sleep(interval);
@@ -115,6 +126,7 @@ public class WordPellet extends StatelessPellet {
                 break;
             }
             i++;
+            tweetRateMeter.mark();
         }
     }
 

@@ -155,7 +155,7 @@ public class PrintPellet extends IteratorPellet implements Signallable {
                         final StateManager stateManager) {
         while (true) {
             Tuple t = tupleItertaor.next();
-            LOGGER.error("{} : Received: {}",
+            LOGGER.debug("{} : Received: {}",
                     peInstanceId, t.get("word"));
         }
     }

@@ -20,8 +20,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
-import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.MessageDispersionStrategy;
+import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.MessageDispersionStrategyFactory;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;

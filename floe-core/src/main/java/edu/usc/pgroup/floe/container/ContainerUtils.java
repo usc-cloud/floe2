@@ -16,7 +16,10 @@
 
 package edu.usc.pgroup.floe.container;
 
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.flake.FlakeInfo;
+import edu.usc.pgroup.floe.flake.FlakeService;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMapping;
 import edu.usc.pgroup.floe.resourcemanager.ResourceMappingDelta;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
@@ -25,8 +28,6 @@ import edu.usc.pgroup.floe.utils.RetryPolicyFactory;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,45 +94,53 @@ public final class ContainerUtils {
         args.add("-cid");
         args.add(cid);
 
-        /*final String[] argsarr = new String[args.size()];
+
+        final String[] argsarr = new String[args.size()];
         args.toArray(argsarr);
 
-        LOGGER.info("args: {}", args);*/
+        LOGGER.info("args: {}", args);
         //System.exit(1);
 
-        /*Thread t = new Thread(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        FlakeService.main(
-                                argsarr
-                        );
-                    }
-                }
-        );
-        t.start();*/
-        List<String> command = new ArrayList<>();
-        command.add("java");
-
-        command.add("-cp");
-        command.add(System.getProperty("java.class.path"));
-
-        command.add("edu.usc.pgroup.floe.flake.FlakeService");
-        command.addAll(args);
-        Runtime r = Runtime.getRuntime();
-
-        final String[] cmdarray = new String[command.size()];
-        command.toArray(cmdarray);
+        String mode = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_EXEC_MODE);
 
         String flakeid = Utils.generateFlakeId(cid, fid);
-        try {
-            Process p = new ProcessBuilder(cmdarray)
-                    .redirectOutput(new File("flake." + flakeid + ".out"))
-                    .redirectError(new File("flake." + flakeid + ".err"))
-                    .start();
-        } catch (IOException e) {
-            LOGGER.error("Could not start process.");
-            return null;
+
+        if (mode.compareToIgnoreCase(Utils.Constants.LOCAL) == 0) {
+            Thread t = new Thread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            FlakeService.main(
+                                    argsarr
+                            );
+                        }
+                    }
+            );
+            t.start();
+        } else {
+            List<String> command = new ArrayList<>();
+            command.add("java");
+
+            command.add("-cp");
+            command.add(System.getProperty("java.class.path"));
+
+            command.add("edu.usc.pgroup.floe.flake.FlakeService");
+            command.addAll(args);
+            Runtime r = Runtime.getRuntime();
+
+            final String[] cmdarray = new String[command.size()];
+            command.toArray(cmdarray);
+
+            try {
+                Process p = new ProcessBuilder(cmdarray)
+                        .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                        .redirectError(ProcessBuilder.Redirect.INHERIT)
+                        .start();
+            } catch (IOException e) {
+                LOGGER.error("Could not start process.");
+                return null;
+            }
         }
         return flakeid;
     }

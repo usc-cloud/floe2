@@ -17,8 +17,8 @@
 package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
 import edu.usc.pgroup.floe.app.Tuple;
-import edu.usc.pgroup.floe.flake.messaging.dispersion
-        .FlakeLocalDispersionStrategy;
+import edu.usc.pgroup.floe.flake.messaging
+        .dispersion.FlakeLocalDispersionStrategy;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

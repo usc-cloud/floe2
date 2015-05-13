@@ -16,7 +16,6 @@
 
 package edu.usc.pgroup.floe.flake.messaging;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.container.FlakeControlCommand;
@@ -234,15 +233,15 @@ public class MsgReceiverComponent extends FlakeComponent {
         boolean done = false;
         boolean terminateSignalled = false;
         final int pollDelay = 500;
-        Counter queLen = getMetricRegistry().counter(
-                MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
+        //Counter queLen = getMetricRegistry().counter(
+                //MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
         while (!done && !Thread.currentThread().isInterrupted()) {
             pollerItems.poll(pollDelay);
             if (pollerItems.pollin(0)) { //frontend
                 //forwardToPellet(msgRecvMeter, frontend, backend,
                 //        msgBackupSender);
                 msgRecvMeter.mark();
-                queLen.inc();
+                //queLen.inc();
                 Utils.forwardCompleteMessage(frontend, recevierME);
 
             /*} else if (pollerItems.pollin(1)) { //backend

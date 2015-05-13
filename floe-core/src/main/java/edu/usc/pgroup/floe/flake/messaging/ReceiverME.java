@@ -18,7 +18,6 @@ package edu.usc.pgroup.floe.flake.messaging;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.messaging
@@ -73,7 +72,7 @@ public class ReceiverME extends FlakeComponent {
     /**
      * Timer to measure approx. nw. latency.
      */
-    private final Timer nwLatTimer;
+    //private final Timer nwLatTimer;
 
     /**
      * Counter for queue length.
@@ -98,11 +97,11 @@ public class ReceiverME extends FlakeComponent {
         this.predChannelMap = pChannelMap;
         this.localDispersionStratMap = new HashMap<>();
         this.tupleSerializer = SerializerFactory.getSerializer();
-        nwLatTimer = registry.timer(
+        /*this.nwLatTimer = registry.timer(
                 MetricRegistry.name(MsgReceiverComponent.class, "nw.latency")
         );
         this.queLen = registry.counter(
-                MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));
+                MetricRegistry.name(MsgReceiverComponent.class, "queue.len"));*/
     }
 
     /**

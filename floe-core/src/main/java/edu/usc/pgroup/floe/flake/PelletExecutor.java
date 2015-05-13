@@ -17,7 +17,6 @@
 package edu.usc.pgroup.floe.flake;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.AppContext;
 import edu.usc.pgroup.floe.app.EmitterEnvelopeHook;
@@ -196,7 +195,7 @@ public class PelletExecutor extends Thread {
 
         this.started = false;
         this.tupleIterator = new TupleItertaor(pelletInstanceId,
-                pelletStateManager, tupleSerializer, dataReceiver);
+                pelletStateManager, tupleSerializer, dataReceiver, registry);
         this.appContext = appCtx;
     }
 
@@ -343,12 +342,6 @@ public class PelletExecutor extends Thread {
         ZMQ.Poller pollerItems = new ZMQ.Poller(2);
         //pollerItems.register(dataReceiver, ZMQ.Poller.POLLIN);
         pollerItems.register(signalReceiver, ZMQ.Poller.POLLIN);
-
-        Meter msgDequeuedMeter =  metricRegistry.meter(
-                MetricRegistry.name(PelletExecutor.class, "dequed"));
-
-        Meter msgProcessedMeter =  metricRegistry.meter(
-                MetricRegistry.name(PelletExecutor.class, "processed"));
 
         //Timer queueTimer = metricRegistry.timer(
         //        MetricRegistry.name(PelletExecutor.class, "queue.latency"));

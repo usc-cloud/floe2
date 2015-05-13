@@ -20,6 +20,7 @@ import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.client.AppSubmitter;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.examples.pellets.HelloGreetingPellet;
 import edu.usc.pgroup.floe.examples.pellets.WelcomeGreetingPellet;
 import edu.usc.pgroup.floe.examples.pellets.WordMultiStreamPellet;
 import edu.usc.pgroup.floe.utils.Utils;
@@ -65,12 +66,11 @@ public final class SimpleMultiOrSplit {
                 new WordMultiStreamPellet("boys", "girls",
                         boys, girls)).setParallelism(1);
 
-        /*builder.addPellet("hello", new HelloGreetingPellet())
-                .subscribe("names", "boys").setParallelism(1);*/
+        builder.addPellet("hello", new HelloGreetingPellet())
+                .subscribe("names", "boys").setParallelism(1);
 
         builder.addPellet("welcome", new WelcomeGreetingPellet())
-                .subscribe("names", "girls", "boys").subscribe("welcome")
-                .setParallelism(1);
+                .subscribe("names", "girls").setParallelism(1);
 
 
 

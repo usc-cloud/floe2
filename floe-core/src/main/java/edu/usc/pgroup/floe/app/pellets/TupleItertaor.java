@@ -1,5 +1,7 @@
 package edu.usc.pgroup.floe.app.pellets;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
@@ -47,6 +49,16 @@ public class TupleItertaor implements Iterator<Tuple> {
     private final ZMQ.Socket receiver;
 
     /**
+     * Metric registry.
+     */
+    private final MetricRegistry registry;
+
+    /**
+     * meter to measure the rate of message read.
+     */
+    private final Meter msgDequeuedMeter;
+
+    /**
      * Constructor.
      * @param peInstanceId pelletInstanceId (has to be unique). Best
      * practice: use flakeid-intancecount on the
@@ -57,15 +69,21 @@ public class TupleItertaor implements Iterator<Tuple> {
      * @param tSerializer  Serializer to be used to serialize and deserialize
  *                     the data tuples.
      * @param dataReceiver zmq data receiver socket associated with the
+     * @param metricRegistry metric registry.
      */
     public TupleItertaor(final String peInstanceId,
                          final StateManager ptStateMgr,
                          final TupleSerializer tSerializer,
-                         final ZMQ.Socket dataReceiver) {
+                         final ZMQ.Socket dataReceiver,
+                         final MetricRegistry metricRegistry) {
         this.pelletInstanceId = peInstanceId;
         this.pelletStateManager = ptStateMgr;
         this.tupleSerializer = tSerializer;
         this.receiver = dataReceiver;
+        this.registry = metricRegistry;
+
+        this.msgDequeuedMeter =  metricRegistry.meter(
+                MetricRegistry.name(TupleItertaor.class, "dequed"));
     }
 
     /**
@@ -101,6 +119,8 @@ public class TupleItertaor implements Iterator<Tuple> {
 
         Tuple tuple = tupleSerializer.deserialize(serializedTuple);
         LOGGER.debug("Read tuple:{}", tuple);
+
+        msgDequeuedMeter.mark();
 
         return tuple;
         /*if (state != null) {

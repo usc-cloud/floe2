@@ -53,7 +53,7 @@ public final class SimpleLinear {
                 .setParallelism(1);
 
         builder.addPellet("print", new PrintPellet())
-                .subscribe("word").setParallelism(2);
+                .subscribe("word").setParallelism(1);
 
 
         /*builder.addPellet("hello", new HelloGreetingPellet())

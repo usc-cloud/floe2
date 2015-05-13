@@ -27,8 +27,8 @@ import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.flake.statemanager.PelletStateDelta;
 import edu.usc.pgroup.floe.flake.statemanager.StateManager;
-import edu.usc.pgroup.floe.flake
-        .statemanager.checkpoint.StateCheckpointComponent;
+import edu.usc.pgroup.floe.flake.statemanager
+        .checkpoint.StateCheckpointComponent;
 import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
