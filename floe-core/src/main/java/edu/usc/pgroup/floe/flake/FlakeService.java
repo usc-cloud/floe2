@@ -17,21 +17,18 @@
 package edu.usc.pgroup.floe.flake;
 
 import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.ParseException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The flake process.
@@ -64,43 +61,16 @@ public final class FlakeService {
  *            psuedo-distributed mode with multiple containers. Bug#1.
      * @param appName application's name to which this flake belongs.
      * @param jar the application's jar file name.
-     * @param statePort       Port to be used for sending checkpoint data.
-     * @param pelletPortMap the list of ports on which this flake should
-*                       listen on. Note: This is fine here (and not as a
-*                       control signal) because this depends only on
-*                       static application configuration and not on
-     * @param backChannelPortMap map of port for the dispersion. One port
-*                           per target pellet.
-     * @param successorChannelTypeMap Map of target pellet to channel type
-*                                (one per edge)
-     * @param predChannelTypeMap Map of src pellet to channel type
-*                                (one per edge)
-     * @param pelletStreamsMap map from successor pellets to subscribed
-     * @param token token from the container.
      */
     private FlakeService(final String pid,
                          final String fid,
                          final String cid,
                          final String appName,
-                         final String jar,
-                         final int statePort,
-                         final Map<String, Integer> pelletPortMap,
-                         final Map<String, Integer> backChannelPortMap,
-                         final Map<String, String> successorChannelTypeMap,
-                         final Map<String, String> predChannelTypeMap,
-                         final Map<String, List<String>> pelletStreamsMap,
-                         final String token) {
+                         final String jar) {
         flake = new Flake(pid, fid,
                 cid,
                 appName,
-                jar,
-                statePort,
-                pelletPortMap,
-                backChannelPortMap,
-                successorChannelTypeMap,
-                predChannelTypeMap,
-                pelletStreamsMap,
-                token);
+                jar);
     }
 
     /**
@@ -144,61 +114,11 @@ public final class FlakeService {
                 .withDescription("App's jar file name containing the pellets")
                 .create("jar");
 
-
-        Option portsOption = OptionBuilder.withArgName("pellet:port list")
-                .hasArgs().isRequired()
-                .withValueSeparator(',')
-                .withDescription("List of ports for data channel.")
-                .create("ports");
-
-        Option backPortsOption = OptionBuilder.withArgName("pellet:port list")
-                .hasArgs().isRequired()
-                .withValueSeparator(',')
-                .withDescription("List of ports for back channel.")
-                .create("backchannelports");
-
-        Option channelTypeOption = OptionBuilder.withArgName("pellet:channel "
-                + "type")
-                .withValueSeparator(',')
-                .hasArgs().isRequired()
-                .withDescription("Type of the channel per out edge.")
-                .create("channeltype");
-
-        Option predChannelTypeOption = OptionBuilder.withArgName(
-                "pellet:channel type")
-                .withValueSeparator(',')
-                .hasArgs().isRequired()
-                .withDescription("Type of the channel per incoming edge.")
-                .create("predchanneltype");
-
-        Option streamsOption = OptionBuilder.withArgName("pellet:<streams> "
-                + "list").hasArgs().isRequired()
-                .withValueSeparator(',')
-                .withDescription("App's jar file name containing the pellets")
-                .create("streams");
-
-        Option statePortOption = OptionBuilder.withArgName("stateport:<num>")
-                .hasArgs().isRequired()
-                .withDescription("Port number to use for state checkpointing")
-                .create("stateport");
-
-        Option tokenOption = OptionBuilder.withArgName("token:<num>")
-                .hasArgs().isRequired()
-                .withDescription("Port number to use for state checkpointing")
-                .create("token");
-
         options.addOption(pidOption);
         options.addOption(idOption);
         options.addOption(cidOption);
         options.addOption(appNameOption);
         options.addOption(jarOption);
-        options.addOption(portsOption);
-        options.addOption(backPortsOption);
-        options.addOption(streamsOption);
-        options.addOption(channelTypeOption);
-        options.addOption(predChannelTypeOption);
-        options.addOption(statePortOption);
-        options.addOption(tokenOption);
 
         return options;
     }
@@ -234,75 +154,16 @@ public final class FlakeService {
             jar = line.getOptionValue("jar");
         }
 
-        String[] sports = line.getOptionValues("ports");
-        Map<String, Integer> pelletPortMap = new HashMap<>();
-        for (String pport: sports) {
-            String[] sp = pport.split(":");
-            String pellet = sp[0];
-            String port = sp[1];
-            pelletPortMap.put(pellet, Integer.parseInt(port));
-        }
-
-        String[] bsports = line.getOptionValues("backchannelports");
-        Map<String, Integer> pelletBackChannelPortMap = new HashMap<>();
-        for (String pport: bsports) {
-            String[] sp = pport.split(":");
-            String pellet = sp[0];
-            String port = sp[1];
-            pelletBackChannelPortMap.put(pellet, Integer.parseInt(port));
-        }
-
-        String[] sChannelTypes = line.getOptionValues("channeltype");
-        Map<String, String> pelletChannelTypeMap = new HashMap<>();
-        for (String ctype: sChannelTypes) {
-            String[] sp = ctype.split(":");
-            String pellet = sp[0];
-            String type = sp[1];
-            pelletChannelTypeMap.put(pellet, type);
-        }
-
-        String[] spredChannelTypes = line.getOptionValues("predchanneltype");
-        Map<String, String> predPelletChannelTypeMap = new HashMap<>();
-        for (String ctype: spredChannelTypes) {
-            String[] sp = ctype.split(":");
-            String pellet = sp[0];
-            String type = sp[1];
-            predPelletChannelTypeMap.put(pellet, type);
-        }
-
-        String[] streams = line.getOptionValues("streams");
-        Map<String, List<String>> pelletStreamsMap = new HashMap<>();
-        for (String sStreams: streams) {
-            String[] sp = sStreams.split(":");
-            String pellet = sp[0];
-            List<String> streamNames = null;
-            if (sp.length > 1) {
-                streamNames = parseCSV(sp[1]);
-            }
-            pelletStreamsMap.put(pellet, streamNames);
-        }
-
-        Integer statePort = Integer.parseInt(line.getOptionValue("stateport"));
-
-        LOGGER.info("pid: {}, id:{}, cid:{}, app:{}, jar:{}, ports:{}, "
-            + "backports:{}, stream:{}, channeltype:{}, predChanneltype:{}",
+        LOGGER.info("pid: {}, id:{}, cid:{}, app:{}, jar:{}",
             pid, id,
             cid,
-            appName, jar, pelletPortMap, pelletBackChannelPortMap,
-            pelletStreamsMap,
-            pelletChannelTypeMap, predPelletChannelTypeMap);
+            appName, jar);
         try {
             new FlakeService(pid,
                     id,
                     cid,
                     appName,
-                    jar,
-                    statePort,
-                    pelletPortMap,
-                    pelletBackChannelPortMap,
-                    pelletChannelTypeMap,
-                    predPelletChannelTypeMap,
-                    pelletStreamsMap, token).start();
+                    jar).start();
         } catch (Exception e) {
             LOGGER.error("Exception while creating flake: {}", e);
             return;

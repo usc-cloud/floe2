@@ -7,10 +7,6 @@
 package edu.usc.pgroup.floe.thriftgen;
 
 
-import java.util.Map;
-import java.util.HashMap;
-import org.apache.thrift.TEnum;
-
 public enum TTupleArgTypes implements org.apache.thrift.TEnum {
   i32_arg(0),
   i64_arg(1),

@@ -17,10 +17,7 @@
 package edu.usc.pgroup.floe.flake.coordination;
 
 import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.app.Pellet;
-import edu.usc.pgroup.floe.app.ReducerPellet;
-import edu.usc.pgroup.floe.config.ConfigProperties;
-import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.app.pellets.Pellet;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,17 +26,17 @@ import org.zeromq.ZMQ;
 /**
  * @author kumbhare
  */
-public final class CoordinationManagerFactory {
+public final class PeerCoordinationManagerFactory {
     /**
      * the global logger instance.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(CoordinationManagerFactory.class);
+            LoggerFactory.getLogger(PeerCoordinationManagerFactory.class);
 
     /**
      * Hiding default constructor.
      */
-    private CoordinationManagerFactory() {
+    private PeerCoordinationManagerFactory() {
 
     }
 
@@ -56,7 +53,7 @@ public final class CoordinationManagerFactory {
      * @param ctx           Shared zmq context.
      * @return the instantiated (but not started) state manager object.
      */
-    public static CoordinationComponent getCoordinationManager(
+    public static PeerCoordinationComponent getCoordinationManager(
             final MetricRegistry metricRegistry,
             final String appName,
             final String pelletName,
@@ -65,12 +62,12 @@ public final class CoordinationManagerFactory {
             final String componentName,
             final StateManagerComponent stateManager,
             final ZMQ.Context ctx) {
-        CoordinationComponent manager = null;
-        if (pellet instanceof ReducerPellet) {
+        PeerCoordinationComponent manager = null;
+        /*if (pellet instanceof ReducerPellet) {
             LOGGER.info("Reducer pellet. Creating reducer state manager.");
             int tolerance = FloeConfig.getConfig().getInt(
                     ConfigProperties.FLAKE_TOLERANCE_LEVEL);
-            manager =  new ReducerCoordinationComponent(
+            manager =  new ReducerPeerCoordinationComponent(
                             metricRegistry,
                             appName,
                             pelletName,
@@ -81,7 +78,7 @@ public final class CoordinationManagerFactory {
                             stateManager);
         } else  {
             manager = null;
-        }
+        }*/
 
         return manager;
     }

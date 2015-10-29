@@ -75,7 +75,8 @@ public class GenericPelletStateManager extends StateManagerComponent
      * combination.
      */
     @Override
-    public final PelletState getState(final String peId, final Tuple tuple) {
+    public final synchronized PelletState getState(final String peId,
+                                                   final Tuple tuple) {
         if (!pelletStateMap.containsKey(peId)) {
             LOGGER.info("Creating new state for peid: {}", peId);
             pelletStateMap.put(peId, new PelletState(peId, this));

@@ -14,30 +14,38 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
+package edu.usc.pgroup.floe.app.pellets;
+
+import java.io.Serializable;
 
 /**
  * @author kumbhare
  */
-public class PelletContext {
+public class PelletConfiguration implements Serializable {
+    /**
+     * the state type associated with the pellet.
+     */
+    private StateType stateType;
 
     /**
-     * Pellet's instance id.
+     * Default constructor. (sets the state type to localonly)
      */
-    private final String pelletInstanceId;
-
-    /**
-     * Constructor.
-     * @param peInstanceId Pellet's instance id.
-     */
-    public PelletContext(final String peInstanceId) {
-        this.pelletInstanceId = peInstanceId;
+    public PelletConfiguration() {
+        this.stateType = StateType.LocalOnly;
     }
 
     /**
-     * @return the pellet's instance id.
+     * @return State type configured for the pellet
      */
-    public final String getPelletInstanceId() {
-        return pelletInstanceId;
+    public final StateType getStateType() {
+        return stateType;
+    }
+
+    /**
+     * Sets the state type for the pellet.
+     * @param type state type enum
+     */
+    public final void setStateType(final StateType type) {
+        this.stateType = type;
     }
 }

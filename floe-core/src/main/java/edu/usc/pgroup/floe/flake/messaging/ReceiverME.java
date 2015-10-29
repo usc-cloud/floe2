@@ -19,6 +19,7 @@ package edu.usc.pgroup.floe.flake.messaging;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
 import edu.usc.pgroup.floe.flake.messaging
         .dispersion.FlakeLocalDispersionStrategy;
@@ -26,13 +27,15 @@ import edu.usc.pgroup.floe.flake.messaging
         .dispersion.MessageDispersionStrategyFactory;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
-import edu.usc.pgroup.floe.thriftgen.TChannelType;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -49,18 +52,18 @@ public class ReceiverME extends FlakeComponent {
     /**
      * Predecessor to channel type map.
      */
-    private Map<String, String> predChannelMap;
+    private Map<String, TChannel> predChannelMap;
 
     /**
      * Map of pred. pellet name to local dispersion strategy.
      */
-    //private final
-    //Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap;
+    private final
+        Map<String, FlakeLocalDispersionStrategy> localDispersionStratMap;
 
     /**
      * local disp. strategy associated with the pellet.
-     */
-    private FlakeLocalDispersionStrategy localDispersionStrat;
+     *
+    private FlakeLocalDispersionStrategy localDispersionStrat;*/
 
     /**
      * Serializer to be used to serialize and deserialized the data tuples.
@@ -84,16 +87,16 @@ public class ReceiverME extends FlakeComponent {
      * @param flakeId       Flake's id to which this component belongs.
      * @param componentName Unique name of the component.
      * @param ctx           Shared zmq context.
-     * @param predChannelTypeMap the pred. to channel type map.
+     * @param pChannelMap the pred. to channel type map.
      */
     public ReceiverME(final MetricRegistry registry,
                       final String flakeId,
                       final String componentName,
                       final ZMQ.Context ctx,
-                      final Map<String, String> predChannelTypeMap) {
+                      final Map<String, TChannel> pChannelMap) {
         super(registry, flakeId, componentName, ctx);
-        this.predChannelMap = predChannelTypeMap;
-        //this.localDispersionStratMap = new HashMap<>();
+        this.predChannelMap = pChannelMap;
+        this.localDispersionStratMap = new HashMap<>();
         this.tupleSerializer = SerializerFactory.getSerializer();
         nwLatTimer = registry.timer(
                 MetricRegistry.name(MsgReceiverComponent.class, "nw.latency")
@@ -157,9 +160,13 @@ public class ReceiverME extends FlakeComponent {
                 break;
             }
         }
-        if (localDispersionStrat != null) {
-            localDispersionStrat.stopAndWait();
-        }
+
+//        if (localDispersionStratMap != null) {
+//            for (FlakeLocalDispersionStrategy strat
+//                    : localDispersionStratMap.values()) {
+//                strat.stopAndWait();
+//            }
+//        }
         backend.close();
         recevierME.close();
         msgBackupSender.close();
@@ -173,77 +180,38 @@ public class ReceiverME extends FlakeComponent {
      */
     private void initializeLocalDispersionStrategyMap() {
 
+        for (Map.Entry<String, TChannel> echannel: predChannelMap.entrySet()) {
+            String src = echannel.getKey();
+            TChannel channel = echannel.getValue();
 
-        String channel
-                = predChannelMap.values().iterator().next();
+            if (channel != null && channel.get_channelType() != null) {
+                LOGGER.info("type and args: {}, Channel type: {}",
+                        channel.get_channelType(),
+                        channel.get_channelArgs());
 
-
-        String[] ctypesAndArgs = channel.split("__");
-        String ctype = ctypesAndArgs[0];
-        String args = null;
-        if (ctypesAndArgs.length > 1) {
-            args = ctypesAndArgs[1];
-        }
-        LOGGER.info("type and args: {}, Channel type: {}", channel,
-                ctype);
-
-        TChannelType type = null;
-        if (!ctype.startsWith("NONE")) {
-            type = Enum.valueOf(TChannelType.class, ctype);
-
-            try {
-                localDispersionStrat = MessageDispersionStrategyFactory
-                        .getFlakeLocalDispersionStrategy(
-                                getMetricRegistry(),
-                                getContext(),
-                                type,
-                                getFid()
-                        );
-                localDispersionStrat.startAndWait();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-
-        /*for (Map.Entry<String, String> channel: predChannelMap.entrySet()) {
-            String src = channel.getKey();
-            String channelType = channel.getValue();
-
-            String[] ctypesAndArgs = channelType.split("__");
-            String ctype = ctypesAndArgs[0];
-            String args = null;
-            if (ctypesAndArgs.length > 1) {
-                args = ctypesAndArgs[1];
-            }
-            LOGGER.info("type and args: {}, Channel type: {}", channelType,
-                    ctype);
-
-            FlakeLocalDispersionStrategy strat = null;
-
-            if (!ctype.startsWith("NONE")) {
-                TChannelType type = Enum.valueOf(TChannelType.class, ctype);
+                FlakeLocalDispersionStrategy strat = null;
                 try {
                     strat = MessageDispersionStrategyFactory
-                            .getFlakeLocalDispersionStrategy(
-                                    getMetricRegistry(),
-                                    type,
-                                    src,
+                            .getFlakeLocalDispersionStrategy(channel);
+                                    /*getMetricRegistry(),
                                     getContext(),
-                                    getFid(),
-                                    args
-                            );
-                    strat.startAndWait();
+                                    channel,
+                                    getFid()
+                                    );*/
+                    //strat.startAndWait();
+
+
                     localDispersionStratMap.put(src, strat);
 
                     //forward the first back message before this returns..
                     // should help. lets see.
 
                 } catch (Exception ex) {
-                    LOGGER.error("Invalid dispersion strategy: {}. "
-                            + "Using default RR", type);
+                    LOGGER.error("Invalid dispersion strategy: {}. ",
+                            ex);
                 }
             }
-        }*/
+        }
     }
 
 
@@ -257,7 +225,8 @@ public class ReceiverME extends FlakeComponent {
     private void forwardToPellet(final ZMQ.Socket from,
                                  final ZMQ.Socket to,
                                  final ZMQ.Socket backup) {
-        String fid = from.recvStr(0, Charset.defaultCharset());
+        String fid = from.recvStr(Charset.defaultCharset());
+        String src = from.recvStr(Charset.defaultCharset());
 
         /*int dummy = 0;
         LOGGER.info("dummy:{}", dummy);
@@ -284,36 +253,40 @@ public class ReceiverME extends FlakeComponent {
             return;
         }
 
-        localDispersionStrat.sendToPellets(from, to);
+        //localDispersionStrat.sendToPellets(from, to);
 
-        //Tuple t = tupleSerializer.deserialize(message);
+        Integer numArgs = Integer.parseInt(
+                from.recvStr(0, Charset.defaultCharset()));
+
+        ArrayList<String> args = new ArrayList<>(); //DONT LIKE THIS>> :(
+        for (int i = 0; i < numArgs; i++) {
+            args.add(from.recvStr(0, Charset.defaultCharset()));
+        }
+
+        byte[] message = from.recv();
+        Tuple t = tupleSerializer.deserialize(message);
 
         //Long ts = (Long) t.get(Utils.Constants.SYSTEM_TS_FIELD_NAME);
+        LOGGER.debug("msg src:{}", src);
+        FlakeLocalDispersionStrategy strategy
+                = localDispersionStratMap.get(src);
 
-
-        //LOGGER.debug("MY:{}", t.get("word"));
-        //String src = (String) t.get(Utils.Constants.SYSTEM_SRC_PELLET_NAME);
-
-        /*FlakeLocalDispersionStrategy strategy
-                = localDispersionStratMap.get(src);*/
+        //BUG: SHOULD
+        // HAVE A DIFFERENT STRATEGY PER SRC PELLET NAME
 
 
         //LOGGER.debug("Forwarding to pellet: {}", t);
-        /*List<String> pelletInstancesIds =
-                strategy.getTargetPelletInstances(t);
+        String pelletInstanceId =
+                strategy.getTargetPelletInstance(t, args);
 
-        if (pelletInstancesIds != null
-                && pelletInstancesIds.size() > 0) {
-            for (String pelletInstanceId : pelletInstancesIds) {
-                LOGGER.debug("Sending to:" + pelletInstanceId);
+        if (pelletInstanceId != null) {
                 to.sendMore(pelletInstanceId);
                 //to.sendMore(currentNano.toString());
                 to.send(message, 0);
-            }
         } else { //should queue up messages.
             LOGGER.warn("Message dropped because no pellet active.");
             //FIXME: FIX THIS..
-        }*/
+        }
 
         //LOGGER.debug("Received msg from:" + src);
     }
@@ -323,8 +296,11 @@ public class ReceiverME extends FlakeComponent {
      * @param peInstanceId instance id of the newly added pellet.
      */
     public final void pelletAdded(final String peInstanceId) {
-        if (localDispersionStrat != null) {
-            localDispersionStrat.pelletAdded(peInstanceId);
+        if (localDispersionStratMap != null) {
+            for (FlakeLocalDispersionStrategy strat
+                    : localDispersionStratMap.values()) {
+                strat.pelletAdded(peInstanceId);
+            }
         }
     }
 
@@ -333,8 +309,11 @@ public class ReceiverME extends FlakeComponent {
      * @param peInstanceId instance id of the removed pellet.
      */
     public final void pelletRemoved(final String peInstanceId) {
-        if (localDispersionStrat != null) {
-            localDispersionStrat.pelletRemoved(peInstanceId);
+        if (localDispersionStratMap != null) {
+            for (FlakeLocalDispersionStrategy strat
+                    : localDispersionStratMap.values()) {
+                strat.pelletRemoved(peInstanceId);
+            }
         }
     }
 

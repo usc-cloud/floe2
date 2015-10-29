@@ -18,6 +18,7 @@ package edu.usc.pgroup.floe.flake.messaging.sender;
 
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.flake.FlakeComponent;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -58,7 +59,7 @@ public class SenderFEComponent extends FlakeComponent {
     /**
      * Map of target pellet to channel type (one per edge).
      */
-    private final Map<String, String> pelletChannelTypeMap;
+    private final Map<String, TChannel> pelletChannelTypeMap;
 
     /**
      * Pellet's name to be sent with each message.
@@ -83,7 +84,7 @@ public class SenderFEComponent extends FlakeComponent {
      *                       control signal) because this depends only on
      *                       static application configuration and not on
      * @param backChannelPortMap ports for dispersion.
-     * @param channelTypeMap Map of target pellet to channel type (one per edge)
+     * @param channels Map of target pellet to channel type (one per edge)
      * @param streamsMap map from successor pellets to subscribed
      *                         streams.
      */
@@ -95,14 +96,14 @@ public class SenderFEComponent extends FlakeComponent {
                                final String componentName,
                                final Map<String, Integer> portMap,
                                final Map<String, Integer> backChannelPortMap,
-                               final Map<String, String> channelTypeMap,
+                               final Map<String, TChannel> channels,
                                final Map<String, List<String>> streamsMap) {
         super(metricRegistry, flakeId, componentName, ctx);
         this.appName = app;
         this.myPelletName = pelletName;
         this.pelletPortMap = portMap;
         this.pelletBackChannelPortMap = backChannelPortMap;
-        this.pelletChannelTypeMap = channelTypeMap;
+        this.pelletChannelTypeMap = channels;
         this.pelletStreamsMap = streamsMap;
     }
 
@@ -127,14 +128,14 @@ public class SenderFEComponent extends FlakeComponent {
         for (String pellet: pelletPortMap.keySet()) {
             int port = pelletPortMap.get(pellet);
             int bpPort = pelletBackChannelPortMap.get(pellet);
-            String channelType = pelletChannelTypeMap.get(pellet);
+            TChannel channel = pelletChannelTypeMap.get(pellet);
             List<String> streams = pelletStreamsMap.get(pellet);
 
             SenderBEComponent be
                     = new SenderBEComponent(getMetricRegistry(),
                     getFid(), "BE", getContext(),
                     port, bpPort, appName, pellet,
-                    channelType, streams, myPelletName);
+                    channel, streams, myPelletName);
 
             be.startAndWait();
             bes.add(be);

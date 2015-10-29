@@ -31,7 +31,6 @@ import edu.usc.pgroup.floe.utils.Utils;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
 import org.apache.curator.framework.recipes.cache.ChildData;
-
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,13 +50,14 @@ import java.util.TreeMap;
 /**
  * @author kumbhare
  */
-public class ReducerCoordinationComponent extends CoordinationComponent {
+public class ReducerPeerCoordinationComponent
+        extends PeerCoordinationComponent {
 
     /**
      * Logger.
      */
     private static final Logger LOGGER =
-            LoggerFactory.getLogger(ReducerCoordinationComponent.class);
+            LoggerFactory.getLogger(ReducerPeerCoordinationComponent.class);
 
     /**
      * level of tolerance. (i.e. number of flake
@@ -120,16 +120,16 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
      * @param ctx           Shared zmq context.
      * @param tolerance level of tolerance. (i.e. number of flake
      *                       failures to tolerate).
-     * @param stManager State manager associated with this flake.
+     * @param stMgr State manager associated with this flake.
      */
-    public ReducerCoordinationComponent(final MetricRegistry metricRegistry,
-                                        final String app,
-                                        final String pellet,
-                                        final String flakeId,
-                                        final String componentName,
-                                        final ZMQ.Context ctx,
-                                        final Integer tolerance,
-                                        final StateManagerComponent stManager) {
+    public ReducerPeerCoordinationComponent(final MetricRegistry metricRegistry,
+                                            final String app,
+                                            final String pellet,
+                                            final String flakeId,
+                                            final String componentName,
+                                            final ZMQ.Context ctx,
+                                            final Integer tolerance,
+                                            final StateManagerComponent stMgr) {
         super(metricRegistry, app, pellet, flakeId, componentName, ctx);
         this.toleranceLevel = tolerance;
         //this.stateBackupNeighbors = new TreeMap<>();
@@ -138,7 +138,7 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                 // message hash is found. FIXME: ADD A PROPOER DOCUMENTATION
                 // HERE.
         this.flakeToDataPortMap = new HashMap<>();
-        this.stateManager = stManager;
+        this.stateManager = stMgr;
     }
 
     /**
@@ -258,10 +258,12 @@ public class ReducerCoordinationComponent extends CoordinationComponent {
                     LOGGER.error("NO CHECKPOINT "
                             + "RECEIVED YEEEEEEEEEEEEEEEEEEEEEEE");
                     LOGGER.error("Initiating recovery procedure");
-                    String nfid = neighborsToBackupMsgsFor
-                            .get(neighborsToBackupMsgsFor.firstKey());
-                    initiateScaleDownAndTakeOver(nfid, false);
-                    nowRecovering = true;
+                    if (neighborsToBackupMsgsFor.size() > 0) {
+                        String nfid = neighborsToBackupMsgsFor
+                                .get(neighborsToBackupMsgsFor.firstKey());
+                        initiateScaleDownAndTakeOver(nfid, false);
+                        nowRecovering = true;
+                    }
                 }
             }
         }

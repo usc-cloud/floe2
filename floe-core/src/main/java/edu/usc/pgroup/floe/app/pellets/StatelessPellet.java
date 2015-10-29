@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
+package edu.usc.pgroup.floe.app.pellets;
 
+import edu.usc.pgroup.floe.app.Emitter;
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 
 /**
@@ -23,7 +25,12 @@ import edu.usc.pgroup.floe.flake.statemanager.PelletState;
  *
  * @author kumbhare
  */
-public abstract class StatelessPellet implements Pellet {
+public abstract class StatelessPellet extends Pellet {
+
+    @Override
+    public final void configure(final PelletConfiguration conf) {
+        conf.setStateType(StateType.None);
+    }
 
     /**
      * The execute method which is called for each tuple.
@@ -48,5 +55,5 @@ public abstract class StatelessPellet implements Pellet {
      * @param emitter An output emitter which may be used by the user to emmit
      *                results.
      */
-    public abstract void execute(Tuple t, Emitter emitter);
+    protected abstract void execute(final Tuple t, final Emitter emitter);
 }

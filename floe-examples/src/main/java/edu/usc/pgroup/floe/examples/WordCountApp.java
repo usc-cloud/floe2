@@ -20,11 +20,10 @@ import edu.usc.pgroup.floe.app.ApplicationBuilder;
 import edu.usc.pgroup.floe.client.AppSubmitter;
 import edu.usc.pgroup.floe.config.ConfigProperties;
 import edu.usc.pgroup.floe.config.FloeConfig;
-import edu.usc.pgroup.floe.examples.pellets.FileSourcePellet;
 import edu.usc.pgroup.floe.examples.pellets.WordCountReducer;
+import edu.usc.pgroup.floe.examples.pellets.WordPellet;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.utils.Utils;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +81,7 @@ public final class WordCountApp {
             wordInterval = Long.parseLong(args[2]);
         }
 
-        final int pathidx = 3;
+        /*final int pathidx = 3;
         String path = args[pathidx];
 
         String[] words = new String[numWords];
@@ -92,14 +91,14 @@ public final class WordCountApp {
             //words[i] = Character.toString((char) ('a' + i % numChars));
             words[i] = i + ":"
                     + RandomStringUtils.randomAlphabetic(maxWordLength);
-        }
-        //String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
+        }*/
+        String[] words = {"John", "Jane", "Maverick", "Alok", "Jack"};
 
-        builder.addPellet("words", new FileSourcePellet("word", path,
-                wordInterval)).setParallelism(numMappers);
+        builder.addPellet("words", new WordPellet(words, wordInterval))
+                .setParallelism(numMappers);
 
         builder.addPellet("count", new WordCountReducer("word"))
-                .setParallelism(numReducers).reduce("words");
+                .setParallelism(numReducers).reduce("words", "word");
 
         TFloeApp app = builder.generateApp();
         try {

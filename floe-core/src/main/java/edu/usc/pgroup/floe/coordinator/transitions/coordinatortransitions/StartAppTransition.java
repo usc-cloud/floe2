@@ -67,7 +67,7 @@ public class StartAppTransition extends BaseAppTransition {
                     .create().creatingParentsIfNeeded()
                     .forPath(appStatusPath,
                             Utils.serialize(
-                                    AppStatus.NEW_REQ_RECEIVED));
+                                    AppStatus.NEW_DEPLOYMENT_REQ_RECEIVED));
         } catch (Exception e) {
             LOGGER.error("Could not update status");
             return false;

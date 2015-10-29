@@ -17,10 +17,7 @@
 package edu.usc.pgroup.floe.flake.statemanager;
 
 import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.app.Pellet;
-import edu.usc.pgroup.floe.app.ReducerPellet;
-import edu.usc.pgroup.floe.app.StatefulPellet;
-import edu.usc.pgroup.floe.app.StatelessPellet;
+import edu.usc.pgroup.floe.app.pellets.Pellet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
@@ -62,7 +59,7 @@ public final class StateManagerFactory {
             final ZMQ.Context ctx,
             final int port) {
         StateManagerComponent manager = null;
-        if (pellet instanceof StatelessPellet) {
+        /*if (pellet instanceof StatelessPellet) {
             LOGGER.info("Stateless pellet. No state required.");
             manager = null;
         } else if (pellet instanceof ReducerPellet) {
@@ -75,8 +72,15 @@ public final class StateManagerFactory {
                     + "manager.");
             manager =  new GenericPelletStateManager(metricRegistry,
                     flakeId, componentName, ctx, port);
+        }*/
+        switch (pellet.getConf().getStateType()) {
+            case LocalOnly:
+            manager = new GenericPelletStateManager(metricRegistry,
+                    flakeId, componentName, ctx, port);
+                break;
+            default:
+                manager = null;
         }
-
         return manager;
     }
 }

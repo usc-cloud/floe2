@@ -27,6 +27,7 @@ import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,10 +119,13 @@ public final class ContainerActions {
                         = Utils.getContainerJarDownloadPath(appName,
                                                             applicationJar);
 
-                LOGGER.info("Downloading: " + applicationJar);
-                FloeClient.getInstance().downloadFileSync(applicationJar,
-                        downloadLocation);
-                LOGGER.info("Finished Downloading: " + applicationJar);
+                File f = new File(downloadLocation);
+                if (!f.exists()) {
+                    LOGGER.info("Downloading: " + applicationJar);
+                    FloeClient.getInstance().downloadFileSync(applicationJar,
+                            downloadLocation);
+                    LOGGER.info("Finished Downloading: " + applicationJar);
+                }
             } catch (Exception e) {
                 LOGGER.warn("No application jar specified. It should work"
                               + " still work for inproc testing. Exception: {}",

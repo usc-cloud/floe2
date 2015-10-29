@@ -17,12 +17,12 @@
 package edu.usc.pgroup.floe.coordinator;
 
 import edu.usc.pgroup.floe.coordinator.transitions.Transitions;
-import edu.usc.pgroup.floe.coordinator
-        .transitions.coordinatortransitions.KillAppTransition;
+import edu.usc.pgroup.floe.coordinator.transitions
+        .coordinatortransitions.KillAppTransition;
 import edu.usc.pgroup.floe.coordinator.transitions
         .coordinatortransitions.ScaleTransition;
-import edu.usc.pgroup.floe.coordinator
-        .transitions.coordinatortransitions.StartAppTransition;
+import edu.usc.pgroup.floe.coordinator.transitions
+        .coordinatortransitions.StartAppTransition;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManager;
 import edu.usc.pgroup.floe.resourcemanager.ResourceManagerFactory;
 import edu.usc.pgroup.floe.thriftgen.AppStatus;

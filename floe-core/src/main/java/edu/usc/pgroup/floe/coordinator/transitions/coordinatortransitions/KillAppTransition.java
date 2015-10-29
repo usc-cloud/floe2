@@ -25,6 +25,7 @@ import edu.usc.pgroup.floe.zookeeper.ZKClient;
 import edu.usc.pgroup.floe.zookeeper.ZKUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 import java.util.UUID;
 
@@ -77,7 +78,8 @@ public class KillAppTransition extends BaseAppTransition {
 
         LOGGER.info("App Path to store the configuration:" + appPath);
         try {
-            ZKUtils.setAppStatus(appName, AppStatus.NEW_REQ_RECEIVED);
+            ZKUtils.setAppStatus(appName,
+                    AppStatus.NEW_DEPLOYMENT_REQ_RECEIVED);
 
         } catch (Exception e) {
             LOGGER.error("Could not update status");

@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.app;
-
-import edu.usc.pgroup.floe.signals.PelletSignal;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
 /**
  * @author kumbhare
  */
-public interface Signallable {
+public interface HashingFunction {
     /**
-     * Called when a signal is received for the component.
-     * @param signal the signal received for this pellet.
+     * @param data byte serialized data.
+     * @return Returns a 32 bit integer hash.
      */
-    void onSignal(PelletSignal signal);
+    int hash(byte[] data);
 }

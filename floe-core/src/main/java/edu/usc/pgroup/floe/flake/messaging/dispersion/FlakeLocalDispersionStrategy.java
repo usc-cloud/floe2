@@ -16,16 +16,16 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
-import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.flake.FlakeComponent;
+import edu.usc.pgroup.floe.app.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
+
+import java.util.List;
 
 /**
  * @author kumbhare
  */
-public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
+public abstract class FlakeLocalDispersionStrategy
         implements PelletUpdateListener {
 
     /**
@@ -36,8 +36,8 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
 
     /**
      * Backchannel sender specific to this edge.
-     */
-    private final BackChannelSenderComponent backChannelSenderComponent;
+     *
+    private final BackChannelSenderComponent backChannelSenderComponent;*/
 
     /**
      * Initializes the strategy.
@@ -50,10 +50,18 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
      * Returns the list of target instances to send the given tuple using the
      * defined strategy.
      * @param tuple tuple object.
+     * @param args custom arguments sent by the source flake with the tuple.
      * @return the list of target instances to send the given tuple.
-     *
-    public abstract List<String> getTargetPelletInstances(Tuple tuple);*/
+     */
+    public abstract String getTargetPelletInstance(Tuple tuple,
+                                                   List<String> args);
 
+    /**
+     * Default constructor.
+     */
+    public FlakeLocalDispersionStrategy() {
+
+    }
     /**
      * @return the current backchannel data (e.g. for loadbalancing or the
      * token on the ring etc.)
@@ -65,47 +73,47 @@ public abstract class FlakeLocalDispersionStrategy extends FlakeComponent
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
-     */
+     *
     public FlakeLocalDispersionStrategy(
             final MetricRegistry metricRegistry,
-                                        final ZMQ.Context context,
-                                        final String flakeId) {
+            final ZMQ.Context context,
+            final String flakeId) {
 
-        super(metricRegistry, flakeId, "FL-LOCAL-STRATEGY", context);
+        /*super(metricRegistry, flakeId, "FL-LOCAL-STRATEGY", context);
 
         LOGGER.info("Initializing flake local strategy.");
         backChannelSenderComponent = new BackChannelSenderComponent(
                 metricRegistry, this,
-                getFid(), "BACK-CHANNEL-SENDER", context);
-    }
+                getFid(), "BACK-CHANNEL-SENDER", context);*
+    }*/
 
     /**
      * Starts all the sub parts of the given component and notifies when
      * components starts completely. This will be in a different thread,
      * so no need to worry.. block as much as you want.
      * @param terminateSignalReceiver terminate signal receiver.
-     */
+     *
     @Override
     protected final void runComponent(
             final ZMQ.Socket terminateSignalReceiver) {
 
         LOGGER.info("Starting fl local strategy.");
-        backChannelSenderComponent.startAndWait();
-        notifyStarted(true);
+        //backChannelSenderComponent.startAndWait();
+        //notifyStarted(true);
 
         terminateSignalReceiver.recv();
 
         LOGGER.info("Stopping back channel sender.");
-        backChannelSenderComponent.stopAndWait();
-        notifyStopped(true);
-    }
+        //backChannelSenderComponent.stopAndWait();
+        //notifyStopped(true);
+    }*/
 
     /**
      * Sends the tuple to the appropriate pellet.
      * @param from the middleend socket to retrieve the message
      * @param to the backend (PUB) socket to send it to (one or more) pellets.
-     */
+     *
     public abstract void sendToPellets(final ZMQ.Socket from,
-                                       final ZMQ.Socket to);
+                                       final ZMQ.Socket to);*/
 }
 

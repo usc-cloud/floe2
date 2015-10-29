@@ -17,6 +17,7 @@
 package edu.usc.pgroup.floe.resourcemanager;
 
 import edu.usc.pgroup.floe.container.ContainerInfo;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
 import edu.usc.pgroup.floe.thriftgen.TPellet;
@@ -537,12 +538,12 @@ public class ResourceMapping implements Serializable {
         /**
          * Map from target pellet name (i.e. per edge) to the channel type.
          */
-        private final Map<String, String> targetPelletChannelTypeMapping;
+        private final Map<String, TChannel> targetPelletChannelTypeMapping;
 
         /**
          * Map from src pellet name (i.e. per edge) to the channel type.
          */
-        private final Map<String, String> srcPelletChannelTypeMapping;
+        private final Map<String, TChannel> srcPelletChannelTypeMapping;
 
         /**
          * The map from pellet name (the immediate downstream pellets) to the
@@ -616,12 +617,9 @@ public class ResourceMapping implements Serializable {
                     pelletBackChannelPortMapping.put(
                             edge.get_destPelletId(), flPorts[i++]);
 
-                    String channelType = edge.get_channelType().toString();
-                    if (edge.get_channelTypeArgs() != null) {
-                        channelType += "__" + edge.get_channelTypeArgs();
-                    }
+                    TChannel channel = edge.get_channel();
                     targetPelletChannelTypeMapping.put(
-                            edge.get_destPelletId(), channelType);
+                            edge.get_destPelletId(), channel);
 
                     List<String> streams = oe.getValue();
                     streamNames
@@ -633,7 +631,7 @@ public class ResourceMapping implements Serializable {
                         , flPorts[1]);
                 pelletBackChannelPortMapping.put("OUT_PELLET"
                         , flPorts[2]);
-                targetPelletChannelTypeMapping.put("OUT_PELLET", "NONE");
+                targetPelletChannelTypeMapping.put("OUT_PELLET", null);
                 streamNames.put("OUT_PELLET",
                         new ArrayList<String>());
             }
@@ -643,18 +641,15 @@ public class ResourceMapping implements Serializable {
                 for (TEdge edge : tPellet.get_incomingEdges()) {
                     String srcPid = edge.get_srcPelletId();
 
-                    String channelType = edge.get_channelType().toString();
-                    if (edge.get_channelTypeArgs() != null) {
-                        channelType += "__" + edge.get_channelTypeArgs();
-                    }
+                    TChannel channel = edge.get_channel();
                     targetPelletChannelTypeMapping.put(
-                            edge.get_destPelletId(), channelType);
+                            edge.get_destPelletId(), channel);
 
-                    srcPelletChannelTypeMapping.put(srcPid, channelType);
+                    srcPelletChannelTypeMapping.put(srcPid, channel);
                 }
             } else {
                 LOGGER.info("No INCOMING PELLETS for: {}", tPellet.get_id());
-                srcPelletChannelTypeMapping.put("IN_PELLET", "NONE");
+                srcPelletChannelTypeMapping.put("IN_PELLET", null);
             }
         }
 
@@ -774,7 +769,7 @@ public class ResourceMapping implements Serializable {
          * @return the pellet to channel type mapping for target (successor)
          * pellets.
          */
-        public final Map<String, String> getTargetPelletChannelTypeMapping() {
+        public final Map<String, TChannel> getTargetPelletChannelTypeMapping() {
             return targetPelletChannelTypeMapping;
         }
 
@@ -782,7 +777,7 @@ public class ResourceMapping implements Serializable {
          * @return the pellet to channel type mapping for predecessor pellets
          * (incoming edges).
          */
-        public final Map<String, String> getSrcPelletChannelTypeMapping() {
+        public final Map<String, TChannel> getSrcPelletChannelTypeMapping() {
             return srcPelletChannelTypeMapping;
         }
 

@@ -374,13 +374,33 @@ public final class ZKUtils {
                                    final String flakeId,
                                    final Integer token,
                                    final Integer flakeDataPort) {
+        updateToken(appName, pelletName, flakeId, token, flakeDataPort, null);
+    }
+
+    /**
+     * Updates the token associated with the given app and flakeid.
+     * Note: flake id is globally unique.
+     * @param appName the application name.
+     * @param pelletName pellet's name to which this flake belongs.
+     * @param flakeId flake id.
+     * @param token Flake's token.
+     * @param flakeDataPort flake's port for data checkpointing.
+     * @param cdata custom data that can be set with Flake's token.
+     */
+    public static void updateToken(final String appName,
+                                   final String pelletName,
+                                   final String flakeId,
+                                   final Integer token,
+                                   final Integer flakeDataPort,
+                                   final byte[] cdata) {
         String flakeTokenPath = getApplicationFlakeTokenPath(
                 appName, pelletName, flakeId);
 
         FlakeToken ftoken = new FlakeToken(
                 token,
                 Utils.getHostNameOrIpAddress(),
-                flakeDataPort
+                flakeDataPort,
+                cdata
         );
 
         try {

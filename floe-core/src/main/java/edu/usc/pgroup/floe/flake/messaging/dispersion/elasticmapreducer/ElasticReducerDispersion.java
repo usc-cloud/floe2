@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticreducer;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.elasticmapreducer;
 
+import edu.usc.pgroup.floe.app.Tuple;
 import edu.usc.pgroup.floe.flake.FlakeToken;
 import edu.usc.pgroup.floe.flake.ZKFlakeTokenCache;
 import edu.usc.pgroup.floe.flake.messaging.dispersion.MessageDispersionStrategy;
 import edu.usc.pgroup.floe.utils.Utils;
-import edu.usc.pgroup.floe.zookeeper.ZKUtils;
-import edu.usc.pgroup.floe.zookeeper.zkcache.PathChildrenUpdateListener;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.utils.ZKPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,8 +37,7 @@ import java.util.TreeMap;
 /**
  * @author kumbhare
  */
-public class ElasticReducerDispersion implements MessageDispersionStrategy,
-        PathChildrenUpdateListener {
+public class ElasticReducerDispersion extends MessageDispersionStrategy {
 
     /**
      * the global logger instance.
@@ -72,6 +68,16 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     private List<String> targetFlakeIds;
 
     /**
+     * List of additional arguments to be sent.
+     */
+    private List<String> flakeArgs;
+
+    /**
+     * Temp. storage to store mapping from flake id to hash value.
+     */
+    private HashMap<String, Integer> actualHashes;
+
+    /**
      * Hash function to be used.
      */
     private HashingFunction hashingFunction;
@@ -82,56 +88,17 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
     private ZKFlakeTokenCache flakeCache;
 
     /**
-     * Initializes the strategy.
-     * @param appName Application name.
-     * @param destPelletName dest pellet name to be used to get data from ZK.
-     * @param args the arguments sent by the user. Fix Me: make this a better
-     *             interface.
+     * Default constructor.
      */
-    @Override
-    public final void initialize(
-            final String appName,
-            final String destPelletName,
-            final String args) {
+    public ElasticReducerDispersion() {
         this.targetFlakeIds = new ArrayList<>();
+        this.flakeArgs = new ArrayList<>();
         this.circle = new TreeMap<>(Collections.reverseOrder());
         this.flakeIdToTokenMap = new HashMap<>();
-        this.keyFieldName = args;
+        this.actualHashes = new HashMap<>();
         this.hashingFunction = new Murmur32();
-
-        String pelletTokenPath = ZKUtils.getApplicationPelletTokenPath(
-                appName, destPelletName);
-        LOGGER.debug("Listening for flake tokens for dest pellet: {} at {}",
-                destPelletName, pelletTokenPath);
-        this.flakeCache = new ZKFlakeTokenCache(pelletTokenPath, this);
-
-                //new PathChildrenCache(ZKClient.getInstance()
-                //.getCuratorClient(), pelletTokenPath, true);
-
-
-        try {
-            //flakeCache.start();
-            //flakeCache.rebuild();
-            flakeCache.rebuild();
-            List<ChildData> childData = flakeCache.getCurrentCachedData();
-            for (ChildData child: childData) {
-                String destFid = ZKPaths.getNodeFromPath(child.getPath());
-                LOGGER.warn("Dest FID: {}", destFid);
-
-                /*Integer newPosition = (Integer) Utils.deserialize(
-                                                    child.getData());*/
-                FlakeToken token = (FlakeToken) Utils.deserialize(
-                                                        child.getData());
-
-                updateCircle(destFid, token.getToken(), true);
-                //targetFlakeIds.add(destFid);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.warn("Error occured while retreving flake information for "
-                    + "destination pellet: {}", e);
-        }
     }
+
 
     /**
      * Returns the list of target instances to send the given tuple using the
@@ -141,7 +108,7 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
      *
      * @param middleendreceiver middleend receiver to get the message.
      * @param backend backend sender to send message to the succeeding flakes.
-     */
+     *
     @Override
     public final void disperseMessage(final ZMQ.Socket middleendreceiver,
                                       final ZMQ.Socket backend) {
@@ -162,17 +129,64 @@ public class ElasticReducerDispersion implements MessageDispersionStrategy,
         Integer hash = getTargetFlakeHash(actualHash);
         String fid =  circle.get(hash);
 
-        //LOGGER.error("Circle: {}", circle);
-        //LOGGER.error("KEY: {}, TO:{}", key, fid);
-        /*if (key.equals("the")) {
-            LOGGER.error("the: {}, flake's:{}", actualHash, hash);
-        }*/
-
         LOGGER.debug("Sending to:{}", hash.toString());
         backend.sendMore(fid.toString());
         backend.sendMore(actualHash.toString());
         backend.sendMore(String.valueOf(System.currentTimeMillis()));
         Utils.forwardCompleteMessage(middleendreceiver, backend);
+    }*/
+
+    /**
+     * @param args the arguments sent by the user. Fix Me: make this a better
+     *             interface.
+     */
+    @Override
+    protected final void initialize(final String args) {
+        this.keyFieldName = args;
+    }
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     * param tuple tuple object.
+     * @param tuple incoming tuple
+     * @return the list of target instances to send the given tuple
+     */
+    @Override
+    public final List<String> getTargetFlakeIds(final Tuple tuple) {
+        Object key = tuple.get(keyFieldName);
+
+        byte[] seralized = null;
+        if (key instanceof  String) {
+            seralized = ((String) key).getBytes();
+        } else {
+            LOGGER.info("KEY IS NOT STRING. Use of string keys is suggested.");
+            seralized = Utils.serialize(key);
+        }
+        Integer actualHash = hashingFunction.hash(seralized);
+        Integer hash = getTargetFlakeHash(actualHash);
+        String fid =  circle.get(hash);
+
+        actualHashes.put(fid, actualHash);
+
+        targetFlakeIds.clear();
+        targetFlakeIds.add(fid);
+        return targetFlakeIds;
+    }
+
+    /**
+     * Should return a list of arguments/"envelopes" to be sent along with
+     * the message for the given target flake.
+     *
+     * @param flakeId one of the flake ids returned by getTargetFlakeIds
+     * @return list of arguments to be sent.
+     */
+    @Override
+    public final List<String> getCustomArguments(final String flakeId) {
+        flakeArgs.clear();
+        flakeArgs.add(actualHashes.get(flakeId).toString());
+        flakeArgs.add(String.valueOf(System.currentTimeMillis()));
+        return flakeArgs;
     }
 
     /**

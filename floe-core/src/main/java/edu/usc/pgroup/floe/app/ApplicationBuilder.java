@@ -16,7 +16,12 @@
 
 package edu.usc.pgroup.floe.app;
 
+import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.app.pellets.StatelessPellet;
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
 import edu.usc.pgroup.floe.thriftgen.TAlternate;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
 import edu.usc.pgroup.floe.thriftgen.TChannelType;
 import edu.usc.pgroup.floe.thriftgen.TEdge;
 import edu.usc.pgroup.floe.thriftgen.TFloeApp;
@@ -163,8 +168,18 @@ public final class ApplicationBuilder {
         public final PelletBuilder subscribe(
                 final String inputPelletName,
                 final String... outputStreamName) {
+
+            TChannel channel = new TChannel();
+
+            channel.set_channelType(TChannelType.ROUND_ROBIN);
+            channel.set_dispersionClass(FloeConfig.getConfig().getString(
+                    ConfigProperties.FLAKE_RR_DISPERSION));
+            channel.set_localDispersionClass(FloeConfig.getConfig().getString(
+                    ConfigProperties.FLAKE_RR_LOCAL_DISPERSION));
+            channel.set_channelArgs(null);
+
             return subscribe(inputPelletName,
-                    TChannelType.ROUND_ROBIN,
+                    channel,
                     outputStreamName);
 
         }
@@ -173,29 +188,10 @@ public final class ApplicationBuilder {
         /**
          * Subscribe to a stream using a reducer pattern.
          * @param inputPelletName name of the preceding pellet.
-         * @return The builder pattern's object to further configure the pellet.
-         */
-        public final PelletBuilder reduce(
-                final String inputPelletName) {
-            Pellet inputPellet = userPellets.get(pellet.get_id());
-            if (!(inputPellet instanceof ReducerPellet)) {
-                throw new IncompatibleClassChangeError("Given pellet: "
-                        + inputPelletName + " is not a reducer.");
-            }
-            String keyFieldName
-                    = ((ReducerPellet) inputPellet).getKeyFieldName();
-            return reduce(inputPelletName,
-                    keyFieldName,
-                    Utils.Constants.DEFAULT_STREAM_NAME);
-        }
-
-        /**
-         * Subscribe to a stream using a reducer pattern.
-         * @param inputPelletName name of the preceding pellet.
          * @param fieldName field name used for grouping tuples to the reducers.
          * @return The builder pattern's object to further configure the pellet.
          */
-        private PelletBuilder reduce(
+        public final PelletBuilder reduce(
                 final String inputPelletName,
                 final String fieldName) {
             return reduce(inputPelletName,
@@ -214,52 +210,39 @@ public final class ApplicationBuilder {
                 final String inputPelletName,
                 final String fieldName,
                 final String... outputStreamName) {
+            TChannel channel = new TChannel();
+
+            channel.set_channelType(TChannelType.REDUCE);
+            channel.set_dispersionClass(FloeConfig.getConfig().getString(
+                    ConfigProperties.FLAKE_REDUCER_DISPERSION));
+            channel.set_localDispersionClass(FloeConfig.getConfig().getString(
+                    ConfigProperties.FLAKE_REDUCER_LOCAL_DISPERSION));
+            channel.set_channelArgs(fieldName);
             return subscribe(inputPelletName,
-                    TChannelType.REDUCE,
-                    fieldName,
+                    channel,
                     outputStreamName);
         }
 
         /**
          * Subscribe to a stream.
          * @param inputPelletName name of the preceding pellet.
-         * @param channelType type of the channel for this edge.
-         * @param outputStreamName the name of the stream to subscribe.
-         * @return The builder pattern's object to further configure the pellet.
-         */
-        private PelletBuilder subscribe(
-                final String inputPelletName,
-                final TChannelType channelType,
-                final String... outputStreamName
-        ) {
-            return subscribe(inputPelletName,
-                    channelType,
-                    null,
-                    outputStreamName);
-        }
-
-        /**
-         * Subscribe to a stream.
-         * @param inputPelletName name of the preceding pellet.
-         * @param channelType type of the channel for this edge.
-         * @param channelInitArgs initial arguments to be passed to the
-         *                        channel. (e.g. the field name in case of
+         * @param channel type of the channel and corresponding arguments for
+         *                this edge (e.g. the field name in case of
          *                        reducer which acts as a key for grouping).
          * @param outputStreamName the name of the stream to subscribe.
          * @return The builder pattern's object to further configure the pellet.
          */
-        private PelletBuilder subscribe(
+        public final PelletBuilder subscribe(
                 final String inputPelletName,
-                final TChannelType channelType,
-                final String channelInitArgs,
+                final TChannel channel,
                 final String... outputStreamName
         ) {
             TPellet inputPellet = pellets.get(inputPelletName);
 
             TEdge edge = new TEdge(inputPellet.get_id(),
                     pellet.get_id(),
-                    channelType);
-            edge.set_channelTypeArgs(channelInitArgs);
+                    channel);
+
             pellet.get_incomingEdges().add(edge);
 
             List<String> subscribedStreams = new ArrayList<>();

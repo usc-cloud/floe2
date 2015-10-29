@@ -216,6 +216,36 @@ public final class ConfigProperties {
      */
     public static final String SYS_PATH_SEPARATOR = "path.separator";
 
+
+    /**
+     * Channel/dispersion classes for reducer.
+     */
+    public static final String FLAKE_REDUCER_DISPERSION = "floe.flake"
+            + ".messaging.dispersion.reducer";
+
+    /**
+     * Channel/dispersion classes for reducer (local).
+     */
+    public static final String FLAKE_REDUCER_LOCAL_DISPERSION = "floe.flake"
+            + ".messaging.dispersion.reducer.local";
+
+    /**
+     * Channel/dispersion classes for round robin.
+     */
+    public static final String FLAKE_RR_DISPERSION = "floe.flake"
+            + ".messaging.dispersion.rr";
+
+    /**
+     * Channel/dispersion classes for reducer (local).
+     */
+    public static final String FLAKE_RR_LOCAL_DISPERSION = "floe.flake"
+            + ".messaging.dispersion.rr.local";
+
+    /**
+     * Jar containing various custom floe plugins.
+     */
+    public static final String FLOE_PLUGIN_JAR = "floe.flake.plugins.jar";
+
     /**
      * Hiding the default constructor.
      */

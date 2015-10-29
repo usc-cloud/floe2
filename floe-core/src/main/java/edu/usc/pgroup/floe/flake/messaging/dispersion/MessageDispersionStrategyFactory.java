@@ -16,18 +16,24 @@
 
 package edu.usc.pgroup.floe.flake.messaging.dispersion;
 
-import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.elasticreducer.ElasticReducerDispersion;
-import edu.usc.pgroup.floe.flake.messaging
-        .dispersion.elasticreducer.ElasticReducerFlakeLocalDispersion;
-import edu.usc.pgroup.floe.thriftgen.TChannelType;
-import org.zeromq.ZMQ;
+import edu.usc.pgroup.floe.config.ConfigProperties;
+import edu.usc.pgroup.floe.config.FloeConfig;
+import edu.usc.pgroup.floe.thriftgen.TChannel;
+import edu.usc.pgroup.floe.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author kumbhare
  */
 public final class MessageDispersionStrategyFactory {
+
+
+    /**
+     * the global logger instance.
+     */
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(MessageDispersionStrategyFactory.class);
 
     /**
      * Hiding default constructor.
@@ -40,9 +46,7 @@ public final class MessageDispersionStrategyFactory {
      * Factory function for creating the MessageDispersionStrategy.
      * @param appName Application name.
      * @param destPelletName dest pellet name to be used to get data from ZK.
-     * @param channelType type of the channel (edge) in the application.
-     * @param args Any arguments to be sent to the Strategy Class while
-     *             initialization.
+     * @param channel type of the channel (edge) in the application.
      * @return new instance of MessageDispersionStrategy based on the edge type.
      * @throws java.lang.ClassNotFoundException if the given channel type is
      * invalid or the class for custom strategy is not found.
@@ -51,25 +55,38 @@ public final class MessageDispersionStrategyFactory {
             getMessageDispersionStrategy(
                 final String destPelletName,
                 final String appName,
-                final TChannelType channelType,
-                final String args) throws ClassNotFoundException {
+                final TChannel channel) throws ClassNotFoundException {
 
-        MessageDispersionStrategy strategy = null;
+        String pluginJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
 
-        switch (channelType) {
-            case ROUND_ROBIN:
-                strategy = new RRDispersionStrategy();
-                break;
-            case REDUCE:
-                strategy = new ElasticReducerDispersion();
-                break;
-            case LOAD_BALANCED:
-            case CUSTOM:
-            default:
-                throw new ClassNotFoundException(channelType.toString());
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
         }
 
-        strategy.initialize(appName, destPelletName, args);
+        MessageDispersionStrategy strategy
+                = (MessageDispersionStrategy) Utils.instantiateObject(
+                channel.get_dispersionClass(), loader);
+
+//        switch (channel.get_channelType()) {
+//            case ROUND_ROBIN:
+//                strategy = new RRDispersionStrategy();
+//                break;
+//            case REDUCE:
+//                strategy = new ElasticReducerDispersion();
+//                break;
+//            case LOAD_BALANCED:
+//            case CUSTOM:
+//            default:
+//                throw new ClassNotFoundException(channel.toString());
+//        }
+        if (strategy != null) {
+
+            strategy.initialize(
+                    appName, destPelletName, channel.get_channelArgs());
+        }
         return strategy;
     }
 
@@ -119,37 +136,43 @@ public final class MessageDispersionStrategyFactory {
      * Factory function for creating the MessageDispersionStrategy.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param context shared ZMQ context.
-     * @param channelType channel type.
+     * @param channel channel type.
      * @param flakeId Current flake id.
      * @return returns the associated local dispersion strategy.
      * @throws java.lang.ClassNotFoundException if the channel type is invalid
-     */
+     *
     public static FlakeLocalDispersionStrategy
                     getFlakeLocalDispersionStrategy(
             final MetricRegistry metricRegistry,
             final ZMQ.Context context,
-            final TChannelType channelType, final String flakeId)
-            throws ClassNotFoundException {
+            final TChannel channel, final String flakeId)
+            throws ClassNotFoundException {*/
 
-        FlakeLocalDispersionStrategy strategy;
-        switch (channelType) {
-            case ROUND_ROBIN:
-                strategy = new RRFlakeLocalDispersionStrategy(metricRegistry,
-                        context, flakeId);
-                break;
-            case REDUCE:
-                strategy = new ElasticReducerFlakeLocalDispersion(
-                        metricRegistry,
-                        context,
-                        flakeId);
-                break;
-            case LOAD_BALANCED:
-            case CUSTOM:
-            default:
-                throw new ClassNotFoundException(channelType.toString());
+    /**
+     * Factory function for creating the Local Message DispersionStrategy.
+     * @param channel channel type associated with the given dataflow edge.
+     * @return returns the associated local dispersion strategy.
+     */
+    public static FlakeLocalDispersionStrategy
+        getFlakeLocalDispersionStrategy(final TChannel channel) {
+
+        FlakeLocalDispersionStrategy strategy = null;
+
+        String pluginJar = FloeConfig.getConfig().getString(
+                ConfigProperties.FLOE_PLUGIN_JAR);
+
+        ClassLoader loader = null;
+        if (pluginJar != null && !pluginJar.isEmpty()) {
+            loader = Utils.getClassLoader(pluginJar,
+                    ClassLoader.getSystemClassLoader());
         }
 
-        strategy.initialize(null);
+        strategy = (FlakeLocalDispersionStrategy) Utils.instantiateObject(
+                channel.get_localDispersionClass(), loader);
+
+        if (strategy != null) {
+            strategy.initialize(channel.get_channelArgs());
+        }
         return strategy;
     }
 }

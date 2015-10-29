@@ -20,17 +20,17 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import edu.usc.pgroup.floe.app.EmitterEnvelopeHook;
-import edu.usc.pgroup.floe.app.Pellet;
-import edu.usc.pgroup.floe.app.PelletContext;
 import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.app.pellets.Pellet;
+import edu.usc.pgroup.floe.app.pellets.PelletContext;
+import edu.usc.pgroup.floe.app.pellets.Signallable;
+import edu.usc.pgroup.floe.flake.messaging.MessageEmitter;
 import edu.usc.pgroup.floe.flake.messaging.MsgReceiverComponent;
 import edu.usc.pgroup.floe.flake.statemanager.PelletState;
 import edu.usc.pgroup.floe.flake.statemanager.StateManagerComponent;
-import edu.usc.pgroup.floe.signals.PelletSignal;
-import edu.usc.pgroup.floe.app.Signallable;
-import edu.usc.pgroup.floe.flake.messaging.MessageEmitter;
 import edu.usc.pgroup.floe.serialization.SerializerFactory;
 import edu.usc.pgroup.floe.serialization.TupleSerializer;
+import edu.usc.pgroup.floe.signals.PelletSignal;
 import edu.usc.pgroup.floe.signals.SystemSignal;
 import edu.usc.pgroup.floe.utils.Utils;
 import org.slf4j.Logger;
@@ -179,7 +179,7 @@ public class PelletExecutor extends Thread {
         this(registry, pelletIndex, sharedContext, fid, fid, stateManager);
         this.pelletClass = fqdnClass;
         this.pellet = (Pellet) Utils.instantiateObject(pelletClass);
-        this.pellet.setup(null, new PelletContext(pelletInstanceId));
+        //this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
 
 
@@ -206,7 +206,7 @@ public class PelletExecutor extends Thread {
                           final StateManagerComponent stateManager) {
         this(registry, pelletIndex, sharedContext, fid, pid, stateManager);
         this.pellet = p;
-        this.pellet.setup(null, new PelletContext(pelletInstanceId));
+        //this.pellet.setup(null, new PelletContext(pelletInstanceId));
     }
 
     /**
@@ -321,8 +321,8 @@ public class PelletExecutor extends Thread {
                 pollerItems.poll();
                 if (pollerItems.pollin(0)) {
                     dataReceiver.recvStr(Charset.defaultCharset());
-                    String sentTime
-                            = dataReceiver.recvStr(Charset.defaultCharset());
+                    /*String sentTime
+                            = dataReceiver.recvStr(Charset.defaultCharset());*/
                     byte[] serializedTuple = dataReceiver.recv();
 
                     queLen.dec();
@@ -348,10 +348,10 @@ public class PelletExecutor extends Thread {
 
 
                     pellet.execute(tuple, emitter, state);
-                    if (state != null) {
+                    /*if (state != null) {
                         state.setLatestTimeStampAtomic(
                                 Long.parseLong(sentTime));
-                    }
+                    }*/
 
 
                     long processedTime = System.nanoTime();
@@ -435,11 +435,11 @@ public class PelletExecutor extends Thread {
                 this.pellet = (Pellet) Utils.deserialize(
                                                 signal.getSignalData(),
                                                 loader);
-                this.pellet.setup(null, new PelletContext(pelletInstanceId));
+                //this.pellet.setup(null, new PelletContext(pelletInstanceId));
                 break;
             case StartInstance:
                 LOGGER.info("Starting pellets.");
-                this.pellet.onStart(emitter);
+                this.pellet.onStart(null, new PelletContext(pelletInstanceId));
                 //FIXME..
                 PelletState state = getPelletState(null);
                 this.pellet.execute(null, emitter, state);

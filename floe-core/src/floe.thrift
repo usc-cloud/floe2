@@ -36,11 +36,17 @@ enum TChannelType {
     CUSTOM
 }
 
+struct TChannel {
+    1: required TChannelType channelType;
+    2: required string dispersionClass;
+    3: required string localDispersionClass;
+    4: optional string channelArgs;
+}
+
 struct TEdge {
     1: required string srcPelletId;
     2: required string destPelletId;
-    3: required TChannelType channelType;
-    4: optional string channelTypeArgs;
+    3: required TChannel channel;
 }
 
 struct TAlternate {

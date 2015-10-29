@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package edu.usc.pgroup.floe.flake.messaging.dispersion;
+package edu.usc.pgroup.floe.flake.messaging.dispersion.roundrobin;
 
-import com.codahale.metrics.MetricRegistry;
-import edu.usc.pgroup.floe.utils.Utils;
+import edu.usc.pgroup.floe.app.Tuple;
+import edu.usc.pgroup.floe.flake.messaging
+        .dispersion.FlakeLocalDispersionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeromq.ZMQ;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,17 +49,23 @@ public class RRFlakeLocalDispersionStrategy
     private List<String> targetPelletInstances;
 
     /**
+     * Default constructor.
+     */
+    public RRFlakeLocalDispersionStrategy() {
+
+    }
+    /**
      * Constructor.
      * @param metricRegistry Metrics registry used to log various metrics.
      * @param context shared ZMQ context.
      * @param flakeId Current flake id.
-     */
+     *
     public RRFlakeLocalDispersionStrategy(
                 final MetricRegistry metricRegistry,
                 final ZMQ.Context context,
                 final String flakeId) {
         super(metricRegistry, context, flakeId);
-    }
+    }*/
 
     /**
      * Initializes the strategy.
@@ -72,6 +78,7 @@ public class RRFlakeLocalDispersionStrategy
         targetPelletInstances = new ArrayList<>();
         currentIndex = 0;
     }
+
 
     /**
      * Returns the list of target instances to send the given tuple using the
@@ -96,7 +103,7 @@ public class RRFlakeLocalDispersionStrategy
         return peid;
     }
 
-    @Override
+    /*@Override
     public final void sendToPellets(final ZMQ.Socket from, final ZMQ.Socket
             to) {
         //do something.
@@ -108,6 +115,21 @@ public class RRFlakeLocalDispersionStrategy
         } else {
             Utils.recvAndignore(from);
         }
+    }*/
+
+    /**
+     * Returns the list of target instances to send the given tuple using the
+     * defined strategy.
+     *
+     * @param tuple tuple object.
+     * @param args  custom arguments sent by the source flake with the tuple.
+     * @return the list of target instances to send the given tuple.
+     */
+    @Override
+    public final String getTargetPelletInstance(
+            final Tuple tuple,
+            final List<String> args) {
+        return getTargetPelletInstances();
     }
 
     /**

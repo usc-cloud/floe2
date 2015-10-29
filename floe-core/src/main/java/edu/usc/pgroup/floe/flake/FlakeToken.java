@@ -36,6 +36,11 @@ public class FlakeToken implements Serializable {
     private int stateCheckptPort;
 
     /**
+     * Custom data that can be set along with the Flake's Token.
+     */
+    private byte[] customData;
+
+    /**
      *
      * @param tk the int token for the flake on the ring.
      * @param ipOrHostName ip or hostname for the flake to connect to.
@@ -44,10 +49,26 @@ public class FlakeToken implements Serializable {
     public FlakeToken(final int tk,
                       final String ipOrHostName,
                       final int port) {
+        this(tk, ipOrHostName, port, null);
+    }
+
+    /**
+     *
+     * @param tk the int token for the flake on the ring.
+     * @param ipOrHostName ip or hostname for the flake to connect to.
+     * @param port the port number to connect to.
+     * @param cdata custom data associated with the flake.
+     */
+    public FlakeToken(final int tk,
+                      final String ipOrHostName,
+                      final int port,
+                      final byte[] cdata) {
         this.token = tk;
         this.ipOrHost = ipOrHostName;
         this.stateCheckptPort = port;
+        this.customData = cdata;
     }
+
 
     /**
      * @return the flake's current token on the ring.
@@ -69,4 +90,9 @@ public class FlakeToken implements Serializable {
     public final int getStateCheckptPort() {
         return stateCheckptPort;
     }
+
+    /**
+     * @return the custom data associated with the flake.
+     */
+    public final byte[] getCustomData() { return customData; }
 }
